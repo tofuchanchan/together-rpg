@@ -15,8 +15,6 @@ export function spritePose(h, time = 0) {
   if (moving) {
     column = [1, 2, 3, 2][Math.floor(stride * 4)];
     y = -Math.abs(Math.sin(stride * Math.PI * 2)) * 1.5;
-  } else {
-    sy = 1 + Math.sin(time * 3 + (h.id || 0)) * .008;
   }
   if (action) {
     sheet = 'combat';

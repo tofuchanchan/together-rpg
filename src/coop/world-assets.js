@@ -1,5 +1,6 @@
 let pending,manifest,background;
 const images=new Map();
+const outlines=new Map();
 export function loadWorldArt(){return pending??= (async()=>{
  const base=new URL('../../assets/world/',import.meta.url),response=await fetch(new URL('manifest.json',base));
  if(!response.ok)throw new Error(`美术清单加载失败 (${response.status})`);manifest=await response.json();
@@ -18,6 +19,11 @@ export function drawArt(c,name,x,y,w,h=w,{alpha=1,rotation=0,anchor,filter}={}){
 }
 export function drawContent(c,name,x,y,w,h){
  const f=frameInfo(name),[cx,cy,cw,ch]=f.content;c.drawImage(images.get(f.page),f.x+cx,f.y+cy,cw,ch,x,y,w,h);
+}
+export function drawOutline(c,name,x,y,w,h,color){
+ const f=frameInfo(name),key=name+color;let silhouette=outlines.get(key);
+ if(!silhouette){silhouette=document.createElement('canvas');silhouette.width=f.w;silhouette.height=f.h;const ctx=silhouette.getContext('2d');ctx.drawImage(images.get(f.page),f.x,f.y,f.w,f.h,0,0,f.w,f.h);ctx.globalCompositeOperation='source-in';ctx.fillStyle=color;ctx.fillRect(0,0,f.w,f.h);outlines.set(key,silhouette);}
+ for(let i=0;i<8;i++){const a=i*Math.PI/4;c.drawImage(silhouette,x-f.anchor[0]*w+Math.cos(a)*3,y-f.anchor[1]*h+Math.sin(a)*3,w,h);}
 }
 export function skin(c,name,x,y,w,h){
  const f=frameInfo(name),[cx,cy,cw,ch]=f.content,img=images.get(f.page);

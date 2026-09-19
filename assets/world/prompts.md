@@ -127,3 +127,10 @@ Keep cap size/proportions identical and feet on consistent baseline. Fixed obliq
 
 行顺序：青绿色史莱姆、紫色蝙蝠、灰狼红围巾、持木弓的骷髅、戴叶冠和木面具的治疗萨满、紫绿毒蜘蛛、琥珀色硬壳甲虫、橙色火灵。各四个不同关键姿态，共 32 单元。原始生成图含少量分离粒子，打包时按连通轮廓归属完整保留，按主体统一脚点和比例；不通过代码绘制怪物。
 
+
+
+# 荆冠古王 Boss · 2026-09-19
+
+模式：内置 imagegen。画风参考：source/bestiary.png。原始输出：source/thornking.png；运行图集：thornking.png；打包：tools/prepare-boss.mjs。4 列 × 2 行，共八张关键姿态，按统一比例和脚点打包。以下是实际生成提示词：
+
+Create a production-ready transparent PNG sprite sheet for an ORIGINAL boss named Thorn Crown, a chunky adorable yet imposing ancient forest stump king with dark bark face, glowing amber eyes, moss shoulders, a crown of red mushrooms and antler roots, enormous asymmetric wooden fists. Match supporting reference's thick dark outlines, simple rounded chibi shapes, warm clean flat shading. This is ONE 4 columns x 2 rows sprite sheet, equal square cells, eight full body poses facing southeast in 45-degree top down game projection. Exact row-major poses: 1 idle arms low, 2 walk left foot, 3 slam windup both fists high, 4 fist slam contact low, 5 seed barrage both palms facing out, 6 root summoning arms spread, 7 ultimate charge roaring luminous amber core, 8 enraged idle amber cracks. Same proportions, silhouette, size and foot baseline across all 8 cells, generous transparent gutters, no ground shadow, no lettering, no gridlines, no particles outside cell. Actual alpha transparency. Boss will be displayed 190 pixels high in gameplay. Distinct from reference monsters; it must read as a forest monarch boss. Save sheet for game integration.

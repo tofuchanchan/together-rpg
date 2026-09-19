@@ -6,7 +6,7 @@ const point=(h,v,d)=>({x:h.x+v.x*d,y:h.y+v.y*d});
 export function companionInput(w,h,role,map){
  const foes=w.enemies.filter(e=>e.hp>0),target=w.nearest(h)||foes.slice().sort((a,b)=>distance(a,h)-distance(b,h))[0];
  const ally=w.heroes.find(p=>p.down),leader=w.heroes.find(p=>!p.ai&&!p.down)||h;
- const zones=[...foes.map(e=>e.action).filter(a=>a&&!a.hit&&a.kind!=='healer').map(a=>({...a,eta:Math.max(0,a.windup-a.t)})),...w.hazards.filter(f=>f.type==='poison').map(f=>({...f,eta:Math.max(0,f.timer)}))];
+ const zones=[...(w.bossWarnings||[]).filter(a=>!a.hit).map(a=>({...a,eta:Math.max(0,a.windup-a.t)})),...foes.map(e=>e.action).filter(a=>a&&!a.hit&&a.kind!=='healer').map(a=>({...a,eta:Math.max(0,a.windup-a.t)})),...w.hazards.filter(f=>f.type==='poison').map(f=>({...f,eta:Math.max(0,f.timer)}))];
  const bullets=w.projectiles.filter(p=>p.hostile&&p.life>0);
  const risk=(p,horizon=.4)=>zones.reduce((n,a)=>n+(a.eta<horizon&&distance(p,a)<a.r+25?5+(a.r+25-distance(p,a))/30:0),0)+bullets.reduce((n,b)=>n+(segmentCircle(b,point(b,{x:b.dx,y:b.dy},b.speed*Math.min(horizon,b.life)),p,29)<Infinity?7:0),0);
  const pathClear=(a,b)=>Math.abs(b.x)<map.x-22&&Math.abs(b.y)<map.y-22&&w.obstacles.every(o=>segmentCircle(a,b,o,o.r+21)===Infinity);
@@ -45,8 +45,8 @@ export function companionInput(w,h,role,map){
   if(!Math.hypot(desired.x,desired.y))s-=Math.hypot(v.x,v.y)*1.5;
   return s;
  };
- candidates.sort((a,b)=>score(b)-score(a));let move=candidates[0];
- if(score(move)<=-1e6)move={x:0,y:0};
+ const ranked=candidates.map(move=>({move,score:score(move)})).sort((a,b)=>b.score-a.score);let move=ranked[0].move;
+ if(ranked[0].score<=-1e6)move={x:0,y:0};
  h.aiIntent=intent;
  const canCast=target&&w.lineClear(h,target)&&intent!=='evade'&&intent!=='heal';
  return {...move,dodge:dodge&&Math.hypot(move.x,move.y)>.5,skill1:!!canCast&&h.skills[0]>0&&h.cd[0]===0&&distance(h,target)<(h.role==='warrior'?210:450)*h.rangeBonus,skill2:!!canCast&&h.skills[1]>0&&h.cd[1]===0&&distance(h,target)<(h.role==='archer'?380:185)*h.rangeBonus};

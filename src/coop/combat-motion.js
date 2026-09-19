@@ -16,10 +16,3 @@ export function reactionPose(actor){
  const q=Math.max(0,1-r.life/r.max),pulse=Math.sin(Math.min(1,q/.5)*Math.PI)*Math.exp(-q*2.5),power=r.power||1;
  return{x:r.x*pulse*7*power,y:r.y*pulse*5*power,sx:1+pulse*.065,sy:1-pulse*.07,rotation:r.x*pulse*.045,brightness:1+Math.max(0,1-q/.42)*1.2};
 }
-// Source-pixel cloth band: upper body and feet stay pinned. Small amplitudes preserve line art.
-export function clothOffset(role,y,time,id=0){
- const top=role==='mage'?126:119,bottom=role==='mage'?202:198;
- if(y<=top||y>=bottom)return 0;
- const q=(y-top)/(bottom-top),amplitude=role==='warrior'?2.8:role==='mage'?2:2.4;
- return Math.sin(q*Math.PI)**2*Math.sin(time*2.5+id*1.7-q*2.2)*amplitude;
-}

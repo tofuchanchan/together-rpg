@@ -1,15 +1,15 @@
 import {chromium} from 'file:///C:/Users/fuweicheng/.codex/skills/node_modules/playwright/index.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
-const out='output/art-overhaul';fs.mkdirSync(out,{recursive:true});
+const out=process.env.ART_OUT||'output/art-overhaul';fs.mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:1440,height:940}});
 const errors=[],checks=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.url().includes('/assets/world/'))requests.push({path:new URL(r.url()).pathname,status:r.status()});});
 const mark=label=>{checks.push(label);console.log('PASS',label);};
 const shot=async name=>{await page.evaluate(()=>coopTest.render());await page.locator('#game canvas').screenshot({path:`${out}/${name}.png`});};
 try{
  await page.goto('http://127.0.0.1:4173/');await page.waitForFunction(()=>window.assetsReady);await page.evaluate(()=>advanceTime(0));
- const state=await page.evaluate(()=>JSON.parse(render_game_to_text()));assert.deepEqual(state.worldArt,{ready:true,source:'illustrated-png-atlases',pages:7,frames:184});assert.ok(state.characterArt.ready);await shot('menu');
- for(const name of ['forest','bestiary','enemies','props','icons','ui','effects','projectiles'])assert.ok(requests.some(r=>r.path.endsWith(`/${name}.png`)&&r.status===200));mark('All illustrated atlases and background loaded before gameplay');
+ const state=await page.evaluate(()=>JSON.parse(render_game_to_text()));assert.deepEqual(state.worldArt,{ready:true,source:'illustrated-png-atlases',pages:8,frames:192});assert.ok(state.characterArt.ready);await shot('menu');
+ for(const name of ['forest','thornking','bestiary','enemies','props','icons','ui','effects','projectiles'])assert.ok(requests.some(r=>r.path.endsWith(`/${name}.png`)&&r.status===200));mark('All illustrated atlases and background loaded before gameplay');
  const spinBounds=await page.evaluate(async()=>{const {heroAction}=await import('/src/coop/world-art.js');return [.3,.6].map(q=>{const cv=document.createElement('canvas');cv.width=cv.height=480;const c=cv.getContext('2d');c.translate(240,240);heroAction(c,{role:'warrior',action:{type:'spin',t:q,duration:1,dir:{x:1,y:0}}});const d=c.getImageData(0,0,480,480).data;let l=480,r=0,t=480,b=0;for(let y=0;y<480;y++)for(let x=0;x<480;x++)if(d[(y*480+x)*4+3]>40){l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y);}return{width:r-l,height:b-t};});});
  for(const bounds of spinBounds)assert.ok(bounds.width/bounds.height>1.15,`Spin must stay on ground plane: ${JSON.stringify(bounds)}`);mark('Rotating spin remains horizontally projected at multiple action phases');
  await page.evaluate(()=>{coopTest.start();coopTest.world.heroes.forEach(h=>h.skills=[1,1]);});await page.keyboard.down('a');await page.keyboard.down('ArrowRight');await page.evaluate(()=>advanceTime(440));await page.keyboard.up('a');await page.keyboard.up('ArrowRight');await page.evaluate(()=>advanceTime(650));

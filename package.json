@@ -1,6 +1,6 @@
 {
   "name": "together-rpg",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,6 +11,8 @@
     "test:browser": "node tools/verify-coop.mjs",
     "test:legacy": "node tools/verify.mjs",
     "build:legacy": "node tools/bake.mjs",
-    "test:roguelite": "node tools/verify-roguelite.mjs"
+    "test:roguelite": "node tools/verify-roguelite.mjs",
+    "test:expedition": "node tools/verify-expedition.mjs",
+    "test:campaign": "node tools/simulate-expedition.mjs"
   }
 }

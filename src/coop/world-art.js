@@ -1,5 +1,6 @@
 import {clamp} from './model.js';
-import {drawArt,drawContent,frameInfo,skin,makeIllustratedGround} from './world-assets.js';
+import {drawArt,drawContent,drawOutline,frameInfo,skin,makeIllustratedGround} from './world-assets.js';
+import {RARITIES} from './encounters.js';
 import {ICON_ALIASES,enemyFrame,effectFrame} from './world-art-defs.js';
 import {enemyDef} from './enemies.js';
 import {actionLayout} from './effect-layout.js';
@@ -16,7 +17,7 @@ export function bar(c,x,y,w,h,q,color='#78cd73'){
 export function enemy(c,e,time){const held=e.visualStop>0&&e.hitPose?{...e,...e.hitPose}:e,key=enemyFrame(held),f=frameInfo(key),size=f.w*f.displayScale;
  if(e.slow>0)drawArt(c,'frost-3',0,-3,e.kind==='mushroom'?98:67,e.kind==='mushroom'?42:28,{alpha:.55});
  const bob=held.action?0:-Math.abs(Math.sin(held.stride*Math.PI*2))*2,hit=reactionPose(e);
- c.save();c.translate(hit.x,hit.y);c.rotate(hit.rotation);c.scale(hit.sx,hit.sy);if(!['goblin','mushroom'].includes(e.kind)&&e.face>=3&&e.face<=5)c.scale(-1,1);drawArt(c,key,0,bob,size,size,{filter:e.freeze>0?'sepia(.7) hue-rotate(130deg)':e.hitFlash>0?`brightness(${hit.brightness}) saturate(.65)`:undefined});c.restore();
+ c.save();c.translate(hit.x,hit.y);c.rotate(hit.rotation);c.scale(hit.sx,hit.sy);if(!['goblin','mushroom'].includes(e.kind)&&e.face>=3&&e.face<=5)c.scale(-1,1);if(e.rarity)drawOutline(c,key,0,bob,size,size,RARITIES[e.rarity].color);if(e.spawnGrace>0)c.globalAlpha=.35+(1-e.spawnGrace)*.65;drawArt(c,key,0,bob,size,size,{filter:e.freeze>0?'sepia(.7) hue-rotate(130deg)':e.hitFlash>0?`brightness(${hit.brightness}) saturate(.65)`:undefined});c.restore();
 }
 export function rock(c,x,y,r){drawArt(c,r>32?'rock-large':'rock-small',x,y+8,r*3.1);}
 export const makeGround=makeIllustratedGround;
@@ -30,6 +31,8 @@ export function warning(c,a){
  c.beginPath();c.ellipse(a.x,a.y*.707,a.r,a.r*.707,0,-Math.PI/2,-Math.PI/2+q*Math.PI*2);c.lineWidth=2.5;c.strokeStyle='#ffe0a5';c.stroke();c.restore();
 }
 export function effect(c,f){
+ if(f.type==='spawn'){drawArt(c,'warning-ring',f.x,f.y*.707,72,45,{alpha:f.life/f.max});return;}
+ if(f.type==='chain'){c.save();c.strokeStyle='#b0edff';c.lineWidth=3;c.globalAlpha=f.life/f.max;c.beginPath();c.moveTo(f.x,f.y*.707-31);c.lineTo((f.x+f.to.x)/2+8,(f.y+f.to.y)*.3535-42);c.lineTo(f.to.x,f.to.y*.707-31);c.stroke();c.restore();return;}
  if(f.type==='contact'){const q=clamp(1-f.life/f.max,0,.999);drawArt(c,effectFrame('hit',q),f.x,f.y*.707-f.height,f.size*(.75+q*.6),f.size*(.75+q*.6),{alpha:Math.min(1,f.life/f.max*3),rotation:Math.atan2(f.dir.y*.707,f.dir.x),filter:f.hurt?'sepia(.8) saturate(2.4) hue-rotate(320deg)':undefined});return;}
  if(f.type==='heal'){drawArt(c,'heal-burst',f.x,f.y*.707,130,80,{alpha:f.life/f.max});return;}
  const progress=clamp(1-f.life/f.max,0,.999),alpha=Math.min(1,f.life/f.max*3),type=f.type==='poof'?'dust':f.type==='impact'?'hit':f.type;

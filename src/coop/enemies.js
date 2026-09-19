@@ -1,3 +1,4 @@
+import {BOSS_DEF} from './encounters.js';
 export const ENEMIES={
  goblin:{name:'哥布林',hp:45,speed:85,range:75,radius:57,windup:.52,damage:12,cd:1.7,behavior:'melee',size:88,xp:1},
  mushroom:{name:'重锤菇',hp:97,speed:58,range:108,radius:90,windup:.7,damage:24,cd:2.15,behavior:'melee',size:126,xp:2},
@@ -10,4 +11,4 @@ export const ENEMIES={
  beetle:{name:'铁甲虫',hp:125,speed:47,range:95,radius:70,windup:.85,damage:22,cd:2.5,behavior:'armored',size:95,xp:3},
  wisp:{name:'火灵',hp:48,speed:77,range:290,radius:60,windup:.8,damage:12,cd:2.7,behavior:'burst',size:78,xp:2},
 };
-export const enemyDef=e=>ENEMIES[e.kind]||ENEMIES.goblin;
+export const enemyDef=e=>e.stats||(e.boss?BOSS_DEF:ENEMIES[e.kind]||ENEMIES.goblin);

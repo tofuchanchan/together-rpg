@@ -10,6 +10,7 @@ export const WORLD_SHEETS=[
 ];
 export const ICON_ALIASES={bash:'shield',fireball:'fire',arrow:'pierce',skill:'focus',speed:'boot',power:'sword',hp:'heart'};
 export function enemyFrame(e){
+ if(e.boss){const a=e.action;if(!a)return `thornking-${e.phase===3?7:Math.floor((e.stride||0)*2)%2}`;return `thornking-${a.kind==='slam'?(a.hit?3:2):a.kind==='barrage'?4:a.kind==='ultimate'?6:5}`;}
  const a=e.action;let face=e.face??0;
  if(a&&Math.hypot(a.x-e.x,a.y-e.y)>1)face=(Math.round(Math.atan2(a.y-e.y,a.x-e.x)/(Math.PI/4))+8)%8;
  const column=a?(a.hit?3:2):Math.floor((((e.stride||0)%1+1)%1)*2);

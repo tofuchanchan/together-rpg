@@ -115,3 +115,5 @@ try{await p.goto('http://127.0.0.1:4173/');
  console.log(`Packed ${Object.keys(frames).length} art cells; all non-empty with safe margins.`);
 }finally{await browser.close();}
 await import('./prepare-bestiary.mjs');
+
+await import('./prepare-boss.mjs');

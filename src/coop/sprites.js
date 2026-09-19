@@ -1,5 +1,5 @@
 import {spritePose} from './sprite-animation.js';
-import {clothOffset} from './combat-motion.js';
+import {splitAccessory,hurtFace} from './character-parts.js';
 
 const atlases = new Map();
 let pending;
@@ -13,7 +13,7 @@ export function loadCharacterSprites() {
     image.src = new URL(manifest.image, url).href;
     await image.decode();
     if (image.width !== manifest.width || image.height !== manifest.height) throw new Error(`角色图集尺寸不符：${role}`);
-    atlases.set(role, {image, manifest, idleFrames:new Map()});
+    atlases.set(role, {image, manifest, parts:new Map(), faces:new Map()});
   }));
 }
 
@@ -41,15 +41,14 @@ export function hero(c, h, time, scale = 1) {
   if(h.invuln>0&&!h.down&&h.action?.type!=='dodge'&&h.hitFlash<=0)c.globalAlpha*=.82+.18*Math.cos(time*38)**2;
   c.imageSmoothingEnabled = true;
   c.imageSmoothingQuality = 'high';
-  if(pose.cloth){
-    // Warp at native pixel resolution, then scale once. Avoid subpixel strip seams on screen.
-    const clock=Math.floor(time*60)/60,key=`${index}:${clock}:${h.id}`;
-    let cloth=atlas.idleFrames.get(key);
-    if(!cloth){cloth=document.createElement('canvas');cloth.width=cloth.height=size;const ctx=cloth.getContext('2d');
-      for(let y=0;y<size;y++)ctx.drawImage(atlas.image,frame.x,frame.y+y,size,1,clothOffset(h.role,y,clock,h.id),y,size,1);
-      atlas.idleFrames.set(key,cloth);if(atlas.idleFrames.size>12)atlas.idleFrames.delete(atlas.idleFrames.keys().next().value);
-    }
-    c.drawImage(cloth,-atlas.manifest.anchor[0],-atlas.manifest.anchor[1]);
+  if(h.hitReaction?.life>0&&!h.down){
+    if(!atlas.faces.has(index))atlas.faces.set(index,hurtFace(atlas.image,frame,size,pose.row,h.role));
+    c.drawImage(atlas.faces.get(index),-atlas.manifest.anchor[0],-atlas.manifest.anchor[1]);
+  }else if(pose.cloth){
+    if(!atlas.parts.has(index))atlas.parts.set(index,splitAccessory(atlas.image,frame,size,h.role));
+    const parts=atlas.parts.get(index),ax=atlas.manifest.anchor[0],ay=atlas.manifest.anchor[1];
+    c.drawImage(parts.body,-ax,-ay);
+    if(parts.part){c.save();c.translate(parts.pivot[0]-ax,parts.pivot[1]-ay);c.rotate(Math.sin(time*2.2+h.id*1.7)*.018);c.drawImage(parts.part,-parts.pivot[0],-parts.pivot[1]);c.restore();}
   }else c.drawImage(atlas.image, frame.x, frame.y, size, size, -atlas.manifest.anchor[0], -atlas.manifest.anchor[1], size, size);
   c.restore();
 }
