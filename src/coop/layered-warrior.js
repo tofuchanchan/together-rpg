@@ -21,7 +21,8 @@ export function drawLayeredWarrior(c,h,time=0,scale=1,options={}){
   const width=f.w/f.h*height*widthScale;c.save();c.translate(point.x+offset[0]*explode,point.y+offset[1]*explode);c.rotate(rotation);c.drawImage(atlas.images[f.page],f.x,f.y,f.w,f.h,-width*pivot[0],-height*pivot[1],width,height);c.restore();
  };
  const capePivots={S:[.5,.06],SW:[.22,.06],W:[.16,.06],NW:[.25,.06],N:[.5,.06],NE:[.8,.06],E:[.88,.06],SE:[.92,.18]};
- const cape=()=>draw(gear.cape,{x:-Math.cos(pose.face*Math.PI/4)*18,y:pose.view==='SE'?-80:-64},pose.view==='SE'?58:56,capePivots[pose.view],pose.capeAngle,[0,25]);
+ const capeHeight=pose.view==='SE'?58:pose.view==='S'?36:56;
+ const cape=()=>draw(gear.cape,{x:-Math.cos(pose.face*Math.PI/4)*18,y:pose.view==='SE'?-80:-64},capeHeight,capePivots[pose.view],pose.capeAngle,[0,25]);
  const arm=side=>{
   const a=arms[side],sign=side==='right'?-1:1,offset=[sign*45,0];
   draw(`upper-${side}`,a.start,29,[.5,.25],a.upper,offset);draw(`fore-${side}`,a.elbow,14,[.5,.13],a.fore,offset);
