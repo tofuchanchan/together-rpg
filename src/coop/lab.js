@@ -1,3 +1,4 @@
+import {actionTiming} from './combat-motion.js';
 import {ellipse,box,text} from './art.js';
 import {hero,loadCharacterSprites} from './sprites.js';
 const directions=['东','东南','南','西南','西','西北','北','东北'];
@@ -8,8 +9,9 @@ try{await loadCharacterSprites();}catch(error){$('#hint').textContent=`素材加
 export function pose(role,clip,dir,q){
  const angle=dir*Math.PI/4,skills=role==='warrior'?['bash','spin']:role==='mage'?['fireball','frost']:['pierce','fan'];
  const type=clip==='skill1'?skills[0]:clip==='skill2'?skills[1]:clip==='run-attack'?'attack':clip,running=clip==='run'||clip==='run-attack';
+ const timing=actionTiming(role,type);
  return{id:0,role,face:dir,move:{x:running?Math.cos(angle):0,y:running?Math.sin(angle):0},stride:q,
-  action:['idle','run'].includes(type)?null:{type,t:q,duration:1,dir:{x:Math.cos(angle),y:Math.sin(angle)}},hitFlash:0,down:false};
+  action:['idle','run'].includes(type)?null:{type,...timing,t:q*timing.duration,dir:{x:Math.cos(angle),y:Math.sin(angle)}},hitFlash:0,down:false};
 }
 function draw(){
  const role=$('#role').value,clip=$('#clip').value,q=(Math.floor(clock*16)%16)/16;c.clearRect(0,0,1344,490);

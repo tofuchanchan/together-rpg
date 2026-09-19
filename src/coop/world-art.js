@@ -3,6 +3,7 @@ import {drawArt,drawContent,frameInfo,skin,makeIllustratedGround} from './world-
 import {ICON_ALIASES,enemyFrame,effectFrame} from './world-art-defs.js';
 import {enemyDef} from './enemies.js';
 import {actionLayout} from './effect-layout.js';
+import {reactionPose} from './combat-motion.js';
 export {skin};
 export function icon(c,name,x,y,size=24){drawArt(c,ICON_ALIASES[name]||name,x,y,size*2.35);}
 export function bar(c,x,y,w,h,q,color='#78cd73'){
@@ -12,10 +13,10 @@ export function bar(c,x,y,w,h,q,color='#78cd73'){
  if(!xp&&['#e58a6d','#eea467'].includes(color))c.filter='hue-rotate(280deg) saturate(.9)';
  drawContent(c,xp?'xp-fill':'health-fill',x+3,y+3,w-6,Math.max(1,h-6));c.restore();
 }
-export function enemy(c,e,time){const key=enemyFrame(e),f=frameInfo(key),size=f.w*f.displayScale;
+export function enemy(c,e,time){const held=e.visualStop>0&&e.hitPose?{...e,...e.hitPose}:e,key=enemyFrame(held),f=frameInfo(key),size=f.w*f.displayScale;
  if(e.slow>0)drawArt(c,'frost-3',0,-3,e.kind==='mushroom'?98:67,e.kind==='mushroom'?42:28,{alpha:.55});
- const bob=e.action?0:-Math.abs(Math.sin(e.stride*Math.PI*2))*2;
- c.save();if(!['goblin','mushroom'].includes(e.kind)&&e.face>=3&&e.face<=5)c.scale(-1,1);drawArt(c,key,0,bob,size,size,{filter:e.freeze>0?'sepia(.7) hue-rotate(130deg)':e.hitFlash>0?'brightness(1.8) saturate(.65)':undefined});c.restore();
+ const bob=held.action?0:-Math.abs(Math.sin(held.stride*Math.PI*2))*2,hit=reactionPose(e);
+ c.save();c.translate(hit.x,hit.y);c.rotate(hit.rotation);c.scale(hit.sx,hit.sy);if(!['goblin','mushroom'].includes(e.kind)&&e.face>=3&&e.face<=5)c.scale(-1,1);drawArt(c,key,0,bob,size,size,{filter:e.freeze>0?'sepia(.7) hue-rotate(130deg)':e.hitFlash>0?`brightness(${hit.brightness}) saturate(.65)`:undefined});c.restore();
 }
 export function rock(c,x,y,r){drawArt(c,r>32?'rock-large':'rock-small',x,y+8,r*3.1);}
 export const makeGround=makeIllustratedGround;
@@ -29,6 +30,7 @@ export function warning(c,a){
  c.beginPath();c.ellipse(a.x,a.y*.707,a.r,a.r*.707,0,-Math.PI/2,-Math.PI/2+q*Math.PI*2);c.lineWidth=2.5;c.strokeStyle='#ffe0a5';c.stroke();c.restore();
 }
 export function effect(c,f){
+ if(f.type==='contact'){const q=clamp(1-f.life/f.max,0,.999);drawArt(c,effectFrame('hit',q),f.x,f.y*.707-f.height,f.size*(.75+q*.6),f.size*(.75+q*.6),{alpha:Math.min(1,f.life/f.max*3),rotation:Math.atan2(f.dir.y*.707,f.dir.x),filter:f.hurt?'sepia(.8) saturate(2.4) hue-rotate(320deg)':undefined});return;}
  if(f.type==='heal'){drawArt(c,'heal-burst',f.x,f.y*.707,130,80,{alpha:f.life/f.max});return;}
  const progress=clamp(1-f.life/f.max,0,.999),alpha=Math.min(1,f.life/f.max*3),type=f.type==='poof'?'dust':f.type==='impact'?'hit':f.type;
  const radius=f.r||35,diameter=type==='dust'?95:radius*2.25;
@@ -37,12 +39,15 @@ export function effect(c,f){
 export function projectile(c,p,time){
  const key=p.type==='arrow'?'arrow':p.type==='pierce'?'pierce-arrow':`${p.type==='fireball'?'fireball':'bolt'}-${Math.floor(time*14)%4}`;
  const width=p.type==='pierce'?77:p.type==='fireball'?86:p.type==='arrow'?55:48;
- drawArt(c,key,p.x,p.y*.707-31,width,width,{rotation:Math.atan2(p.dy*.707,p.dx),filter:p.hostile?'sepia(.8) saturate(3) hue-rotate(320deg)':undefined});
+ // Ground collision position is the leading edge, not the middle of a long arrow.
+ const angle=Math.atan2(p.dy*.707,p.dx),offset=p.type==='arrow'||p.type==='pierce'?width*.35:0;
+ drawArt(c,key,p.x-Math.cos(angle)*offset,p.y*.707-31-Math.sin(angle)*offset,width,width,{rotation:angle,filter:p.hostile?'sepia(.8) saturate(3) hue-rotate(320deg)':undefined});
 }
 export function heroAction(c,h){const a=h.action,layout=actionLayout(h);if(!a||!layout)return;const q=clamp(a.t/a.duration,0,.999),angle=Math.atan2(a.dir.y*.707,a.dir.x);c.save();c.translate(layout.x,layout.y*.707);
- if(a.type==='attack'&&q>.25&&q<.76)drawArt(c,effectFrame('slash',(q-.25)/.51),0,-28,layout.size,layout.size,{rotation:angle,alpha:.92});
- if(a.type==='spin'){c.scale(1,.707);drawArt(c,effectFrame('spin',q),0,0,layout.size,layout.size,{rotation:q*Math.PI,alpha:.75});}
- if(a.type==='bash')drawArt(c,'shield-burst',0,-28,77,77,{rotation:angle,alpha:Math.sin(q*Math.PI)*.8});
+ const start=a.windup??a.duration*.33,end=a.activeEnd??a.duration*.56,fx=clamp((a.t-start)/Math.max(.001,end-start+.07),0,1);
+ if(a.type==='attack'&&a.t>=start&&fx<1)drawArt(c,effectFrame('slash',fx),0,-28,layout.size,layout.size,{rotation:angle,alpha:.92*(1-fx*.6)});
+ if(a.type==='spin'&&a.t>=(a.windup??.12)){c.scale(1,.707);drawArt(c,effectFrame('spin',q),0,0,layout.size,layout.size,{rotation:q*Math.PI,alpha:.75});}
+ if(a.type==='bash'&&a.t>=(a.windup??0))drawArt(c,'shield-burst',0,-28,77,77,{rotation:angle,alpha:Math.sin(q*Math.PI)*.8});
  if(a.type==='dodge')drawArt(c,effectFrame('dust',q),0,0,83,60,{alpha:.65});c.restore();
 }
 export const SCENE_PROPS=[

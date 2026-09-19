@@ -1,5 +1,8 @@
 import {ACTIVE,applyReward,attributePool,shuffle,rollSkills} from './builds.js';
 import {ENEMIES,enemyDef} from './enemies.js';
+import {actionTiming,actionPhase} from './combat-motion.js';
+import {segmentCircle} from './collision.js';
+import {companionInput} from './ai.js';
 export const MAP_SCALE=Math.sqrt(1.5),MAP={x:550*MAP_SCALE,y:345*MAP_SCALE};
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const len=(x,y)=>Math.hypot(x,y);
@@ -23,56 +26,57 @@ export class World{
  emit(type,data={}){this.events.push({type,...data});if(this.events.length>80)this.events.shift();}
  request(h,type,input){if(h.down)return false;const moving=len(input.x,input.y)>.01;const v=moving?norm(input.x,input.y):h.lastMove;h.buffer={type,expires:this.time+.14,dir:{...v}};return this.consume(h);}
  consume(h){const b=h.buffer;if(!b)return false;if(this.time>b.expires){h.buffer=null;return false;}const a=h.action;if(b.type==='dodge'){
-   if(h.dodgeCd>0||a?.type==='dodge'||(a&&a.type!=='attack'&&a.t<a.duration*.55))return false;
-   h.action={type:'dodge',t:0,duration:.29,dir:b.dir,hit:new Set()};h.invuln=.15;h.dodgeCd=.85;h.empowered=h.passives.momentum?3:0;h.buffer=null;this.emit('dodge',{id:h.id});return true;
+   if(h.dodgeCd>0||a?.type==='dodge'||(a&&a.type!=='attack'&&a.t<(a.cancelAt??a.duration*.55)))return false;
+   h.visualStop=0;h.hitPose=null;h.action={type:'dodge',t:0,duration:.29,dir:b.dir,hit:new Set()};h.invuln=.15;h.dodgeCd=.85;h.empowered=h.passives.momentum?3:0;h.buffer=null;this.emit('dodge',{id:h.id});return true;
   }
   const s=b.type==='skill1'?0:1;if(!h.skills[s]){h.buffer=null;return false;}if(h.cd[s]>0||(a&&a.type!=='attack'))return false;
   const target=this.nearest(h,520);const d=target?norm(target.x-h.x,target.y-h.y):b.dir;
   const type=h.role==='warrior'?(s===0?'bash':'spin'):h.role==='mage'?(s===0?'fireball':'frost'):(s===0?'pierce':'fan');
-  h.action={type,slot:s,t:0,duration:type==='bash'?.39:type==='spin'?.53:.38,dir:type==='bash'?b.dir:d,hit:new Set(),fired:false};h.cd[s]=ROLES[h.role].cd[s]*(1-h.cooldown);h.buffer=null;h.face=dir8(h.action.dir.x,h.action.dir.y);this.emit('skill',{id:h.id,skill:type});return true;
+  h.visualStop=0;h.hitPose=null;h.action={type,slot:s,t:0,...actionTiming(h.role,type),dir:type==='bash'?b.dir:d,hit:new Set(),fired:false};h.cd[s]=ROLES[h.role].cd[s]*(1-h.cooldown);h.buffer=null;h.face=dir8(h.action.dir.x,h.action.dir.y);this.emit('skill',{id:h.id,skill:type});return true;
  }
  nearest(h,range=Infinity){let best=null,d=range;for(const e of this.enemies){const n=dist(h,e);if(e.hp>0&&n<d&&this.lineClear(h,e)){best=e;d=n;}}return best;}
  lineClear(a,b){const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy;return !this.obstacles.some(o=>{const t=l?clamp(((o.x-a.x)*dx+(o.y-a.y)*dy)/l,0,1):0;return len(a.x+t*dx-o.x,a.y+t*dy-o.y)<o.r;});}
  moveActor(h,dx,dy,r=17){h.x=clamp(h.x+dx,-MAP.x+r,MAP.x-r);h.y=clamp(h.y+dy,-MAP.y+r,MAP.y-r);for(const o of this.obstacles){const d=dist(h,o),rr=r+o.r;if(d<rr){const n=d?norm(h.x-o.x,h.y-o.y):{x:1,y:0};h.x=o.x+n.x*rr;h.y=o.y+n.y*rr;}}}
- damageEnemy(e,n,h,knock=70,source='attack',extraCrit=0){if(e.hp<=0)return;let crit=false;
+ damageEnemy(e,n,h,knock=70,source='attack',extraCrit=0,incoming=null){if(e.hp<=0)return;let crit=false;
   if(source!=='dot'){crit=h.empowered>0||this.random()<h.crit+extraCrit;if(crit)n*=h.critDamage;if(h.empowered>0){n*=1+(h.passives.momentum||0)*.1;h.empowered=0;}
-   if(e.kind==='beetle'){const facing={x:Math.cos(e.face*Math.PI/4),y:Math.sin(e.face*Math.PI/4)},v=norm(h.x-e.x,h.y-e.y);if(v.x*facing.x+v.y*facing.y>.25)n*=.5;}
+   if(e.kind==='beetle'){const facing={x:Math.cos(e.face*Math.PI/4),y:Math.sin(e.face*Math.PI/4)},v=incoming?{x:-incoming.x,y:-incoming.y}:norm(h.x-e.x,h.y-e.y);if(v.x*facing.x+v.y*facing.y>.25)n*=.5;}
    if(h.passives.chill)e.slow=Math.max(e.slow,.1+h.passives.chill*.4);
    e.statuses??=[];const dot=(type,damage)=>{const old=e.statuses.find(s=>s.type===type&&s.owner===h.id);if(old){old.life=3;old.damage=damage;}else e.statuses.push({type,damage,life:3,timer:1,owner:h.id});};
    if(source==='skill'&&h.passives.ember)dot('burn',h.passives.ember*4);if(crit&&h.passives.blood)dot('bleed',h.passives.blood*5);
   }
-  e.hp-=n;h.damageDone+=n;e.hitFlash=.13;e.visualStop=.04;h.visualStop=.035;const d=norm(e.x-h.x,e.y-h.y);e.knock={x:d.x*knock,y:d.y*knock};this.effects.push({type:'number',x:e.x,y:e.y,text:`${crit?'暴击 ':''}${Math.round(n)}`,life:.7,max:.7,color:crit?'#ffce71':'#fff0b4'});this.emit('hit',{id:h.id,heavy:n>=28});if(n>=28)this.shake=Math.min(.12,this.shake+.05);
+  e.hp-=n;h.damageDone+=n;const d=incoming||norm(e.x-h.x,e.y-h.y);if(source!=='dot'){e.hitFlash=.16;e.visualStop=n>=28?.055:.035;e.hitPose={stride:e.stride,action:e.action?{...e.action}:null};e.hitReaction={x:d.x,y:d.y,life:.24,max:.24,power:n>=28?1.3:1};if(h.role==='warrior'){h.visualStop=.035;h.hitPose={stride:h.stride,action:h.action?{...h.action}:null};}if(!incoming)this.contact(e,d,n>=28?68:48);}e.knock={x:d.x*knock,y:d.y*knock};this.effects.push({type:'number',x:e.x+12*((e.id%3)-1),y:e.y,height:enemyDef(e).size+36,text:`${crit?'暴击 ':''}${Math.round(n)}`,life:.7,max:.7,color:crit?'#ffce71':'#fff0b4'});this.emit('hit',{id:h.id,heavy:n>=28});if(n>=28)this.shake=Math.min(.12,this.shake+.05);
   if(e.hp<=0){this.kills++;this.xp+=enemyDef(e).xp;this.effects.push({type:'poof',x:e.x,y:e.y,life:.35,max:.35});this.emit('kill',{id:h.id});if(this.random()<.28)this.pickups.push({id:this.nextId++,type:'potion',x:e.x,y:e.y});h.hp=Math.min(h.maxHp,h.hp+(h.passives.harvest||0)*3);h.cd=h.cd.map(cd=>Math.max(0,cd-(h.passives.echo||0)*.3));}
  }
- damageHero(h,n,e){if(h.down||h.invuln>0)return;if(h.evasion>0&&this.random()<h.evasion){h.invuln=.22;this.effects.push({type:'number',x:h.x,y:h.y,text:'闪避',life:.6,max:.6,color:'#9bf1d2'});return;}h.hp=Math.max(0,h.hp-n*(1-h.armor));h.invuln=.55;h.hitFlash=.2;this.emit('hurt',{id:h.id});const d=norm(h.x-e.x,h.y-e.y);this.moveActor(h,d.x*18,d.y*18);if(!h.hp){h.down=true;h.action=null;h.buffer=null;this.emit('down',{id:h.id});}}
- shoot(h,dir,type,damage,speed=470,source='attack',evolved=false){this.projectiles.push({id:this.nextId++,owner:h.id,type,x:h.x+dir.x*43,y:h.y+dir.y*43,dx:dir.x,dy:dir.y,damage,speed,life:1.7*h.rangeBonus,hit:new Set(),source,evolved,rangeBonus:h.rangeBonus});}
+ damageHero(h,n,e){if(h.down||h.invuln>0)return;if(h.evasion>0&&this.random()<h.evasion){h.invuln=.22;this.effects.push({type:'number',x:h.x+28,y:h.y,height:162,text:'闪避',life:.6,max:.6,color:'#9bf1d2'});return;}h.hp=Math.max(0,h.hp-n*(1-h.armor));h.invuln=.55;h.hitFlash=.22;h.visualStop=.045;h.hitPose={stride:h.stride,action:h.action?{...h.action}:null};this.emit('hurt',{id:h.id});const d=e.dx!==undefined?{x:e.dx,y:e.dy}:norm(h.x-e.x,h.y-e.y);h.hitReaction={x:d.x,y:d.y,life:.3,max:.3,power:1.25};this.contact(h,d,62,true);this.effects.push({type:'number',x:h.x+28,y:h.y,height:162,text:`−${Math.round(n*(1-h.armor))}`,life:.65,max:.65,color:'#ff9b88'});this.moveActor(h,d.x*18,d.y*18);if(!h.hp){h.down=true;h.action=null;h.buffer=null;this.emit('down',{id:h.id});}}
+ contact(p,dir,size=48,hurt=false){this.effects.push({type:'contact',x:p.x,y:p.y,height:31,depthY:p.depthY??p.y+.1,dir:{...dir},size,hurt,life:.22,max:.22,layer:'depth'});}
+ shoot(h,dir,type,damage,speed=470,source='attack',evolved=false){this.projectiles.push({id:this.nextId++,owner:h.id,type,x:h.x,y:h.y,muzzle:43,dx:dir.x,dy:dir.y,damage,speed,life:1.7*h.rangeBonus,hit:new Set(),source,evolved,rangeBonus:h.rangeBonus});}
  skillDamage(h,slot,base){return base*(1+Math.max(0,h.skills[slot]-1)*.34)*h.skillPower;}
  areaHit(h,r,damage,knock=100){for(const e of this.enemies)if(e.hp>0&&dist(h,e)<r&&this.lineClear(h,e))this.damageEnemy(e,damage,h,knock,'skill');}
  advance(seconds,inputs=[{},{}]){if(this.mode!=='play')return;for(let p=0;p<2;p++)for(const k of ['dodge','skill1','skill2'])this.pendingEdges[p][k] ||= !!inputs[p]?.[k];this.accumulator+=Math.max(0,seconds);while(this.mode==='play'&&this.accumulator+1e-9>=1/120){this.accumulator-=1/120;const sample=[0,1].map(p=>({...inputs[p],...this.pendingEdges[p]}));this.pendingEdges=[{dodge:false,skill1:false,skill2:false},{dodge:false,skill1:false,skill2:false}];this.step(1/120,sample);}}
  step(dt,inputs){if(this.mode!=='play')return;this.time+=dt;this.tick++;this.shake=Math.max(0,this.shake-dt);this.effects=this.effects.filter(f=>(f.life-=dt)>0);
-  for(const h of this.heroes){let input={...baseInput(),...(inputs[h.id]||{})};if(h.ai)input=this.aiInput(h);h.cd=h.cd.map(t=>Math.max(0,t-dt));h.dodgeCd=Math.max(0,h.dodgeCd-dt);h.attackCd=Math.max(0,h.attackCd-dt);h.invuln=Math.max(0,h.invuln-dt);h.hitFlash=Math.max(0,h.hitFlash-dt);h.visualStop=Math.max(0,h.visualStop-dt);
+  for(const h of this.heroes){let input={...baseInput(),...(inputs[h.id]||{})};if(h.ai)input=this.aiInput(h);h.cd=h.cd.map(t=>Math.max(0,t-dt));h.dodgeCd=Math.max(0,h.dodgeCd-dt);h.attackCd=Math.max(0,h.attackCd-dt);h.invuln=Math.max(0,h.invuln-dt);h.hitFlash=Math.max(0,h.hitFlash-dt);h.visualStop=Math.max(0,h.visualStop-dt);if(h.hitReaction)h.hitReaction.life=Math.max(0,h.hitReaction.life-dt);
    if(h.down){const helper=this.heroes.some(p=>!p.down&&p.id!==h.id&&dist(p,h)<82);h.revive=helper?h.revive+dt:Math.max(0,h.revive-dt*.5);if(h.revive>=2){h.down=false;h.hp=h.maxHp*.45;h.revive=0;h.invuln=1;this.emit('revive',{id:h.id});}continue;}
    const m=len(input.x,input.y);if(m>1){input.x/=m;input.y/=m;}h.move={x:input.x,y:input.y};if(m>.01)h.lastMove=norm(input.x,input.y);
    if(input.dodge)this.request(h,'dodge',input);else if(input.skill1)this.request(h,'skill1',input);else if(input.skill2)this.request(h,'skill2',input);this.consume(h);
    h.empowered=Math.max(0,h.empowered-dt);const a=h.action;const speed=ROLES[h.role].speed*h.speedBonus;
-   if(a&&(a.type==='dodge'||a.type==='bash')){const old=a.t;a.t=Math.min(a.duration,a.t+dt);const ease=t=>1-(1-t)**2;const travel=a.type==='dodge'?112:145*(h.evolved[0]?1.3:1);const d=(ease(a.t/a.duration)-ease(old/a.duration))*travel;this.moveActor(h,a.dir.x*d,a.dir.y*d);h.face=dir8(a.dir.x,a.dir.y);}
+   if(a&&(a.type==='dodge'||a.type==='bash')){const old=a.t;a.t=Math.min(a.duration,a.t+dt);const windup=a.type==='bash'?(a.windup??0):0;const ease=t=>{const q=clamp((t*a.duration-windup)/(a.duration-windup),0,1);return 1-(1-q)**2;};const travel=a.type==='dodge'?112:145*(h.evolved[0]?1.3:1);const d=(ease(a.t/a.duration)-ease(old/a.duration))*travel;this.moveActor(h,a.dir.x*d,a.dir.y*d);h.face=dir8(a.dir.x,a.dir.y);}
    else{this.moveActor(h,input.x*speed*dt,input.y*speed*dt);if(m>.01){h.stride+=Math.min(1,m)*speed*dt/62;if(!a)this.faceToward(h,input.x,input.y);}if(a)a.t+=dt;}
    // Keep both players inside a shared camera range without teleporting the other player.
    if(!h.ai&&this.humanCount===2){const other=this.heroes[1-h.id],dx=h.x-other.x,dy=h.y-other.y;if(!other.down){const spread=len(dx,dy*.72);if(spread>900){const k=900/spread;h.x=other.x+dx*k;h.y=other.y+dy*k;}}}
    if(a){const t=a.t;
-    if(a.type==='attack'&&!a.fired&&t>=a.duration*.33){a.fired=true;if(h.role==='warrior'){for(const e of this.enemies){const n=norm(e.x-h.x,e.y-h.y);if(dist(e,h)<155*h.rangeBonus&&n.x*a.dir.x+n.y*a.dir.y>-.1&&this.lineClear(h,e))this.damageEnemy(e,ROLES[h.role].damage*h.power,h);}}else this.shoot(h,a.dir,h.role==='mage'?'bolt':'arrow',ROLES[h.role].damage*h.power);}
-    if(a.type==='bash'&&t>.045){for(const e of this.enemies)if(!a.hit.has(e.id)&&dist(h,e)<80*h.rangeBonus&&this.lineClear(h,e)){a.hit.add(e.id);this.damageEnemy(e,this.skillDamage(h,0,36),h,260,'skill');if(h.evolved[0])h.cd[0]=Math.max(0,h.cd[0]-.4);}}
-    if(a.type==='spin'&&t>.12){for(const e of this.enemies)if(!a.hit.has(e.id)&&dist(h,e)<170*h.rangeBonus&&this.lineClear(h,e)){a.hit.add(e.id);this.damageEnemy(e,this.skillDamage(h,1,38),h,150,'skill');}if(!a.fired){a.fired=true;if(h.evolved[1])for(const delay of [.24,.48])this.delayed.push({type:'spin',owner:h.id,delay,damage:this.skillDamage(h,1,38)*.55});}}
-    if(['fireball','frost','pierce','fan'].includes(a.type)&&!a.fired&&t>=.105){a.fired=true;if(a.type==='frost'){this.effects.push({type:'frost',x:h.x,y:h.y,r:185*h.rangeBonus,life:.48,max:.48});for(const e of this.enemies)if(dist(h,e)<185*h.rangeBonus&&this.lineClear(h,e)){e.slow=2.2;if(h.evolved[1])e.freeze=1.5;this.damageEnemy(e,this.skillDamage(h,1,23)*(h.evolved[1]?1.5:1),h,100,'skill');}}else if(a.type==='fan'){this.fan(h,a.dir);if(h.evolved[1])this.delayed.push({type:'fan',owner:h.id,dir:{...a.dir},delay:.3});}else this.shoot(h,a.dir,a.type,this.skillDamage(h,0,a.type==='fireball'?42:45),a.type==='fireball'?390:650,'skill',h.evolved[0]);}
+    if(a.type==='attack'&&!a.fired&&t>=(a.windup??a.duration*.33)){a.fired=true;if(h.role!=='warrior'){const target=this.nearest(h,ROLES[h.role].range*h.rangeBonus+45);if(target){const flight=Math.min(.4,Math.max(0,dist(h,target)-43)/470),pred={x:target.x+(target.vx||0)*flight,y:target.y+(target.vy||0)*flight};a.dir=norm((this.lineClear(h,pred)?pred.x:target.x)-h.x,(this.lineClear(h,pred)?pred.y:target.y)-h.y);h.face=dir8(a.dir.x,a.dir.y);}}if(h.role==='warrior'){for(const e of this.enemies){const n=norm(e.x-h.x,e.y-h.y);if(dist(e,h)<155*h.rangeBonus&&n.x*a.dir.x+n.y*a.dir.y>-.1&&this.lineClear(h,e))this.damageEnemy(e,ROLES[h.role].damage*h.power,h);}}else this.shoot(h,a.dir,h.role==='mage'?'bolt':'arrow',ROLES[h.role].damage*h.power);}
+    if(a.type==='bash'&&t>=(a.windup??.045)&&t<=(a.activeEnd??a.duration)){for(const e of this.enemies)if(!a.hit.has(e.id)&&dist(h,e)<80*h.rangeBonus&&this.lineClear(h,e)){a.hit.add(e.id);this.damageEnemy(e,this.skillDamage(h,0,36),h,260,'skill');if(h.evolved[0])h.cd[0]=Math.max(0,h.cd[0]-.4);}}
+    if(a.type==='spin'&&t>=(a.windup??.12)&&t<=(a.activeEnd??a.duration)){for(const e of this.enemies)if(!a.hit.has(e.id)&&dist(h,e)<170*h.rangeBonus&&this.lineClear(h,e)){a.hit.add(e.id);this.damageEnemy(e,this.skillDamage(h,1,38),h,150,'skill');}if(!a.fired){a.fired=true;if(h.evolved[1])for(const delay of [.24,.48])this.delayed.push({type:'spin',owner:h.id,delay,damage:this.skillDamage(h,1,38)*.55});}}
+    if(['fireball','frost','pierce','fan'].includes(a.type)&&!a.fired&&t>=(a.windup??.105)){a.fired=true;if(a.type==='frost'){this.effects.push({type:'frost',x:h.x,y:h.y,r:185*h.rangeBonus,life:.48,max:.48});for(const e of this.enemies)if(dist(h,e)<185*h.rangeBonus&&this.lineClear(h,e)){e.slow=2.2;if(h.evolved[1])e.freeze=1.5;this.damageEnemy(e,this.skillDamage(h,1,23)*(h.evolved[1]?1.5:1),h,100,'skill');}}else if(a.type==='fan'){this.fan(h,a.dir);if(h.evolved[1])this.delayed.push({type:'fan',owner:h.id,dir:{...a.dir},delay:.3});}else this.shoot(h,a.dir,a.type,this.skillDamage(h,0,a.type==='fireball'?42:45),a.type==='fireball'?390:650,'skill',h.evolved[0]);}
     if(t>=a.duration)h.action=null;
    }
-   if(!h.action&&h.attackCd<=0){const target=this.nearest(h,ROLES[h.role].range*h.rangeBonus);if(target){const d=norm(target.x-h.x,target.y-h.y);h.face=dir8(d.x,d.y);h.action={type:'attack',dir:d,t:0,duration:ROLES[h.role].interval*.85/h.haste,fired:false,hit:new Set()};h.attackCd=ROLES[h.role].interval/h.haste;}}
+   if(!h.action&&h.attackCd<=0){const target=this.nearest(h,ROLES[h.role].range*h.rangeBonus);if(target){const d=norm(target.x-h.x,target.y-h.y);h.face=dir8(d.x,d.y);h.action={type:'attack',dir:d,t:0,...actionTiming(h.role,'attack',h.haste),fired:false,hit:new Set()};h.attackCd=ROLES[h.role].interval/h.haste;}}
   }
   this.updateProjectiles(dt);this.updateHazards(dt);this.updatePickups();
   for(const job of this.delayed){job.delay-=dt;if(job.delay<=0){const h=this.heroes[job.owner];if(!h.down){if(job.type==='fan')this.fan(h,job.dir);else{this.areaHit(h,170*h.rangeBonus,job.damage);this.effects.push({type:'spin',x:h.x,y:h.y,r:170*h.rangeBonus,life:.25,max:.25});}}}}
   this.delayed=this.delayed.filter(j=>j.delay>0);
   this.enemies=this.enemies.filter(e=>e.hp>0);
-  for(const e of this.enemies)this.updateEnemy(e,dt);
+  for(const e of this.enemies){const ox=e.x,oy=e.y;this.updateEnemy(e,dt);e.vx=clamp((e.x-ox)/dt,-160,160);e.vy=clamp((e.y-oy)/dt,-160,160);}
   this.enemies=this.enemies.filter(e=>e.hp>0);
   // Separate foes so telegraphs and silhouettes remain legible.
   for(let i=0;i<this.enemies.length;i++)for(let j=i+1;j<this.enemies.length;j++){const a=this.enemies[i],b=this.enemies[j],d=dist(a,b);if(d<47){const v=d?norm(a.x-b.x,a.y-b.y):{x:1,y:0};this.moveActor(a,v.x*(47-d)*.5,v.y*(47-d)*.5,22);this.moveActor(b,-v.x*(47-d)*.5,-v.y*(47-d)*.5,22);}}
@@ -83,21 +87,26 @@ export class World{
  }
  fan(h,dir){const angle=Math.atan2(dir.y,dir.x);for(const off of [-.34,-.17,0,.17,.34])this.shoot(h,{x:Math.cos(angle+off),y:Math.sin(angle+off)},'arrow',this.skillDamage(h,1,20),560,'skill');}
  updateProjectiles(dt){
-  for(const p of this.projectiles){p.life-=dt;const ox=p.x,oy=p.y;p.x+=p.dx*p.speed*dt;p.y+=p.dy*p.speed*dt;if(!this.lineClear({x:ox,y:oy},p)){p.life=0;continue;}
-   const targets=p.hostile?this.heroes:this.enemies;
-   for(const e of targets){if(e.hp<=0||p.hit.has(e.id))continue;const dx=p.x-ox,dy=p.y-oy,l=dx*dx+dy*dy,t=l?clamp(((e.x-ox)*dx+(e.y-oy)*dy)/l,0,1):0;
-    if(len(ox+t*dx-e.x,oy+t*dy-e.y)>(p.hostile?19:e.kind==='mushroom'?32:23))continue;p.hit.add(e.id);
-    if(p.hostile){this.damageHero(e,p.damage,p);p.life=0;break;}
-    const h=this.heroes[p.owner];this.damageEnemy(e,p.damage,h,p.type==='pierce'?150:65,p.source,p.evolved&&p.type==='pierce'?.25:0);
-    if(p.type==='fireball'){const r=95*(p.rangeBonus||1)*(p.evolved?1.5:1);this.effects.push({type:'blast',x:e.x,y:e.y,r,life:.4,max:.4});for(const other of this.enemies)if(other!==e&&other.hp>0&&dist(e,other)<r&&this.lineClear(e,other))this.damageEnemy(other,p.damage*.65,h,100,'skill');if(p.evolved)this.hazards.push({type:'fire',owner:h.id,x:e.x,y:e.y,r,life:3,timer:.5,damage:p.damage*.12});}
-    if(p.type!=='pierce'){p.life=0;break;}
+  for(const p of this.projectiles){const travel=p.speed*Math.min(dt,Math.max(0,p.life))+(p.muzzle||0);p.muzzle=0;p.life-=dt;const start={x:p.x,y:p.y},end={x:p.x+p.dx*travel,y:p.y+p.dy*travel};
+   const contacts=this.obstacles.map(o=>({t:segmentCircle(start,end,o,o.r),wall:true}));
+   for(const e of p.hostile?this.heroes:this.enemies)if(e.hp>0&&!p.hit.has(e.id))contacts.push({t:segmentCircle(start,end,e,p.hostile?19:e.kind==='mushroom'?32:23),target:e});
+   contacts.sort((a,b)=>a.t-b.t||(a.wall?-1:1));let stopped=false;
+   for(const hit of contacts){if(hit.t===Infinity)break;const pos={x:start.x+(end.x-start.x)*hit.t,y:start.y+(end.y-start.y)*hit.t},dir={x:p.dx,y:p.dy};
+    if(hit.wall){this.contact(pos,dir,30);p.x=pos.x;p.y=pos.y;p.life=0;stopped=true;break;}
+    const e=hit.target;if(e.hp<=0)continue;p.hit.add(e.id);this.contact({...pos,depthY:e.y+.1},dir,p.type==='fireball'?65:42,!!p.hostile);
+    if(p.hostile)this.damageHero(e,p.damage,{...pos,dx:p.dx,dy:p.dy});
+    else{const h=this.heroes[p.owner];this.damageEnemy(e,p.damage,h,p.type==='pierce'?150:65,p.source,p.evolved&&p.type==='pierce'?.25:0,dir);
+     if(p.type==='fireball'){const r=95*(p.rangeBonus||1)*(p.evolved?1.5:1);this.effects.push({type:'blast',x:pos.x,y:pos.y,r,life:.4,max:.4});for(const other of this.enemies)if(other!==e&&other.hp>0&&dist(pos,other)<r&&this.lineClear(pos,other))this.damageEnemy(other,p.damage*.65,h,100,'skill');if(p.evolved)this.hazards.push({type:'fire',owner:h.id,x:pos.x,y:pos.y,r,life:3,timer:.5,damage:p.damage*.12});}
+    }
+    if(p.hostile||p.type!=='pierce'){p.x=pos.x;p.y=pos.y;p.life=0;stopped=true;break;}
    }
+   if(!stopped){p.x=end.x;p.y=end.y;}
   }this.projectiles=this.projectiles.filter(p=>p.life>0&&Math.abs(p.x)<MAP.x+30&&Math.abs(p.y)<MAP.y+30);
  }
- updatePickups(){this.pickups=this.pickups.filter(p=>{const candidates=this.heroes.filter(h=>!h.down&&h.hp<h.maxHp&&dist(h,p)<38).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp);if(!candidates.length)return true;const h=candidates[0],heal=Math.min(h.maxHp-h.hp,35*h.recovery);h.hp+=heal;this.effects.push({type:'number',x:h.x,y:h.y,text:`+${Math.round(heal)}`,life:.8,max:.8,color:'#b7f99d'});this.emit('heal',{id:h.id});return false;});}
+ updatePickups(){this.pickups=this.pickups.filter(p=>{const candidates=this.heroes.filter(h=>!h.down&&h.hp<h.maxHp&&dist(h,p)<38).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp);if(!candidates.length)return true;const h=candidates[0],heal=Math.min(h.maxHp-h.hp,35*h.recovery);h.hp+=heal;this.effects.push({type:'number',x:h.x+28,y:h.y,height:162,text:`+${Math.round(heal)}`,life:.8,max:.8,color:'#b7f99d'});this.emit('heal',{id:h.id});return false;});}
  updateHazards(dt){for(const f of this.hazards){f.life-=dt;f.timer-=dt;if(f.timer>0)continue;f.timer+=.65;for(const target of f.type==='poison'?this.heroes:this.enemies){if(dist(target,f)>=f.r)continue;if(f.type==='poison')this.damageHero(target,f.damage,f);else this.damageEnemy(target,f.damage,this.heroes[f.owner],0,'dot');}}this.hazards=this.hazards.filter(f=>f.life>0);}
  updateEnemy(e,dt){
-  const d=enemyDef(e);e.hitFlash=Math.max(0,e.hitFlash-dt);e.visualStop=Math.max(0,e.visualStop-dt);e.slow=Math.max(0,e.slow-dt);e.freeze=Math.max(0,(e.freeze||0)-dt);
+  const d=enemyDef(e);e.hitFlash=Math.max(0,e.hitFlash-dt);e.visualStop=Math.max(0,e.visualStop-dt);if(e.hitReaction)e.hitReaction.life=Math.max(0,e.hitReaction.life-dt);e.slow=Math.max(0,e.slow-dt);e.freeze=Math.max(0,(e.freeze||0)-dt);
   for(const s of e.statuses||[]){s.life-=dt;s.timer-=dt;if(s.timer<=0){s.timer+=1;this.damageEnemy(e,s.damage,this.heroes[s.owner],0,'dot');}}e.statuses=(e.statuses||[]).filter(s=>s.life>0);if(e.hp<=0||e.freeze>0)return;
   this.moveActor(e,e.knock.x*dt,e.knock.y*dt,22);e.knock.x*=Math.exp(-dt*10);e.knock.y*=Math.exp(-dt*10);e.cd=Math.max(0,e.cd-dt);
   const target=this.heroes.filter(h=>!h.down).sort((a,b)=>dist(a,e)-dist(b,e))[0];if(!target)return;
@@ -116,12 +125,7 @@ export class World{
   if(Math.abs(distance-ideal)>20){const v=norm(target.x-e.x,target.y-e.y),sign=ranged&&distance<ideal?-1:1,sp=d.speed*(e.slow>0?.38:1);this.moveActor(e,v.x*sp*dt*sign,v.y*sp*dt*sign,22);e.face=dir8(v.x,v.y);e.stride+=dt*sp/60;}
  }
  faceToward(h,x,y){const a=Math.atan2(y,x),old=h.face*Math.PI/4;const diff=Math.atan2(Math.sin(a-old),Math.cos(a-old));if(Math.abs(diff)>Math.PI/8+.08)h.face=dir8(x,y);}
- aiInput(h){const n=this.heroes.find(p=>p.down),target=this.nearest(h)||this.enemies.filter(e=>e.hp>0).sort((a,b)=>dist(a,h)-dist(b,h))[0],leader=n||this.heroes.find(p=>!p.ai&&!p.down)||h;let dest=leader;
-  if(!n&&target){const d=dist(h,target),ideal=h.role==='warrior'?100:240;if(d>ideal+25)dest=target;else if(d<ideal-60){const v=norm(h.x-target.x,h.y-target.y);dest={x:h.x+v.x*120,y:h.y+v.y*120};}else dest=h;}
-  if(h.hp/h.maxHp<.7&&!n){const potion=this.pickups.filter(p=>dist(p,h)<320).sort((a,b)=>dist(a,h)-dist(b,h))[0];if(potion)dest=potion;}
-  const dangerZone=this.enemies.map(e=>e.action).find(a=>a&&!a.hit&&dist(h,a)<a.r+25)||this.hazards.find(f=>f.type==='poison'&&dist(h,f)<f.r+25);
-  if(dangerZone){const away=norm(h.x-dangerZone.x||h.lastMove.x,h.y-dangerZone.y||h.lastMove.y);dest={x:h.x+away.x*160,y:h.y+away.y*160};}
-  const v=dist(h,dest)>(n?48:dest.type==='potion'?15:dest===target?0:90)?norm(dest.x-h.x,dest.y-h.y):{x:0,y:0};for(const ally of this.heroes){const d=dist(h,ally);if(ally!==h&&!ally.down&&d<48){const away=d?norm(h.x-ally.x,h.y-ally.y):{x:1,y:0};v.x+=away.x*.8;v.y+=away.y*.8;}}if(!this.lineClear(h,{x:h.x+v.x*75,y:h.y+v.y*75})){const a=Math.atan2(v.y,v.x);const candidates=[a+1.15,a-1.15].map(t=>({x:Math.cos(t),y:Math.sin(t)})).filter(p=>this.lineClear(h,{x:h.x+p.x*75,y:h.y+p.y*75})).sort((a,b)=>dist({x:h.x+a.x*75,y:h.y+a.y*75},dest)-dist({x:h.x+b.x*75,y:h.y+b.y*75},dest));if(candidates.length){v.x=candidates[0].x;v.y=candidates[0].y;}}const danger=this.enemies.some(e=>e.action&&!e.action.hit&&dist(h,e.action)<e.action.r+8&&e.action.t>e.action.windup*.5);return{x:v.x,y:v.y,dodge:danger&&h.dodgeCd===0,skill1:!!target&&h.skills[0]>0&&h.cd[0]===0,skill2:!!target&&h.skills[1]>0&&dist(h,target)<(h.role==='archer'?380:200)*h.rangeBonus&&h.cd[1]===0};}
+ aiInput(h){return companionInput(this,h,ROLES[h.role],MAP);}
  beginUpgrade(){this.xp=Math.max(0,this.xp-this.xpNext);this.level++;this.xpNext=5+(this.level-1)*3;this.beginReward('attribute');}
  beginReward(type){this.mode='upgrade';this.rewardType=type;this.clearBuffers();this.accumulator=0;this.ready=this.heroes.map(h=>h.ai);this.selection=[0,0,0];this.offers=this.heroes.map(h=>type==='skill'?rollSkills(h,()=>this.random()):shuffle(attributePool(h),()=>this.random()).slice(0,3));
   for(const h of this.heroes.filter(h=>h.ai)){const choices=this.offers[h.id];const preferred=type==='skill'?(choices.find(o=>o.kind==='evolution')||choices.find(o=>o.kind==='active'&&!h.skills[o.slot])||choices.find(o=>o.key===`passive:${ACTIVE[h.role][0].need}`)||choices[0]):(choices.find(o=>h.hp<h.maxHp*.5&&['hp','recovery'].includes(o.key))||choices[0]);applyReward(h,preferred.key);}
@@ -135,7 +139,7 @@ export class World{
   if(this.wave===1){this.wave=2;this.mode='play';this.spawnWave();this.emit('wave');}else{this.mode='complete';this.emit('complete');}
  }
  nextRoom(){if(this.mode!=='complete')return;this.room++;this.wave=1;this.mode='play';this.clearBuffers();for(const h of this.heroes){h.hp=Math.min(h.maxHp,h.hp+25);h.action=null;h.invuln=1;}this.spawnWave();}
- snapshot(){return{mode:this.mode,reason:this.reason,humanCount:this.humanCount,map:MAP,xp:this.xp,xpNext:this.xpNext,rewardType:this.rewardType,pickups:this.pickups,hazards:this.hazards,coordinateSystem:'ground center (0,0), x right, y down, screen y scaled 0.707',time:+this.time.toFixed(3),room:this.room,wave:this.wave,level:this.level,kills:this.kills,heroes:this.heroes.map(h=>({id:h.id,role:h.role,ai:h.ai,x:+h.x.toFixed(2),y:+h.y.toFixed(2),hp:+h.hp.toFixed(1),maxHp:h.maxHp,down:h.down,revive:+h.revive.toFixed(2),face:h.face,action:h.action?.type||'idle',actionTime:h.action?.t,invuln:h.invuln,cooldowns:[...h.cd,h.dodgeCd],power:h.power,skills:h.skills,evolved:h.evolved,passives:h.passives,stats:{crit:h.crit,critDamage:h.critDamage,evasion:h.evasion,armor:h.armor,haste:h.haste,range:h.rangeBonus},damageDone:h.damageDone})),enemies:this.enemies.map(e=>({id:e.id,kind:e.kind,x:+e.x.toFixed(1),y:+e.y.toFixed(1),hp:+e.hp.toFixed(1),attack:e.action?{x:e.action.x,y:e.action.y,r:e.action.r,t:e.action.t,windup:e.action.windup}:null})),projectiles:this.projectiles.length,ready:this.ready,selection:this.selection,offers:this.offers,obstacles:this.obstacles,camera:this.camera};}
+ snapshot(){return{mode:this.mode,reason:this.reason,humanCount:this.humanCount,map:MAP,xp:this.xp,xpNext:this.xpNext,rewardType:this.rewardType,pickups:this.pickups,hazards:this.hazards,coordinateSystem:'ground center (0,0), x right, y down, screen y scaled 0.707',time:+this.time.toFixed(3),room:this.room,wave:this.wave,level:this.level,kills:this.kills,heroes:this.heroes.map(h=>({id:h.id,role:h.role,ai:h.ai,x:+h.x.toFixed(2),y:+h.y.toFixed(2),hp:+h.hp.toFixed(1),maxHp:h.maxHp,down:h.down,revive:+h.revive.toFixed(2),face:h.face,action:h.action?.type||'idle',actionTime:h.action?.t,phase:actionPhase(h.action),aiIntent:h.aiIntent||null,hitReaction:h.hitReaction?.life||0,invuln:h.invuln,cooldowns:[...h.cd,h.dodgeCd],power:h.power,skills:h.skills,evolved:h.evolved,passives:h.passives,stats:{crit:h.crit,critDamage:h.critDamage,evasion:h.evasion,armor:h.armor,haste:h.haste,range:h.rangeBonus},damageDone:h.damageDone})),enemies:this.enemies.map(e=>({id:e.id,kind:e.kind,x:+e.x.toFixed(1),y:+e.y.toFixed(1),hp:+e.hp.toFixed(1),attack:e.action?{x:e.action.x,y:e.action.y,r:e.action.r,t:e.action.t,windup:e.action.windup}:null})),projectiles:this.projectiles.length,ready:this.ready,selection:this.selection,offers:this.offers,obstacles:this.obstacles,camera:this.camera};}
 }
 
 

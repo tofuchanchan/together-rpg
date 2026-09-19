@@ -1,3 +1,4 @@
+import {actionPhase,reactionPose} from './combat-motion.js';
 // Source rows are separately illustrated views, not mirrored fronts.
 export const DIRECTION_ROWS = [6, 7, 0, 1, 2, 3, 4, 5];
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
@@ -19,13 +20,14 @@ export function spritePose(h, time = 0) {
   }
   if (action) {
     sheet = 'combat';
-    // The impact key starts at the actual one-third hit point.
-    column = q < .33 ? 0 : q < .56 ? 1 : q < .82 ? 2 : 0;
+    const phase=actionPhase(action),start=action.windup??action.duration*.33,end=action.activeEnd??action.duration*.56;
+    column = phase==='windup'?0:phase==='active'?1:q<.9?2:0;
     const a = direction * Math.PI / 4;
-    const attack = Math.sin(q * Math.PI);
-    x = Math.cos(a) * attack * 3;
-    y += Math.sin(a) * attack * 2;
-    if (q >= .82) { sheet = 'move'; column = moving ? [1, 2, 3, 2][Math.floor(stride * 4)] : 0; }
+    const attack = phase==='windup'?-Math.sin(action.t/Math.max(.001,start)*Math.PI/2)*2:phase==='active'?5*(1-(action.t-start)/Math.max(.001,end-start)*.3):3.5*(1-(action.t-end)/Math.max(.001,action.duration-end))**2;
+    x = Math.cos(a) * attack;
+    y += Math.sin(a) * attack*.707;
+    sx=1+(phase==='windup'?-.012:phase==='active'?.025:0);sy=1+(phase==='windup'?.014:phase==='active'?-.025:0);
+    if (q >= .9) { sheet = 'move'; column = moving ? [1, 2, 3, 2][Math.floor(stride * 4)] : 0; }
     if (action.type === 'bash' || action.type === 'dodge') {
       sheet = 'combat'; column = 3;
       const compress = Math.sin(Math.PI * q);
@@ -36,12 +38,14 @@ export function spritePose(h, time = 0) {
       if (q > .87) { sheet = 'move'; column = 0; }
     }
     if (action.type === 'spin') {
-      direction = (direction + Math.floor(q * 16)) % 8;
-      sheet = 'combat'; column = 1;
+      const spin=clamp((action.t-start)/Math.max(.001,action.duration-start),0,1);
+      direction = (direction + Math.floor(spin * 16)) % 8;
+      sheet = 'combat'; column = phase==='windup'?0:1;
       x = 0; y = -2;
     }
-    if (action.type === 'frost') { column = q < .33 ? 0 : 1; sheet = 'combat'; }
+    if (action.type === 'frost'&&q<.9) { column = phase==='windup'?0:phase==='active'?1:2; sheet = 'combat'; }
   }
   if (h.down) { sheet = 'combat'; column = 3; rotation = -1.35; y = -9; sx = sy = 1; }
-  return { sheet, row: DIRECTION_ROWS[direction], column, direction, x, y, rotation, sx, sy };
+  const hit=reactionPose(h);if(!h.down){x+=hit.x;y+=hit.y;rotation+=hit.rotation;sx*=hit.sx;sy*=hit.sy;}
+  return { sheet, row: DIRECTION_ROWS[direction], column, direction, x, y, rotation, sx, sy,brightness:hit.brightness,cloth:!action&&!moving&&!h.down };
 }
