@@ -24,6 +24,7 @@ export const makeGround=makeIllustratedGround;
 export function actorShadow(c,x,y,r){drawArt(c,'shadow',x,y,r*2.3,r*.82,{alpha:.55});}
 export function playerRing(c,x,y,r,id){drawArt(c,id===1?'ring-orange':'ring-cyan',x,y,r*2.2,r*.85,{alpha:id===2?.65:1,filter:id===2?'sepia(.9) saturate(.5)':undefined});}
 export function warning(c,a){
+ if(a.from){const q=clamp(a.t/a.windup,0,1);c.save();c.scale(1,.707);c.lineCap='round';c.beginPath();c.moveTo(a.from.x,a.from.y);c.lineTo(a.x,a.y);c.strokeStyle='#e8745655';c.lineWidth=a.r*2;c.stroke();c.setLineDash([12,8]);c.strokeStyle='#ffe0a5';c.lineWidth=3;c.stroke();c.setLineDash([]);c.beginPath();c.moveTo(a.from.x,a.from.y);c.lineTo(a.from.x+(a.x-a.from.x)*q,a.from.y+(a.y-a.from.y)*q);c.strokeStyle='#ffb073';c.lineWidth=6;c.stroke();c.restore();return;}
  const q=clamp(a.t/a.windup,0,1);drawArt(c,'warning-ring',a.x,a.y*.707,a.r*2.1,a.r*2.1*.707,{alpha:.8});
  // Exact range/progress is functional geometry, kept aligned with the actual collision radius.
  c.save();c.beginPath();c.ellipse(a.x,a.y*.707,a.r*q,a.r*q*.707,0,0,Math.PI*2);c.fillStyle='#e56a4930';c.fill();

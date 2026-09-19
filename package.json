@@ -18,6 +18,10 @@
     "build:layered": "node tools/prepare-layered-warrior.mjs",
     "test:layered": "node tools/verify-layered-warrior.mjs",
     "build:cel": "node tools/prepare-cel-warrior.mjs",
-    "test:cel": "node tools/verify-cel-warrior.mjs"
+    "test:cel": "node tools/verify-cel-warrior.mjs",
+    "build:companions": "node tools/prepare-cel-companions.mjs",
+    "test:companions": "node tools/verify-cel-companions.mjs",
+    "test:pressure": "node tools/verify-pressure.mjs",
+    "test:kiting": "node tools/simulate-pressure.mjs"
   }
 }

@@ -23,7 +23,7 @@ export class View{
   for(const f of w.hazards){drawArt(c,f.type==='poison'?'frost-2':'blast-2',f.x,f.y*.707,f.r*2,f.r*1.414,{alpha:.55,filter:f.type==='poison'?'hue-rotate(230deg) saturate(1.5)':undefined});}
   if(w.options.feedback){for(const f of w.effects)if(f.type!=='number'&&f.layer!=='depth')effect(c,f);for(const h of w.heroes)if(actionLayout(h)?.layer==='ground')heroAction(c,h);}
   for(const p of w.pickups){actorShadow(c,p.x,p.y*.707,15);icon(c,'heal',p.x,p.y*.707-17,20);}
-  for(const e of w.enemies)if(e.action&&!e.action.hit&&!e.boss)warning(c,e.action);for(const a of w.bossWarnings)if(!a.hit)warning(c,a);
+  for(const e of w.enemies)if(e.action&&(!e.action.hit||(e.action.from&&e.action.t<e.action.windup+e.action.travelTime))&&!e.boss)warning(c,e.action);for(const a of w.bossWarnings)if(!a.hit)warning(c,a);
   const actors=[...SCENE_PROPS.map(p=>({...p,x:p.x*MAP_SCALE,y:p.y*MAP_SCALE,prop:true})),...w.obstacles.map(o=>({...o,obstacle:true})),...w.enemies,...w.heroes,...w.projectiles.map(p=>({...p,projectile:true})),...(w.options.feedback?w.effects.filter(f=>f.layer==='depth').map(f=>({...f,depthEffect:true})):[]),...(w.options.feedback?w.heroes.filter(h=>actionLayout(h)?.layer==='depth').map(h=>({...actionLayout(h),actionHero:h})):[])].sort((a,b)=>(a.depthY??a.y)-(b.depthY??b.y));
   for(const h of actors){
    if(h.depthEffect){effect(c,h);continue;}
@@ -57,7 +57,7 @@ export class View{
   for(const e of w.enemies)ellipse(c,1323+e.x*.118/MAP_SCALE,79+e.y*.1/MAP_SCALE,3,3,'#ee9472',null);for(const h of w.heroes)ellipse(c,1323+h.x*.118/MAP_SCALE,79+h.y*.1/MAP_SCALE,4,4,colors[h.id],null);c.restore();
   text(c,`击败 ${w.kills}`,1209,40,15,CREAM,'right');
   for(let i=0;i<w.humanCount;i++)this.playerHUD(i,w.humanCount===1?422:i===0?24:820);bar(c,476,783,488,23,w.xp/w.xpNext,'#f1c864');text(c,`小队 Lv.${w.level}  ·  ${w.xp} / ${w.xpNext}`,720,795,13,CREAM,'center');
-  if(w.mode==='play'){const boss=w.enemies.find(e=>e.boss);if(boss){skin(c,'panel-gold',427,83,586,57);text(c,`荆冠古王 · 阶段 ${boss.phase}/3  ${boss.action?BOSS_SKILLS[boss.action.kind]:''}`,720,99,18,CREAM,'center');bar(c,447,118,546,12,boss.hp/boss.maxHp,'#e58a6d');}else{const next=w.spawnQueue[0],remaining=Math.max(0,Math.ceil(w.waveDuration-w.waveElapsed));text(c,next?`增援 ${Math.ceil(Math.max(0,next.at-w.waveElapsed))} 秒 · 波次剩余 ${remaining} 秒`:remaining?`波次剩余 ${remaining} 秒 · 清理残敌`:w.enemies.length?'清理残敌后选择构筑':'清波奖励即将开启…',720,104,16,CREAM,'center');}}
+  if(w.mode==='play'){text(c,w.enraged?'狂暴 · 小怪移速 +35% / 伤害 +30% / 冷却恢复 +40%':`狂暴倒计时 ${Math.max(0,Math.ceil(w.enrageAt-w.waveElapsed))} 秒`,720,158,14,w.enraged?'#ff986e':'#c9d5b4','center');const boss=w.enemies.find(e=>e.boss);if(boss){skin(c,'panel-gold',427,83,586,57);text(c,`荆冠古王 · 阶段 ${boss.phase}/3  ${boss.action?BOSS_SKILLS[boss.action.kind]:''}`,720,99,18,CREAM,'center');bar(c,447,118,546,12,boss.hp/boss.maxHp,'#e58a6d');}else{const next=w.spawnQueue[0],remaining=Math.max(0,Math.ceil(w.waveDuration-w.waveElapsed));text(c,next?`增援 ${Math.ceil(Math.max(0,next.at-w.waveElapsed))} 秒 · 波次剩余 ${remaining} 秒`:remaining?`波次剩余 ${remaining} 秒 · 清理残敌`:w.enemies.length?'清理残敌后选择构筑':'清波奖励即将开启…',720,104,16,CREAM,'center');}}
   if(w.mode==='play'&&w.time<8){skin(c,'button-neutral',440,620,560,32);text(c,'自动普攻 · 看准红圈闪避 · 靠近倒地队友可救援',720,636,14,'#edf0ca','center');}
  }
  iconButton(name,x,y,w,h,action){skin(this.c,'button-neutral',x,y,w,h);icon(this.c,name,x+w/2,y+h/2,13);this.regions.push({x,y,w,h,action});}

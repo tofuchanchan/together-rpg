@@ -3,12 +3,14 @@ const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const unit=(x,y)=>{const n=Math.hypot(x,y);return n?{x:x/n,y:y/n}:{x:0,y:0};};
 const point=(h,v,d)=>({x:h.x+v.x*d,y:h.y+v.y*d});
 
+function zoneCenter(p,a){if(!a.from)return a;const dx=a.x-a.from.x,dy=a.y-a.from.y,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,((p.x-a.from.x)*dx+(p.y-a.from.y)*dy)/l)):0;return{x:a.from.x+dx*t,y:a.from.y+dy*t};}
+const zoneDistance=(p,a)=>distance(p,zoneCenter(p,a));
 export function companionInput(w,h,role,map){
  const foes=w.enemies.filter(e=>e.hp>0),target=w.nearest(h)||foes.slice().sort((a,b)=>distance(a,h)-distance(b,h))[0];
  const ally=w.heroes.find(p=>p.down),leader=w.heroes.find(p=>!p.ai&&!p.down)||h;
- const zones=[...(w.bossWarnings||[]).filter(a=>!a.hit).map(a=>({...a,eta:Math.max(0,a.windup-a.t)})),...foes.map(e=>e.action).filter(a=>a&&!a.hit&&a.kind!=='healer').map(a=>({...a,eta:Math.max(0,a.windup-a.t)})),...w.hazards.filter(f=>f.type==='poison').map(f=>({...f,eta:Math.max(0,f.timer)}))];
+ const zones=[...(w.bossWarnings||[]).filter(a=>!a.hit).map(a=>({...a,eta:Math.max(0,a.windup-a.t)})),...foes.map(e=>e.action).filter(a=>a&&(!a.hit||(a.from&&a.t<a.windup+a.travelTime))&&a.kind!=='healer').map(a=>({...a,eta:Math.max(0,a.windup-a.t)})),...w.hazards.filter(f=>f.type==='poison').map(f=>({...f,eta:Math.max(0,f.timer)}))];
  const bullets=w.projectiles.filter(p=>p.hostile&&p.life>0);
- const risk=(p,horizon=.4)=>zones.reduce((n,a)=>n+(a.eta<horizon&&distance(p,a)<a.r+25?5+(a.r+25-distance(p,a))/30:0),0)+bullets.reduce((n,b)=>n+(segmentCircle(b,point(b,{x:b.dx,y:b.dy},b.speed*Math.min(horizon,b.life)),p,29)<Infinity?7:0),0);
+ const risk=(p,horizon=.4)=>zones.reduce((n,a)=>n+(a.eta<horizon&&zoneDistance(p,a)<a.r+25?5+(a.r+25-zoneDistance(p,a))/30:0),0)+bullets.reduce((n,b)=>n+(segmentCircle(b,point(b,{x:b.dx,y:b.dy},b.speed*Math.min(horizon,b.life)),p,29)<Infinity?7:0),0);
  const pathClear=(a,b)=>Math.abs(b.x)<map.x-22&&Math.abs(b.y)<map.y-22&&w.obstacles.every(o=>segmentCircle(a,b,o,o.r+21)===Infinity);
  let dest=ally||leader,stop=ally?48:90,intent=ally?'revive':'follow';
  if(!ally&&target){
@@ -23,12 +25,12 @@ export function companionInput(w,h,role,map){
   const medicine=w.pickups.filter(p=>risk(p,.9)===0&&distance(p,h)<650).sort((a,b)=>distance(a,h)-distance(b,h)+(a.id===h.potionTarget?-65:0)-(b.id===h.potionTarget?-65:0))[0];
   if(medicine){dest=medicine;stop=20;intent='heal';h.potionTarget=medicine.id;}else h.potionTarget=null;
  }
- const impending=zones.filter(a=>distance(h,a)<a.r+22).sort((a,b)=>a.eta-b.eta)[0];
+ const impending=zones.filter(a=>zoneDistance(h,a)<a.r+22).sort((a,b)=>a.eta-b.eta)[0];
  const bullet=bullets.map(b=>({b,t:segmentCircle(b,point(b,{x:b.dx,y:b.dy},b.speed*Math.min(.45,b.life)),h,29)})).filter(v=>v.t<Infinity).sort((a,b)=>a.t-b.t)[0];
  let desired=distance(h,dest)>stop?unit(dest.x-h.x,dest.y-h.y):{x:0,y:0};
- if(impending){desired=unit(h.x-impending.x,h.y-impending.y);if(!Math.hypot(desired.x,desired.y))desired=h.lastMove;intent='evade';}
+ if(impending){const center=zoneCenter(h,impending);desired=unit(h.x-center.x,h.y-center.y);if(!Math.hypot(desired.x,desired.y))desired=h.lastMove;intent='evade';}
  if(bullet){desired={x:-bullet.b.dy,y:bullet.b.dx};if(!pathClear(h,point(h,desired,112)))desired={x:-desired.x,y:-desired.y};intent='evade';}
- const exitDistance=impending?impending.r+22-distance(h,impending):0;
+ const exitDistance=impending?impending.r+22-zoneDistance(h,impending):0;
  // If one roll cannot leave a large circle, align its invulnerability with impact.
  const urgent=(impending&&impending.eta<(exitDistance<105?.24:.13))||!!bullet;
  const dodge=!!urgent&&h.dodgeCd<=0&&(!h.action||h.action.type==='attack'||h.action.t>=(h.action.cancelAt??h.action.duration*.55));
