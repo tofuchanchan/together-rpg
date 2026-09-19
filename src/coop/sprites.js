@@ -1,5 +1,6 @@
-import {spritePose} from './sprite-animation.js';
+import {spritePose,jointPose} from './sprite-animation.js';
 import {splitAccessory,hurtFace} from './character-parts.js';
+import {makeCharacterRig,drawCharacterRig,rigHurtBody} from './character-rig.js';
 
 const atlases = new Map();
 let pending;
@@ -13,7 +14,13 @@ export function loadCharacterSprites() {
     image.src = new URL(manifest.image, url).href;
     await image.decode();
     if (image.width !== manifest.width || image.height !== manifest.height) throw new Error(`角色图集尺寸不符：${role}`);
-    atlases.set(role, {image, manifest, parts:new Map(), faces:new Map()});
+    const atlas={image, manifest, parts:new Map(), faces:new Map(), rigs:new Map()};
+    // Prepare all directions before play; never segment pixels on the first moving frame.
+    for(let row=0;row<8;row++){
+      const base=row*4,rig=makeCharacterRig(image,manifest.frames[base],manifest.cell,row,role,manifest.frames[role==='warrior'?32:32+base]);
+      atlas.rigs.set(base,rig);rigHurtBody(rig,image);
+    }
+    atlases.set(role,atlas);
   }));
 }
 
@@ -41,7 +48,10 @@ export function hero(c, h, time, scale = 1) {
   if(h.invuln>0&&!h.down&&h.action?.type!=='dodge'&&h.hitFlash<=0)c.globalAlpha*=.82+.18*Math.cos(time*38)**2;
   c.imageSmoothingEnabled = true;
   c.imageSmoothingQuality = 'high';
-  if(h.hitReaction?.life>0&&!h.down){
+  if(!pose.cloth&&!h.down&&!['dodge','bash','spin'].includes(h.action?.type)){
+    const base=pose.row*4;
+    drawCharacterRig(c,atlas.rigs.get(base),jointPose(h,time),atlas.manifest.anchor,h.hitReaction?.life>0,atlas.image);
+  }else if(h.hitReaction?.life>0&&!h.down){
     if(!atlas.faces.has(index))atlas.faces.set(index,hurtFace(atlas.image,frame,size,pose.row,h.role));
     c.drawImage(atlas.faces.get(index),-atlas.manifest.anchor[0],-atlas.manifest.anchor[1]);
   }else if(pose.cloth){

@@ -14,21 +14,21 @@ export function pose(role,clip,dir,q){
   action:['idle','run'].includes(type)?null:{type,...timing,t:q*timing.duration,dir:{x:Math.cos(angle),y:Math.sin(angle)}},hitFlash:0,down:false};
 }
 function draw(){
- const role=$('#role').value,clip=$('#clip').value,q=(Math.floor(clock*16)%16)/16;c.clearRect(0,0,1344,490);
+ const role=$('#role').value,clip=$('#clip').value,q=((clock%1)+1)%1;c.clearRect(0,0,1344,490);
  for(let d=0;d<8;d++){
   const x=168+(d%4)*336,y=185+Math.floor(d/4)*235;
   box(c,x-153,y-162,306,215,18,'#7b9569','#537a58',2);ellipse(c,x,y,40,13,'#46674980',null);
   c.save();c.translate(x,y);hero(c,pose(role,clip,d,q),q*2,1.32);c.restore();
   text(c,`${directions[d]} / ${d*45}°`,x,y+34,17,'#f6edc8','center');
  }
- $('#timeline').value=Math.floor(q*16);$('#frame').textContent=`${Math.floor(q*16)+1} / 16`;
- $('#hint').textContent=`${$('#role').selectedOptions[0].text} · ${$('#clip').selectedOptions[0].text} · PNG 关键姿态播放 / 时间轴 16 等分`;
+ $('#timeline').value=Math.floor(q*60+1e-8);$('#frame').textContent=`${Math.floor(q*60+1e-8)+1} / 60`;
+ $('#hint').textContent=`${$('#role').selectedOptions[0].text} · ${$('#clip').selectedOptions[0].text} · 连续动作播放 / 时间轴 60 等分`;
 }
 function raf(t){const dt=last?(t-last)/1000:0;last=t;if(playing)clock=(clock+Math.min(.1,dt)*Number($('#speed').value))%1;draw();requestAnimationFrame(raf);}
 $('#pause').onclick=()=>{playing=!playing;$('#pause').textContent=playing?'暂停':'播放';};
-function step(n){playing=false;$('#pause').textContent='播放';clock=((Math.floor(clock*16)+n+16)%16)/16;draw();}
+function step(n){playing=false;$('#pause').textContent='播放';clock=((Math.floor(clock*60+1e-8)+n+60)%60)/60;draw();}
 $('#next').onclick=()=>step(1);$('#prev').onclick=()=>step(-1);
-$('#timeline').oninput=()=>{playing=false;$('#pause').textContent='播放';clock=+$('#timeline').value/16;draw();};
+$('#timeline').oninput=()=>{playing=false;$('#pause').textContent='播放';clock=+$('#timeline').value/60;draw();};
 $('#role').onchange=$('#clip').onchange=()=>{clock=0;draw();};
 window.exportBeanAtlas=async role=>{
  const [response,metadata]=await Promise.all([fetch(`assets/characters/${role}.png`),fetch(`assets/characters/${role}.json`)]);

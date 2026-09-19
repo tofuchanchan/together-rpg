@@ -34,7 +34,7 @@ export class View{
    if(allied){
     const col=colors[h.id],a=h.action;playerRing(c,0,0,33,h.id);
     if(a?.type==='dodge'&&w.options.feedback){for(let i=3;i>0;i--){c.save();c.globalAlpha=(4-i)*.055;c.translate(-a.dir.x*i*17,-a.dir.y*i*12);hero(c,h,w.time);c.restore();}}
-    let drawH=h;if(h.visualStop>0&&w.options.feedback&&this.displayPoses.has(h.id)){const cached=h.hitPose||this.displayPoses.get(h.id);drawH={...h,action:cached.action,stride:cached.stride};}else this.displayPoses.set(h.id,{action:h.action?{...h.action}:null,stride:h.stride});
+    let drawH=h;if(h.visualStop>0&&w.options.feedback&&this.displayPoses.has(h.id)){const cached=h.hitPose||this.displayPoses.get(h.id);drawH={...h,action:cached.action,stride:h.stride};}else this.displayPoses.set(h.id,{action:h.action?{...h.action}:null,stride:h.stride});
     hero(c,drawH,w.time);
    }else{
     enemy(c,h,w.time);
@@ -50,7 +50,7 @@ export class View{
   c.restore();if(w.mode!=='menu')this.hud();if(w.mode==='menu')this.menu();if(w.mode==='upgrade')this.upgrade();if(['paused','complete','defeat'].includes(w.mode))this.modal();
  }
  hud(){const c=this.c,w=this.world;
-  w.heroes.filter(h=>h.ai).forEach((ai,index)=>{const x=23+index*218;skin(c,'panel-neutral',x,18,215,73);drawArt(c,'portrait-frame',x+39,56,60);c.save();c.translate(x+38,80);hero(c,{...ai,action:null,face:1,move:{x:0,y:0},down:false,hitFlash:0,hitReaction:null,invuln:0},0,.45);c.restore();text(c,`AI · ${ROLES[ai.role].name}`,x+73,42,16);bar(c,x+73,59,116,13,ai.hp/ai.maxHp);});
+  w.heroes.filter(h=>h.ai).forEach((ai,index)=>{const x=23+index*218;skin(c,'panel-neutral',x,18,215,73);drawArt(c,'portrait-frame',x+39,56,60);c.save();c.translate(x+38,80);hero(c,{...ai,action:null,face:1,move:{x:0,y:0},gait:0,down:false,hitFlash:0,hitReaction:null,invuln:0},0,.45);c.restore();text(c,`AI · ${ROLES[ai.role].name}`,x+73,42,16);bar(c,x+73,59,116,13,ai.hp/ai.maxHp);});
   skin(c,'panel-neutral',588,17,267,60);text(c,`林间遗迹  ${String(w.room).padStart(2,'0')}`,721,40,20,CREAM,'center');text(c,w.bossRoom?`首领战 · ${w.enemies.length} 敌人`:`第 ${w.wave}/2 波 · 批次 ${w.batchSpawned}/${w.batchTotal} · ${w.enemies.length} 敌人`,721,62,12,'#c5d0ab','center');
   this.iconButton('pause',865,23,40,40,()=>this.actions.pause());this.iconButton(w.options.sound?'sound':'muted',920,23,40,40,()=>{w.options.sound=!w.options.sound;});
   skin(c,'panel-neutral',1230,18,186,125);c.save();c.beginPath();c.roundRect(1247,35,152,89,7);c.clip();c.globalAlpha=.7;c.drawImage(this.ground,1247,35,152,89);c.globalAlpha=1;
@@ -63,7 +63,7 @@ export class View{
  iconButton(name,x,y,w,h,action){skin(this.c,'button-neutral',x,y,w,h);icon(this.c,name,x+w/2,y+h/2,13);this.regions.push({x,y,w,h,action});}
  playerHUD(i,x){const c=this.c,w=this.world,h=w.heroes[i],color=colors[i];
   skin(c,`panel-${variant(color)}`,x,665,596,107);drawArt(c,'portrait-frame',x+51,720,89);
-  c.save();c.translate(x+51,749);hero(c,{...h,face:i===0?1:3,action:null,move:{x:0,y:0},down:false,hitFlash:0,hitReaction:null,invuln:0},0,.59);c.restore();
+  c.save();c.translate(x+51,749);hero(c,{...h,face:i===0?1:3,action:null,move:{x:0,y:0},gait:0,down:false,hitFlash:0,hitReaction:null,invuln:0},0,.59);c.restore();
   text(c,`P${i+1} · ${ROLES[h.role].name}`,x+101,690,18);text(c,this.router.describe(i),x+277,690,11,'#bfceae','right');bar(c,x+100,711,177,17,h.hp/h.maxHp);text(c,`${Math.ceil(h.hp)} / ${h.maxHp}`,x+101,738,16);text(c,'AUTO',x+277,738,11,'#b4c49f','right');
   text(c,`${h.core?CORES[h.core].title:'未定流派'} · 盾 ${Math.ceil(h.shield||0)}`,x+101,776,10,'#ffe096');text(c,Object.entries(h.passives).map(([key,rank])=>`${PASSIVES[key].title}${rank}`).join(' · ')||'被动：0 / 4',x+101,757,10,'#cdd7b1');
   const keys=this.router.labels(i),icons=h.role==='warrior'?['shield','spin']:h.role==='mage'?['fire','frost']:['pierce','fan'];
@@ -76,7 +76,7 @@ export class View{
  menu(){const c=this.c;this.veil(.45);skin(c,'panel-gold',466,35,508,146);text(c,'TOGETHER  /  ROGUELITE',720,67,13,'#c9d5b4','center');text(c,'同行 · 林间远征',720,121,43,CREAM,'center',900);
   this.button('单人 + 双 AI',478,196,228,43,()=>{this.humanCount=1;this.router.awaiting=null;},this.humanCount===1?CYAN:'#9ab38b');this.button('双人 + AI',734,196,228,43,()=>this.humanCount=2,this.humanCount===2?ORANGE:'#9ab38b');
   for(let i=0;i<2;i++){const x=255+i*485,col=colors[i],h=this.world.heroes[i],ai=i>=this.humanCount;skin(c,`card-${variant(col)}`,x,260,445,265);text(c,ai?'AI 队友':`PLAYER ${i+1}`,x+28,291,15,col);
-   c.save();c.translate(x+87,439);hero(c,{...h,role:this.roles[i],face:i?3:1,action:null,move:{x:0,y:0},down:false,hitFlash:0,hitReaction:null,invuln:0},this.animTime,1.3);c.restore();text(c,ROLES[this.roles[i]].name,x+173,340,29);text(c,ROLES[this.roles[i]].skills.join('  /  '),x+173,382,16,'#d0d9ba');
+   c.save();c.translate(x+87,439);hero(c,{...h,role:this.roles[i],face:i?3:1,action:null,move:{x:0,y:0},gait:0,down:false,hitFlash:0,hitReaction:null,invuln:0},this.animTime,1.3);c.restore();text(c,ROLES[this.roles[i]].name,x+173,340,29);text(c,ROLES[this.roles[i]].skills.join('  /  '),x+173,382,16,'#d0d9ba');
    this.button('切换职业',x+174,412,135,38,()=>this.cycleRole(i),col);text(c,ai?'自动走位 · 战斗 · 拾药 · 成长':this.router.describe(i),x+27,485,14,'#bdcdb0');if(!ai){this.button('绑定手柄',x+219,466,102,37,()=>this.router.claim(i),col);this.button('键盘',x+332,466,80,37,()=>this.router.bind(i,{type:'keyboard',id:i}),col);}
   }
   const ai=Object.keys(ROLES).find(r=>!this.roles.includes(r));text(c,`第三位队友：AI ${ROLES[ai].name}  ·  开局无技能，清波后构筑`,720,554,16,'#e0e5c9','center');this.button('出发  →',554,589,332,64,()=>this.actions.start(this.roles),CYAN);

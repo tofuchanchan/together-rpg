@@ -1,6 +1,6 @@
 {
   "name": "together-rpg",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
     "build:legacy": "node tools/bake.mjs",
     "test:roguelite": "node tools/verify-roguelite.mjs",
     "test:expedition": "node tools/verify-expedition.mjs",
-    "test:campaign": "node tools/simulate-expedition.mjs"
+    "test:campaign": "node tools/simulate-expedition.mjs",
+    "test:animation": "node tools/verify-animation-flow.mjs"
   }
 }
