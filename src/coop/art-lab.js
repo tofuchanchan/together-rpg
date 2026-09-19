@@ -1,6 +1,7 @@
 import {loadWorldArt,worldArtState,drawArt,skin,frameInfo} from './world-assets.js';
 import {enemy,effect,actorShadow} from './world-art.js';
 import {WORLD_SHEETS} from './world-art-defs.js';
+import {ENEMIES} from './enemies.js';
 import {text} from './art.js';
 const $=id=>document.getElementById(id),ctx=id=>$(id).getContext('2d');
 await loadWorldArt();
@@ -21,7 +22,7 @@ function effects(){const c=base('effects'),labels=['剑弧','旋风斩','冰霜�
  });}
 function grid(id,columns,cellH){const c=base(id),sheet=WORLD_SHEETS.find(s=>s.source===id),cellW=c.canvas.width/columns;sheet.keys.forEach((key,i)=>{const x=(i%columns+.5)*cellW,y=Math.floor(i/columns)*cellH;const size=id==='props'?174:id==='icons'?90:86;drawArt(c,key,x,y+(id==='props'?230:cellH*.42),size,size);text(c,names[key]||key,x,y+cellH-22,14,'#203d2d','center');});}
 function ui(){const c=base('ui'),keys=WORLD_SHEETS.find(s=>s.source==='ui').keys;keys.forEach((key,i)=>{const x=(i%4)*320+18,y=Math.floor(i/4)*150+12;if(i<12)skin(c,key,x,y,284,i<8?105:66);else drawArt(c,key,x+142,y+54,key.includes('fill')?250:106,key.includes('fill')?95:106);text(c,names[key],x+142,y+125,14,'#ecedcc','center');});}
-function draw(){enemies();effects();}
+function draw(){enemies();effects();const c=base('bestiary');Object.entries(ENEMIES).slice(2).forEach(([kind,d],i)=>{const x=160+(i%4)*320,y=155+Math.floor(i/4)*210;for(let pose=0;pose<4;pose++){c.save();c.translate(x-110+pose*73,y);c.scale(.62,.62);enemy(c,{kind,face:0,stride:pose===1?.7:0,action:pose<2?null:{x:0,y:0,hit:pose===3}},time);c.restore();}text(c,d.name,x,y+30,16,'#203d2d','center');});}
 grid('props',6,295);grid('icons',10,210);grid('projectiles',8,185);ui();draw();
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'播放':'暂停';};
 $('step').onclick=()=>{paused=true;$('pause').textContent='播放';time+=.25;draw();};$('clip').onchange=draw;

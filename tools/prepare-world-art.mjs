@@ -114,3 +114,4 @@ try{await p.goto('http://127.0.0.1:4173/');
  fs.writeFileSync(`${out}/atlas-report.json`,JSON.stringify({sources:report,pages,frames:Object.keys(frames).length,empty:0,clipped:0},null,2));
  console.log(`Packed ${Object.keys(frames).length} art cells; all non-empty with safe margins.`);
 }finally{await browser.close();}
+await import('./prepare-bestiary.mjs');

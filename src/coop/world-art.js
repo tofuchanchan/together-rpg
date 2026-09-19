@@ -1,6 +1,8 @@
 import {clamp} from './model.js';
 import {drawArt,drawContent,frameInfo,skin,makeIllustratedGround} from './world-assets.js';
 import {ICON_ALIASES,enemyFrame,effectFrame} from './world-art-defs.js';
+import {enemyDef} from './enemies.js';
+import {actionLayout} from './effect-layout.js';
 export {skin};
 export function icon(c,name,x,y,size=24){drawArt(c,ICON_ALIASES[name]||name,x,y,size*2.35);}
 export function bar(c,x,y,w,h,q,color='#78cd73'){
@@ -13,7 +15,7 @@ export function bar(c,x,y,w,h,q,color='#78cd73'){
 export function enemy(c,e,time){const key=enemyFrame(e),f=frameInfo(key),size=f.w*f.displayScale;
  if(e.slow>0)drawArt(c,'frost-3',0,-3,e.kind==='mushroom'?98:67,e.kind==='mushroom'?42:28,{alpha:.55});
  const bob=e.action?0:-Math.abs(Math.sin(e.stride*Math.PI*2))*2;
- drawArt(c,key,0,bob,size,size,{filter:e.hitFlash>0?'brightness(1.8) saturate(.65)':undefined});
+ c.save();if(!['goblin','mushroom'].includes(e.kind)&&e.face>=3&&e.face<=5)c.scale(-1,1);drawArt(c,key,0,bob,size,size,{filter:e.freeze>0?'sepia(.7) hue-rotate(130deg)':e.hitFlash>0?'brightness(1.8) saturate(.65)':undefined});c.restore();
 }
 export function rock(c,x,y,r){drawArt(c,r>32?'rock-large':'rock-small',x,y+8,r*3.1);}
 export const makeGround=makeIllustratedGround;
@@ -27,20 +29,21 @@ export function warning(c,a){
  c.beginPath();c.ellipse(a.x,a.y*.707,a.r,a.r*.707,0,-Math.PI/2,-Math.PI/2+q*Math.PI*2);c.lineWidth=2.5;c.strokeStyle='#ffe0a5';c.stroke();c.restore();
 }
 export function effect(c,f){
+ if(f.type==='heal'){drawArt(c,'heal-burst',f.x,f.y*.707,130,80,{alpha:f.life/f.max});return;}
  const progress=clamp(1-f.life/f.max,0,.999),alpha=Math.min(1,f.life/f.max*3),type=f.type==='poof'?'dust':f.type==='impact'?'hit':f.type;
  const radius=f.r||35,diameter=type==='dust'?95:radius*2.25;
- drawArt(c,effectFrame(type,progress),f.x,f.y*.707+(type==='dust'?-25:0),diameter,diameter*(type==='frost'?.707:type==='hit'?.75:1),{alpha});
+ drawArt(c,effectFrame(type,progress),f.x,f.y*.707,diameter,diameter*(['frost','spin','blast'].includes(type)?.707:type==='hit'?.75:1),{alpha});
 }
 export function projectile(c,p,time){
  const key=p.type==='arrow'?'arrow':p.type==='pierce'?'pierce-arrow':`${p.type==='fireball'?'fireball':'bolt'}-${Math.floor(time*14)%4}`;
  const width=p.type==='pierce'?77:p.type==='fireball'?86:p.type==='arrow'?55:48;
- drawArt(c,key,p.x,p.y*.707-31,width,width,{rotation:Math.atan2(p.dy*.707,p.dx)});
+ drawArt(c,key,p.x,p.y*.707-31,width,width,{rotation:Math.atan2(p.dy*.707,p.dx),filter:p.hostile?'sepia(.8) saturate(3) hue-rotate(320deg)':undefined});
 }
-export function heroAction(c,h){if(h.down&&h.revive>0)drawArt(c,'heal-burst',0,-30,86,86,{alpha:h.revive/2});const a=h.action;if(!a)return;const q=clamp(a.t/a.duration,0,.999),angle=Math.atan2(a.dir.y*.707,a.dir.x);
- if(a.type==='attack'&&h.role==='warrior'&&q>.25&&q<.76)drawArt(c,effectFrame('slash',(q-.25)/.51),a.dir.x*24,-32+a.dir.y*16,158,158,{rotation:angle,alpha:.95});
- if(a.type==='spin'){c.save();c.translate(0,-10);c.scale(1,.707);drawArt(c,effectFrame('spin',q),0,0,270,270,{rotation:q*Math.PI,alpha:.78});c.restore();}
- if(a.type==='bash')drawArt(c,'shield-burst',a.dir.x*39,-27+a.dir.y*25,77,77,{rotation:angle,alpha:Math.sin(q*Math.PI)*.8});
- if(a.type==='dodge')drawArt(c,effectFrame('dust',q),-a.dir.x*23,-a.dir.y*18,83,60,{alpha:.65});
+export function heroAction(c,h){const a=h.action,layout=actionLayout(h);if(!a||!layout)return;const q=clamp(a.t/a.duration,0,.999),angle=Math.atan2(a.dir.y*.707,a.dir.x);c.save();c.translate(layout.x,layout.y*.707);
+ if(a.type==='attack'&&q>.25&&q<.76)drawArt(c,effectFrame('slash',(q-.25)/.51),0,-28,layout.size,layout.size,{rotation:angle,alpha:.92});
+ if(a.type==='spin'){c.scale(1,.707);drawArt(c,effectFrame('spin',q),0,0,layout.size,layout.size,{rotation:q*Math.PI,alpha:.75});}
+ if(a.type==='bash')drawArt(c,'shield-burst',0,-28,77,77,{rotation:angle,alpha:Math.sin(q*Math.PI)*.8});
+ if(a.type==='dodge')drawArt(c,effectFrame('dust',q),0,0,83,60,{alpha:.65});c.restore();
 }
 export const SCENE_PROPS=[
  {name:'arch',x:0,y:-380,size:244},{name:'banner',x:-210,y:-385,size:159},{name:'banner',x:235,y:-385,size:159},

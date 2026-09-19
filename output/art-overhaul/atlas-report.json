@@ -55,6 +55,11 @@
       "source": "projectiles",
       "frames": 16,
       "transparent": true
+    },
+    {
+      "source": "bestiary",
+      "frames": 32,
+      "transparent": true
     }
   ],
   "pages": {
@@ -93,9 +98,15 @@
       "width": 1024,
       "height": 1024,
       "count": 16
+    },
+    "bestiary": {
+      "file": "bestiary.png",
+      "width": 2048,
+      "height": 1024,
+      "count": 32
     }
   },
-  "frames": 152,
+  "frames": 184,
   "empty": 0,
   "clipped": 0
 }

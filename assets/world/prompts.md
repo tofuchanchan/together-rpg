@@ -121,4 +121,9 @@ Col1 left-foot walking contact; Col2 right-foot walking contact; Col3 attack ant
 Keep cap size/proportions identical and feet on consistent baseline. Fixed oblique top-down45degree camera, generous margin above raised club. Sprite assets only, alpha0 blank space.
 
 补画记录：goblinFixPrompt 与 goblinFixAlphaPrompt 的背景不合格，未用于运行图集；最终用 goblinStrikePrompt 重新生成三张左向出手姿态。mushroomFixPrompt 用于西北方向补画。
+# 八种新怪物 · 2026-09-19
+
+输入画风参考：output/coop-design/D-coop-combat.png。输出 source/bestiary.png，运行 bestiary.png。透明 PNG，八行四列，每行一个怪物；四列为待机、移动、蓄力、出手。统一东南三分之四视角、粗深色描边、可爱豆豆比例、45 度俯视、格间透明安全留白、无文字、无网格、无地面。
+
+行顺序：青绿色史莱姆、紫色蝙蝠、灰狼红围巾、持木弓的骷髅、戴叶冠和木面具的治疗萨满、紫绿毒蜘蛛、琥珀色硬壳甲虫、橙色火灵。各四个不同关键姿态，共 32 单元。原始生成图含少量分离粒子，打包时按连通轮廓归属完整保留，按主体统一脚点和比例；不通过代码绘制怪物。
 

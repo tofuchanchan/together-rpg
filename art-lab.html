@@ -7,6 +7,7 @@
 <p id="status" class="status">载入图集…</p>
 <h2>怪物 · 八方向</h2><div class="controls"><select id="clip" aria-label="怪物动作"><option value="move">移动</option><option value="windup">攻击蓄力</option><option value="strike">攻击出手</option></select><button id="pause">暂停</button><button id="step">下一帧</button><select id="speed" aria-label="播放速度"><option value="1">1×</option><option value="0.5">0.5×</option><option value="0.25">0.25×</option></select><span id="phase"></span></div>
 <canvas id="enemies" width="1280" height="410"></canvas><p class="caption">哥布林 / 蘑菇暴徒：每类 8 方向 × 4 个关键姿态。两帧步态、蓄力与出手；脚点统一，武器留出安全边距。</p>
+<h2>新增八种怪物</h2><canvas id="bestiary" width="1280" height="440"></canvas><p class="caption">每种四个关键姿态：待机、移动、蓄力、出手。当前为三分之四视角、左右镜像；不是独立八方向素材。</p>
 <h2>战斗特效</h2><canvas id="effects" width="1280" height="420"></canvas><p class="caption">每组 4 个绘制阶段：剑弧、旋风、冰霜、爆破、命中、尘雾。游戏按实际动作时间播放。</p>
 <h2>弹道、预警与玩家标记</h2><canvas id="projectiles" width="1280" height="370"></canvas>
 <h2>场景物件</h2><canvas id="props" width="1280" height="590"></canvas>

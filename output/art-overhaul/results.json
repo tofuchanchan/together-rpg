@@ -19,15 +19,15 @@
       "status": 200
     },
     {
-      "path": "/assets/world/props.png",
-      "status": 200
-    },
-    {
       "path": "/assets/world/enemies.png",
       "status": 200
     },
     {
       "path": "/assets/world/icons.png",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/props.png",
       "status": 200
     },
     {
@@ -40,6 +40,10 @@
     },
     {
       "path": "/assets/world/projectiles.png",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/bestiary.png",
       "status": 200
     },
     {
