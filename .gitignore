@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+.codex/
+.agents/
+output/verification/
+output/coop-verification/
+output/standard-client/
+output/deployment-verification/
+assets/world/source/cuts/

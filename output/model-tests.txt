@@ -1,0 +1,23 @@
+✔ eight directions map consistently to the baked atlas (1.1119ms)
+✔ pause freezes time, position and combat (0.8251ms)
+✔ automatic attacks never move the player and only hit once per swing (0.169ms)
+✔ out of range stops auto attacks (0.1351ms)
+✔ dodge cancels a windup without a delayed phantom hit (0.3608ms)
+✔ movement does not restart auto attack and stride survives direction changes (0.1684ms)
+✔ attack speed scales contact timing (0.6088ms)
+✔ seeking and frame stepping produce no combat events (0.3721ms)
+✔ bash has cooldown and can hit a target on the path (0.2321ms)
+✔ render sampling is pure and independent of the number of draws (0.2206ms)
+✔ fixed steps match coarse steps for attack event crossing (0.1007ms)
+✔ reset restores initial settings (0.1699ms)
+✔ moving away while striking keeps locomotion direction independent (0.0979ms)
+✔ preview attack loops do not restart the run cycle (0.0496ms)
+✔ rock footprint stops movement (0.1142ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 92.5434

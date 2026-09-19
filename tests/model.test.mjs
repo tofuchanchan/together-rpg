@@ -1,0 +1,18 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {LabModel,direction} from '../src/model.js';
+const step=(m,t,input={})=>{for(let n=0;n<Math.round(t*120);n++)m.update(1/120,input);};
+test('eight directions map consistently to the baked atlas',()=>{for(let i=0;i<8;i++)assert.equal(direction(Math.cos(i*Math.PI/4),Math.sin(i*Math.PI/4)),i);});
+test('pause freezes time, position and combat',()=>{const m=new LabModel();m.setMode('play');step(m,.1);m.paused=true;const before=m.snapshot();step(m,2,{x:1});assert.deepEqual(m.snapshot(),before);});
+test('automatic attacks never move the player and only hit once per swing',()=>{const m=new LabModel();m.setMode('play');step(m,.7);assert.equal(m.hits,1);assert.equal(m.x,0);assert.equal(m.z,0);});
+test('out of range stops auto attacks',()=>{const m=new LabModel();m.setMode('play');m.target.x=250;step(m,3);assert.equal(m.hits,0);assert.equal(m.action,null);});
+test('dodge cancels a windup without a delayed phantom hit',()=>{const m=new LabModel();m.setMode('play');step(m,.1);assert.equal(m.action.type,'attack');m.trigger('dodge',{x:-1});step(m,.8);assert.equal(m.hits,0);assert.ok(m.x< -100);});
+test('movement does not restart auto attack and stride survives direction changes',()=>{const m=new LabModel();m.setMode('play');step(m,.2,{x:1});const stride=m.stride,t=m.action.t;step(m,.12,{z:1});assert.ok(m.stride>stride);assert.ok(m.action.t>t);step(m,.15,{z:-1});assert.equal(m.hits,1);});
+test('attack speed scales contact timing',()=>{for(const speed of [.5,1,2]){const m=new LabModel();m.setMode('play');m.attackSpeed=speed;step(m,.72*.42/speed);assert.equal(m.hits,0);step(m,.72*.12/speed);assert.equal(m.hits,1);}});
+test('seeking and frame stepping produce no combat events',()=>{const m=new LabModel();for(let i=0;i<16;i++){m.seek(i/16);assert.equal(m.pose().frame,i);}m.stepFrame();assert.equal(m.pose().frame,0);assert.equal(m.hits,0);assert.equal(m.paused,true);});
+test('bash has cooldown and can hit a target on the path',()=>{const m=new LabModel();m.setMode('play');m.auto=false;m.dir=0;assert.equal(m.trigger('bash'),true);step(m,.4);assert.equal(m.hits,1);assert.equal(m.trigger('bash'),false);step(m,.5);assert.equal(m.hits,1);});
+test('render sampling is pure and independent of the number of draws',()=>{const m=new LabModel();m.setMode('play');step(m,.2);const before=m.snapshot();for(let i=0;i<100;i++)m.pose();assert.deepEqual(m.snapshot(),before);});
+test('fixed steps match coarse steps for attack event crossing',()=>{const a=new LabModel(),b=new LabModel();a.setMode('play');b.setMode('play');step(a,.65);for(let i=0;i<13;i++)b.update(.05);assert.equal(a.hits,b.hits);assert.equal(a.damage,b.damage);});
+test('reset restores initial settings',()=>{const m=new LabModel();m.moveSpeed=2;m.attackSpeed=2;m.speed=.25;m.setMode('play');step(m,2);m.reset();assert.deepEqual(m.snapshot(),new LabModel().snapshot());});
+test('moving away while striking keeps locomotion direction independent',()=>{const m=new LabModel();m.setMode('play');step(m,.05);step(m,.1,{z:1});assert.equal(m.pose().dir,0);assert.equal(m.pose().legDir,2);});
+test('preview attack loops do not restart the run cycle',()=>{const m=new LabModel();m.attackSpeed=1.7;step(m,.41);const before=m.stride;step(m,.04);assert.ok(m.clock<.1);assert.ok(m.stride>before);});
+test('rock footprint stops movement',()=>{const m=new LabModel();m.setMode('play');m.auto=false;m.x=-80;m.z=-60;step(m,1,{x:-1});assert.ok(m.x>=-112);});

@@ -1,0 +1,30 @@
+{
+  "frameWidth": 192,
+  "frameHeight": 224,
+  "frames": 16,
+  "directions": [
+    "E",
+    "SE",
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "N",
+    "NE"
+  ],
+  "origin": [
+    0.5,
+    0.6652976869618202
+  ],
+  "clips": [
+    "legs-idle",
+    "legs-run",
+    "upper-idle",
+    "upper-attack",
+    "upper-bash",
+    "dodge"
+  ],
+  "handedness": "right sword / left shield",
+  "source": "tools/rig.js",
+  "view": "orthographic oblique"
+}

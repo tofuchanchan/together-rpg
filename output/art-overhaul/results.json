@@ -1,0 +1,60 @@
+{
+  "checks": [
+    "All illustrated atlases and background loaded before gameplay",
+    "Rotating spin remains horizontally projected at multiple action phases",
+    "Combat, layered effects, projectiles and enemy warning render with feedback on and off",
+    "Menu, HUD, upgrades, waiting state, pause, binding, completion and defeat use illustrated UI",
+    "Both enemies at eight directions, all props/icons/UI/markers and four effect stages render in art lab",
+    "Narrow layout stays inside viewport (touch gameplay not implemented)",
+    "Missing atlas blocks ready state and displays a loading error"
+  ],
+  "errors": [],
+  "requests": [
+    {
+      "path": "/assets/world/ui/button-neutral.png",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/manifest.json",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/props.png",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/enemies.png",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/icons.png",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/ui.png",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/effects.png",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/projectiles.png",
+      "status": 200
+    },
+    {
+      "path": "/assets/world/forest.png",
+      "status": 200
+    }
+  ],
+  "stagedScreenshots": [
+    "effects-review",
+    "feedback-off",
+    "upgrade",
+    "pause",
+    "device-binding",
+    "complete",
+    "defeat"
+  ],
+  "note": "Effects review is staged visual inspection, not a gameplay completion claim. Physical gamepads not tested."
+}

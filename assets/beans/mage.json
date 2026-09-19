@@ -1,0 +1,31 @@
+{
+  "role": "mage",
+  "frameWidth": 192,
+  "frameHeight": 192,
+  "frames": 16,
+  "directions": [
+    "东",
+    "东南",
+    "南",
+    "西南",
+    "西",
+    "西北",
+    "北",
+    "东北"
+  ],
+  "clips": [
+    "idle",
+    "run",
+    "attack",
+    "run-attack",
+    "skill1",
+    "skill2",
+    "dodge"
+  ],
+  "origin": [
+    0.5,
+    0.75
+  ],
+  "layout": "row = clipIndex * 8 + direction; column = frame; premultiplied-independent transparent PNG",
+  "source": "src/coop/art.js / hero()"
+}

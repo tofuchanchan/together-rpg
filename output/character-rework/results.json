@@ -1,0 +1,11 @@
+{
+  "checks": [
+    "all three illustrated PNG atlases decoded before ready",
+    "actual game, HUD portraits and third AI draw new art",
+    "warrior: eight directions, movement, attack, both skills and dodge render",
+    "mage: eight directions, movement, attack, both skills and dodge render",
+    "archer: eight directions, movement, attack, both skills and dodge render",
+    "transparent atlas download uses the real 64 painted poses"
+  ],
+  "errors": []
+}

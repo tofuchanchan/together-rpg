@@ -1,0 +1,7 @@
+{
+  "name": "together-rpg",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node tools/serve.mjs", "test": "node --test tests/*.test.mjs", "build:assets": "node tools/prepare-character-sprites.mjs", "test:sprites": "node tools/verify-character-sprites.mjs", "test:browser": "node tools/verify-coop.mjs", "test:legacy": "node tools/verify.mjs", "build:legacy": "node tools/bake.mjs" }
+}

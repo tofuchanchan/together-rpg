@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>同行 · 战士动作工坊</title><link rel="stylesheet" href="style.css"><script src="assets/vendor/phaser.min.js"></script></head>
+<body>
+<header><a class="brand" href="./"><span class="brand-mark">◈</span> 同行 <small>TOGETHER</small></a><div class="header-title">角色动作工坊 <span>/ 01 战士</span></div><span class="status"><i></i> 本地试验场</span></header>
+<main>
+ <div class="intro"><div><p class="eyebrow">MOTION STUDY / WARRIOR</p><h1>先让每一次出手，都有分量。</h1><p>八方向 · 自动普攻 · 手动盾冲与闪避</p></div><button id="reset" class="quiet">↺ 重置试验</button></div>
+ <div class="workspace">
+  <section class="viewer">
+   <div class="viewer-bar"><div class="segmented"><button id="preview-mode" class="active">动作预览</button><button id="play-mode">自由试跑</button></div><div class="view-tools"><label><input type="checkbox" id="debug"> 脚点 / 判定</label><button id="fullscreen" title="全屏 F">⛶</button></div></div>
+   <div id="game"><div id="loading">正在装载战士动作图集…</div></div>
+   <div class="stage-bottom"><span id="stage-hint">预览模式 · 选择动作，检查方向与节奏</span><span>45° 斜俯视</span></div>
+   <div class="transport"><button id="prev" aria-label="上一帧">◀│</button><button id="pause" class="primary" aria-label="暂停">Ⅱ 暂停</button><button id="next" aria-label="下一帧">│▶</button><div class="scrubber"><div><span id="phase">步伐循环</span><span id="frame-count">01 / 16</span></div><input id="timeline" aria-label="动作时间轴" type="range" min="0" max="999" value="0"><div class="ticks"><span>起势</span><span>发力</span><span>收势</span></div></div></div>
+   <div class="direction-strip"><div class="strip-heading"><b>八方向对照</b><span>相同时间 · 独立视角渲染</span></div><div id="directions"></div></div>
+  </section>
+  <aside>
+   <section class="panel"><p class="eyebrow">01 / ACTION</p><h2>动作选择</h2><div id="actions"></div><p class="note" id="action-note">腿部保持步伐，上半身完成挥剑。</p></section>
+   <section class="panel"><p class="eyebrow">02 / TIMING</p><h2>播放与节奏</h2><div class="speed-buttons" id="speed-buttons"><button data-speed="0.25">¼×</button><button data-speed="0.5">½×</button><button data-speed="1" class="active">1×</button></div><label class="slider-label">攻击速度 <output id="attack-value">1.00×</output><input id="attack-speed" type="range" min="0.5" max="2" step="0.05" value="1"></label><label class="slider-label">移动速度 <output id="move-value">1.00×</output><input id="move-speed" type="range" min="0.5" max="2" step="0.05" value="1"></label><label class="switch-line"><span>自动普通攻击</span><input id="auto" type="checkbox" checked></label></section>
+   <section class="panel readout"><p class="eyebrow">03 / OBSERVE</p><div><span>当前动作</span><b id="current-action">移动普攻</b></div><div><span>角色朝向</span><b id="current-dir">东南</b></div><div><span>真实命中</span><b id="hits">0</b></div><div><span>累计伤害</span><b id="damage">0</b></div><p id="event" class="event">进入自由试跑，靠近木桩验证命中。</p></section>
+  </aside>
+ </div>
+ <footer><span><b>操作</b> WASD / 方向键移动 <kbd>Q</kbd> 盾冲 <kbd>Space</kbd> 闪避 <kbd>P</kbd> 暂停 <kbd>F</kbd> 全屏</span><span>低多边形动作样板 · 非最终角色美术</span></footer>
+</main><script type="module" src="src/app.js"></script></body></html>

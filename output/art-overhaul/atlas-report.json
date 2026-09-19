@@ -1,0 +1,101 @@
+{
+  "sources": [
+    {
+      "source": "goblin-strikes",
+      "frames": 3,
+      "transparent": true,
+      "replaces": [
+        "goblin-7",
+        "goblin-11",
+        "goblin-15"
+      ]
+    },
+    {
+      "source": "goblin",
+      "frames": 32,
+      "transparent": true
+    },
+    {
+      "source": "mushroom-nw",
+      "frames": 4,
+      "transparent": true,
+      "replaces": [
+        "mushroom-12",
+        "mushroom-13",
+        "mushroom-14",
+        "mushroom-15"
+      ]
+    },
+    {
+      "source": "mushroom",
+      "frames": 32,
+      "transparent": true
+    },
+    {
+      "source": "props",
+      "frames": 12,
+      "transparent": true
+    },
+    {
+      "source": "icons",
+      "frames": 20,
+      "transparent": true
+    },
+    {
+      "source": "ui",
+      "frames": 16,
+      "transparent": true
+    },
+    {
+      "source": "effects",
+      "frames": 24,
+      "transparent": true
+    },
+    {
+      "source": "projectiles",
+      "frames": 16,
+      "transparent": true
+    }
+  ],
+  "pages": {
+    "enemies": {
+      "file": "enemies.png",
+      "width": 2048,
+      "height": 2048,
+      "count": 64
+    },
+    "props": {
+      "file": "props.png",
+      "width": 1536,
+      "height": 1152,
+      "count": 12
+    },
+    "icons": {
+      "file": "icons.png",
+      "width": 768,
+      "height": 960,
+      "count": 20
+    },
+    "ui": {
+      "file": "ui.png",
+      "width": 1280,
+      "height": 1280,
+      "count": 16
+    },
+    "effects": {
+      "file": "effects.png",
+      "width": 1280,
+      "height": 1920,
+      "count": 24
+    },
+    "projectiles": {
+      "file": "projectiles.png",
+      "width": 1024,
+      "height": 1024,
+      "count": 16
+    }
+  },
+  "frames": 152,
+  "empty": 0,
+  "clipped": 0
+}

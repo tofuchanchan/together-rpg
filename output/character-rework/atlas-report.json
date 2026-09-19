@@ -1,0 +1,29 @@
+[
+  {
+    "role": "warrior",
+    "frames": 64,
+    "empty": 0,
+    "clipped": 0,
+    "bytes": 2927071,
+    "moveScale": 1.2121212121212122,
+    "combatScale": 1.1339198435972628
+  },
+  {
+    "role": "mage",
+    "frames": 64,
+    "empty": 0,
+    "clipped": 0,
+    "bytes": 2920977,
+    "moveScale": 1.2253521126760563,
+    "combatScale": 1.1984212970128463
+  },
+  {
+    "role": "archer",
+    "frames": 64,
+    "empty": 0,
+    "clipped": 0,
+    "bytes": 2814194,
+    "moveScale": 1.2030075187969924,
+    "combatScale": 1.1369082045773775
+  }
+]

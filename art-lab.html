@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>同行 · 美术资源工坊</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#112b24;color:#efe9cb;font:15px system-ui,"Microsoft YaHei",sans-serif}main{max-width:1320px;margin:auto;padding:28px}header{display:flex;justify-content:space-between;gap:20px;align-items:center}h1{font-size:28px;margin-bottom:8px}h2{font-size:21px;margin:34px 0 12px}p{color:#b8cab2;line-height:1.75}a{color:#76d9ce;text-decoration:none}header nav{display:flex;gap:20px}button,select{font:inherit;color:#f6eccf;background:#234c40;border:1px solid #638e75;border-radius:8px;padding:9px 13px}button{cursor:pointer}button:hover{background:#316452}.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}canvas{display:block;width:100%;border-radius:14px;background:#78936c;border:2px solid #253e31}input{accent-color:#5ad5cd}.scene{width:100%;border-radius:14px}.caption{font-size:13px}.status{color:#8ce1c6}footer{border-top:1px solid #375146;margin-top:36px;padding:18px 0;color:#a7beaa;font-size:13px}@media(max-width:700px){main{padding:16px}header{display:block}header nav{margin-top:18px}.caption{font-size:12px}}
+</style></head><body><main>
+<header><div><h1>美术资源工坊</h1><p>D 画风 · 与可玩版本共用同一套 PNG 图集</p></div><nav><a href="index.html">进入双人战斗 →</a><a href="bean-lab.html">角色动作</a></nav></header>
+<p id="status" class="status">载入图集…</p>
+<h2>怪物 · 八方向</h2><div class="controls"><select id="clip" aria-label="怪物动作"><option value="move">移动</option><option value="windup">攻击蓄力</option><option value="strike">攻击出手</option></select><button id="pause">暂停</button><button id="step">下一帧</button><select id="speed" aria-label="播放速度"><option value="1">1×</option><option value="0.5">0.5×</option><option value="0.25">0.25×</option></select><span id="phase"></span></div>
+<canvas id="enemies" width="1280" height="410"></canvas><p class="caption">哥布林 / 蘑菇暴徒：每类 8 方向 × 4 个关键姿态。两帧步态、蓄力与出手；脚点统一，武器留出安全边距。</p>
+<h2>战斗特效</h2><canvas id="effects" width="1280" height="420"></canvas><p class="caption">每组 4 个绘制阶段：剑弧、旋风、冰霜、爆破、命中、尘雾。游戏按实际动作时间播放。</p>
+<h2>弹道、预警与玩家标记</h2><canvas id="projectiles" width="1280" height="370"></canvas>
+<h2>场景物件</h2><canvas id="props" width="1280" height="590"></canvas>
+<h2>技能与系统图标</h2><canvas id="icons" width="1280" height="420"></canvas>
+<h2>界面皮肤</h2><canvas id="ui" width="1280" height="600"></canvas><p class="caption">面板、选中卡片、按钮、禁用态、技能槽、头像框与数值条。界面文字与实时进度独立绘制。</p>
+<h2>林间遗迹</h2><img class="scene" src="assets/world/forest.png" alt="低对比战斗空地与手绘森林遗迹边缘">
+<footer>当前可玩版本的资源集。生成源图、提示词、图集清单保存在 assets/world；角色精灵保存在 assets/characters。</footer>
+</main><script type="module" src="src/coop/art-lab.js"></script></body></html>
