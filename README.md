@@ -6,7 +6,7 @@ D「极简豆豆冒险」画风的本地双人可玩样板。三职业、共享�
 
 GitHub 仓库：https://github.com/tofuchanchan/together-rpg
 
-Pages 访问地址：https://tofuchanchan.github.io/together-rpg/ （启用 Pages 并完成部署后可用）
+在线试玩：https://tofuchanchan.github.io/together-rpg/ （已部署）
 
 站点是纯静态 HTML / JavaScript / PNG，不需要后端、数据库或线上 Node 服务。GitHub Pages 设置使用 `main` 分支的根目录；`.nojekyll` 禁用 Jekyll 处理。后续推送 `main` 会触发站点更新。浏览器推荐桌面 Chrome / Edge；公开访问仍为本地同屏双人，没有异地联机或手机触屏操作。
 
