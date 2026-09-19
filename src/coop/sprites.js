@@ -1,3 +1,8 @@
+import {loadLayeredWarrior,drawLayeredWarrior,layeredAssetState} from './layered-warrior.js';
+import {equipment} from './layered-pose.js';
+const appearanceQuery=new URLSearchParams(globalThis.location?.search||'');
+const layeredPreview=appearanceQuery.get('warriorRig')==='layered';
+const previewGear=equipment(Object.fromEntries(appearanceQuery));
 import {spritePose,jointPose} from './sprite-animation.js';
 import {splitAccessory,hurtFace} from './character-parts.js';
 import {makeCharacterRig,drawCharacterRig,rigHurtBody} from './character-rig.js';
@@ -21,16 +26,17 @@ export function loadCharacterSprites() {
       atlas.rigs.set(base,rig);rigHurtBody(rig,image);
     }
     atlases.set(role,atlas);
-  }));
+  })).then(async result=>{if(layeredPreview)await loadLayeredWarrior();return result;});
 }
 
 export function characterAssetState() {
-  return { renderer: 'illustrated-png-atlas', ready: atlases.size === 3,
+  return { renderer: 'illustrated-png-atlas', ready: atlases.size === 3, ...(layeredPreview?{warriorPreview:layeredAssetState()}:{}),
     roles: [...atlases].map(([role, {manifest}]) => ({role, frames: manifest.frames.length, source: manifest.source})) };
 }
 
 // Only draw PNG pixels. This function no longer constructs the character from paths.
 export function hero(c, h, time, scale = 1) {
+  if(layeredPreview&&h.role==='warrior')return drawLayeredWarrior(c,h,time,scale,{gear:previewGear});
   const atlas = atlases.get(h.role);
   if (!atlas) return;
   const pose = spritePose(h, time);

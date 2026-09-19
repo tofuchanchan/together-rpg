@@ -16,6 +16,7 @@ GitHub 仓库：https://github.com/tofuchanchan/together-rpg
 
 - 游戏：http://127.0.0.1:4173/
 - D 三职业八方向动作工坊：http://127.0.0.1:4173/bean-lab.html
+- 战士独立分层/换装样板：http://127.0.0.1:4173/layered-lab.html （原版并排对照，Canvas，无需 Spine 授权；默认游戏尚不替换）
 - 怪物、场景、特效与 UI 美术工坊：http://127.0.0.1:4173/art-lab.html
 - 原低多边形工坊：http://127.0.0.1:4173/lab.html
 - 概念图：http://127.0.0.1:4173/output/coop-design/index.html

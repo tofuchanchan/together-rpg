@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "format": "together-rpg-canvas-contract-not-spine",
+  "coordinates": "rig-local pixels; origin feet; positive x right, positive y down",
+  "directions": ["S", "SW", "W", "NW", "N", "NE", "E", "SE"],
+  "bones": {
+    "root": null,
+    "pelvis": "root",
+    "torso": "pelvis",
+    "head": "torso",
+    "shoulder-right": "torso",
+    "elbow-right": "shoulder-right",
+    "hand-right": "elbow-right",
+    "shoulder-left": "torso",
+    "elbow-left": "shoulder-left",
+    "hand-left": "elbow-left",
+    "leg-right": "pelvis",
+    "leg-left": "pelvis"
+  },
+  "note": "Semantic parent hierarchy only. Runtime sampled coordinates are absolute rig-local, not parent-relative transforms.",
+  "slots": {"weapon": "hand-right", "shield": "hand-left", "helmet": "head", "cape": "torso"},
+  "sockets": {"weaponGrip": "hand-right", "offhandGrip": "hand-left", "weaponTip": "equipped PNG tip transformed around actual handle pivot", "ground": "root"},
+  "motionSource": "src/coop/layered-pose.js",
+  "drawOrderSource": "src/coop/layered-warrior.js",
+  "futureMigration": "PNG parts and slot names reusable; Spine binding and animation conversion still required"
+}
