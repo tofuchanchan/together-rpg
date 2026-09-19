@@ -13,3 +13,7 @@ test('effect lifetime boundaries never address a missing atlas frame',()=>{
  for(const name of Object.values(ICON_ALIASES))assert.ok(keys.has(name));
  assert.equal(keys.size,WORLD_SHEETS.reduce((n,s)=>n+s.keys.length,0));
 });
+test('negative initial animation delta cannot address a negative monster frame',()=>{
+ const keys=new Set(WORLD_SHEETS.flatMap(s=>s.keys));
+ for(const stride of [-2,-1,-.001,0,.001])for(let face=0;face<8;face++)assert.ok(keys.has(enemyFrame({kind:'goblin',face,stride})));
+});

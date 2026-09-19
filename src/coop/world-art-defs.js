@@ -12,7 +12,7 @@ export const ICON_ALIASES={bash:'shield',fireball:'fire',arrow:'pierce',skill:'f
 export function enemyFrame(e){
  const a=e.action;let face=e.face??0;
  if(a&&Math.hypot(a.x-e.x,a.y-e.y)>1)face=(Math.round(Math.atan2(a.y-e.y,a.x-e.x)/(Math.PI/4))+8)%8;
- const column=a?(a.hit?3:2):Math.floor(((e.stride||0)%1)*2);
+ const column=a?(a.hit?3:2):Math.floor((((e.stride||0)%1+1)%1)*2);
  if(!['goblin','mushroom'].includes(e.kind))return `${e.kind}-${column}`;
  return `${e.kind}-${ENEMY_ROWS[face]*4+column}`;
 }

@@ -26,6 +26,6 @@ function draw(){enemies();effects();const c=base('bestiary');Object.entries(ENEM
 grid('props',6,295);grid('icons',10,210);grid('projectiles',8,185);ui();draw();
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'播放':'暂停';};
 $('step').onclick=()=>{paused=true;$('pause').textContent='播放';time+=.25;draw();};$('clip').onchange=draw;
-function animate(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!paused){time+=dt*Number($('speed').value);draw();}requestAnimationFrame(animate);}requestAnimationFrame(animate);
+function animate(now){const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;if(!paused){time+=dt*Number($('speed').value);draw();}requestAnimationFrame(animate);}requestAnimationFrame(animate);
 const state=worldArtState();$('status').textContent=`已载入 ${state.pages} 张图集、${state.frames} 个透明单元与 1 张场景背景。`;
 window.artLab={ready:true,draw,freeze:t=>{paused=true;time=t;draw();},state};
