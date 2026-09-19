@@ -5,7 +5,7 @@ import {spritePose} from '../src/coop/sprite-animation.js';
 import {CORES,applyReward,skillPool} from '../src/coop/builds.js';
 import {startBossSkill,updateBossWarnings,updateBoss} from '../src/coop/boss.js';
 const arena=()=>{const w=new World(42);w.reset(['warrior','mage'],1);w.obstacles=[];w.heroes.forEach(h=>{h.attackCd=999;h.ai=false;});return w;};
-test('map area doubles v0.4 while warrior acquisition remains unchanged',()=>{assert.ok(Math.abs(MAP_SCALE**2-3)<1e-8);assert.equal(ROLES.warrior.range,145);assert.ok(MAP.x>950);});
+test('map area doubles the accepted expedition map while warrior acquisition remains unchanged',()=>{assert.ok(Math.abs(MAP_SCALE**2-6)<1e-8);assert.equal(ROLES.warrior.range,145);assert.ok(MAP.x>950);});
 test('idle body transform is exactly stable at every sampled time',()=>{for(const role of ['warrior','mage','archer']){const h={role,move:{x:0,y:0},face:1,id:0};for(const t of [0,.2,.6,1.2]){const p=spritePose(h,t);assert.equal(p.sx,1);assert.equal(p.sy,1);assert.equal(p.x,0);assert.equal(p.y,0);}}});
 test('waves keep queued reinforcements when early batch dies and pause the schedule on upgrades',()=>{const w=arena();assert.ok(w.spawnQueue.length>=3);w.enemies=[];w.advance(2);assert.equal(w.mode,'play');assert.ok(w.spawnQueue.length);const elapsed=w.waveElapsed;w.beginUpgrade();w.advance(30);assert.equal(w.waveElapsed,elapsed);});
 test('later wave enemies gain actual health damage and pace',()=>{const w=arena(),a=w.createEnemy('goblin',0,0,0);w.room=6;w.wave=2;const b=w.createEnemy('goblin',0,0,0);assert.ok(b.maxHp>a.maxHp);assert.ok(b.stats.damage>a.stats.damage);assert.ok(b.stats.speed>a.stats.speed);});

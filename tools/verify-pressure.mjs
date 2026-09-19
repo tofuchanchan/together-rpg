@@ -1,0 +1,16 @@
+import {chromium} from 'file:///C:/Users/fuweicheng/.codex/skills/node_modules/playwright/index.mjs';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const out='output/coop-verification/pressure';fs.mkdirSync(out,{recursive:true});const b=await chromium.launch(),p=await b.newPage({viewport:{width:1440,height:940}}),errors=[],checks=[];
+p.on('pageerror',e=>errors.push(e.message));p.on('response',r=>{if(r.status()>=400)errors.push(`${r.status()} ${r.url()}`);});const mark=s=>{checks.push(s);console.log('PASS',s);};const shot=async name=>{await p.evaluate(()=>coopTest.render());await p.locator('#game canvas').screenshot({path:`${out}/${name}.png`});};
+try{
+ await p.goto(process.env.GAME_URL||'http://127.0.0.1:4173/');await p.waitForFunction(()=>window.assetsReady,null,{timeout:120000});await p.evaluate(()=>advanceTime(0));
+ await p.evaluate(()=>{coopTest.start(['archer','mage'],1);const w=coopTest.world;w.spawnQueue=[];w.obstacles=[];w.heroes.forEach((h,i)=>{h.x=i*180;h.y=i*120;h.ai=false;h.attackCd=999;});const e=w.createEnemy('wolf',-340,0);e.cd=0;w.enemies=[e];w.updateEnemy(e,.01);w.camera={x:0,y:0,zoom:.8};});
+ const locked=await p.evaluate(()=>{const a=coopTest.world.enemies[0].action;return {x:a.x,y:a.y,r:a.r,from:a.from};});assert.ok(locked.from);await shot('charge-warning');
+ await p.evaluate(()=>{const w=coopTest.world,e=w.enemies[0];w.updateEnemy(e,e.action.windup+.16);});await shot('charge-moving');assert.ok(await p.evaluate(()=>{const e=coopTest.world.enemies[0];return e.x>-340&&e.x<e.action.x;}));mark('charge warning corridor and continuous movement render');
+ await p.evaluate(()=>{const w=coopTest.world;w.waveElapsed=w.enrageAt-.02;w.updateSpawns(.03);});await shot('enraged');assert.equal(await p.evaluate(()=>JSON.parse(render_game_to_text()).enraged),true);mark('deadline triggers real enrage state and HUD');
+ await p.evaluate(()=>{const w=coopTest.world;w.pause();});const t=await p.evaluate(()=>coopTest.world.waveElapsed);await p.evaluate(()=>advanceTime(30000));assert.equal(await p.evaluate(()=>coopTest.world.waveElapsed),t);await p.evaluate(()=>coopTest.world.resume());mark('pause freezes enrage clock');
+ await p.evaluate(async()=>{const w=coopTest.world,{MAP}=await import('./src/coop/model.js');coopTest.start(['archer','mage'],1);w.spawnQueue=[];w.enemies=[];const h=w.heroes[0];h.x=MAP.x-24;h.y=0;w.moveActor(h,100,0);const e=w.createEnemy('beetle',-800,0);e.freeze=999;w.enemies=[e];w.camera={x:0,y:0,zoom:.8};w.advance(3);});await shot('expanded-map-edge');assert.ok(await p.evaluate(()=>{const w=coopTest.world;return w.heroes[0].x>1300&&w.heroes[0].x<w.snapshot().map.x;}));mark('expanded map collision and camera edge render');
+ await p.evaluate(()=>{coopTest.start(['archer','mage'],1);});await p.evaluate(()=>advanceTime(5000));await shot('live-battle');assert.ok(await p.evaluate(()=>coopTest.world.time>4));mark('normal wave with two AI companions still runs');
+ assert.deepEqual(errors,[]);fs.writeFileSync(`${out}/browser.json`,JSON.stringify({checks,errors,scope:'Staged charge, enrage and map edge; normal battle smoke. Simulation tool verifies actual circling damage and responsive clear.'},null,2));
+}finally{await b.close();}

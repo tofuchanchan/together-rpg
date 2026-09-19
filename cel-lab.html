@@ -1,8 +1,9 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>战士 · 关键帧小样</title><link rel="stylesheet" href="src/coop/cel-lab.css"></head>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>三职业 · 关键帧小样</title><link rel="stylesheet" href="src/coop/cel-lab.css"></head>
 <body><main>
-<header><div><span class="eyebrow">TOGETHER / MOTION STUDY 02</span><h1>让原来的战士动起来。</h1><p>东南、东北 · 待机、走路、普攻 · 原图始终在旁边</p></div><a href="index.html">返回游戏 ↗</a></header>
+<header><div><span class="eyebrow">TOGETHER / MOTION STUDY 02</span><h1>让原来的角色动起来。</h1><p>东南、东北 · 待机、走路、普攻 · 原图始终在旁边</p></div><a href="index.html">返回游戏 ↗</a></header>
 <section class="toolbar" aria-label="动画控制">
+<label>职业<select id="role"><option value="warrior">战士 · 已验收</option><option value="mage">法师 · 新小样</option><option value="archer">弓手 · 新小样</option></select></label>
 <label>动作<select id="clip"><option value="idle">待机</option><option value="walk" selected>走路</option><option value="attack">普攻</option></select></label>
 <label>播放速度<select id="speed"><option value=".25">¼ 速度</option><option value=".5">½ 速度</option><option value="1" selected>正常速度</option></select></label>
 <button id="pause">暂停</button><button id="prev" aria-label="上一帧">← 上一帧</button><button id="next" aria-label="下一帧">下一帧 →</button>
@@ -10,7 +11,7 @@
 </section>
 <canvas id="cel-canvas" width="1200" height="860" tabindex="0" aria-label="原版与关键帧动画对照，东南和东北两个方向"></canvas>
 <section class="scrub"><label for="timeline">关键帧 <b id="frame">1 / 8</b></label><input id="timeline" type="range" min="0" max="7" value="0"><span id="phase">加载中</span></section>
-<section class="notes"><div><h2>先看角色，再看动作。</h2><p>左侧原图保持不动。中间播放完整姿势，右侧观察缩小后的辨识度。勾选叠加后，可以直接检查头身比例和轮廓。</p></div><div><h2>这次保留什么</h2><p>待机沿用原版像素，只让披风轻摆。走路和挥剑使用完整角色关键帧，不对头、身体和四肢分别拉伸拼装。</p></div><div><h2>试用说明</h2><p>点画布后：A / D 走路，空格挥剑，松开回到待机。F 全屏。当前为美术小样，未替换游戏角色；不是八方向成品。</p></div></section>
+<section class="notes"><div><h2>先看角色，再看动作。</h2><p>左侧原图保持不动。中间播放完整姿势，右侧观察缩小后的辨识度。勾选叠加后，可以直接检查头身比例和轮廓。</p></div><div><h2>这次保留什么</h2><p>待机沿用原版像素，仅披风、法师帽尖等局部轻摆。走路和普攻使用完整角色关键帧，不对头、身体和四肢分别拉伸拼装。</p></div><div><h2>试用说明</h2><p>点画布后：A / D 走路，空格普攻，松开回到待机。F 全屏。当前为美术小样，未替换游戏角色；不是八方向成品。</p></div></section>
 <p id="status" role="status">正在加载绘制素材…</p>
 <footer>完整姿势原画由 imagegen 辅助生成，需视觉验收。播放帧数与页面刷新率分别计算。<a href="layered-lab.html">查看旧分层试验</a></footer>
 </main><script type="module" src="src/coop/cel-lab.js"></script></body></html>
