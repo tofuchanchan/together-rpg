@@ -94,7 +94,7 @@ export class World{
   for(const e of this.enemies){const ox=e.x,oy=e.y;this.updateEnemy(e,dt);e.vx=clamp((e.x-ox)/dt,-800,800);e.vy=clamp((e.y-oy)/dt,-800,800);}
   this.enemies=this.enemies.filter(e=>e.hp>0);
   // Separate foes so telegraphs and silhouettes remain legible.
-  for(let i=0;i<this.enemies.length;i++)for(let j=i+1;j<this.enemies.length;j++){const a=this.enemies[i],b=this.enemies[j],d=dist(a,b);if(d<47){const v=d?norm(a.x-b.x,a.y-b.y):{x:1,y:0};this.moveActor(a,v.x*(47-d)*.5,v.y*(47-d)*.5,22);this.moveActor(b,-v.x*(47-d)*.5,-v.y*(47-d)*.5,22);}}
+  for(let i=0;i<this.enemies.length;i++)for(let j=i+1;j<this.enemies.length;j++){const a=this.enemies[i],b=this.enemies[j],d=dist(a,b);if(d<47){const v=d?norm(a.x-b.x,a.y-b.y):{x:1,y:0};const fixedA=a.action?.kind==='dash',fixedB=b.action?.kind==='dash';if(!fixedA)this.moveActor(a,v.x*(47-d)*(fixedB?1:.5),v.y*(47-d)*(fixedB?1:.5),22);if(!fixedB)this.moveActor(b,-v.x*(47-d)*(fixedA?1:.5),-v.y*(47-d)*(fixedA?1:.5),22);}}
   if(this.heroes.every(h=>h.down)){this.mode='defeat';this.clearBuffers();return;}
   if(this.xp>=this.xpNext){this.beginUpgrade();return;}
   if(!this.enemies.length&&!this.spawnQueue.length&&this.waveElapsed>=this.waveDuration){this.waveTimer+=dt;if(this.waveTimer>1.1){this.beginReward('skill');return;}}
