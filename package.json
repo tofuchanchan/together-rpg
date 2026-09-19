@@ -16,6 +16,8 @@
     "test:campaign": "node tools/simulate-expedition.mjs",
     "test:animation": "node tools/verify-animation-flow.mjs",
     "build:layered": "node tools/prepare-layered-warrior.mjs",
-    "test:layered": "node tools/verify-layered-warrior.mjs"
+    "test:layered": "node tools/verify-layered-warrior.mjs",
+    "build:cel": "node tools/prepare-cel-warrior.mjs",
+    "test:cel": "node tools/verify-cel-warrior.mjs"
   }
 }

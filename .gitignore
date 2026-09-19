@@ -11,5 +11,6 @@ output/verification/
 output/coop-verification/
 output/standard-client/
 output/layered-warrior/
+output/cel-warrior/
 output/deployment-verification/
 assets/world/source/cuts/

@@ -15,6 +15,7 @@ GitHub 仓库：https://github.com/tofuchanchan/together-rpg
     node tools/serve.mjs
 
 - 游戏：http://127.0.0.1:4173/
+- 战士完整关键帧小样：http://127.0.0.1:4173/cel-lab.html （东南/东北，原图对照与逐帧；未替换正式角色）
 - D 三职业八方向动作工坊：http://127.0.0.1:4173/bean-lab.html
 - 战士独立分层/换装样板：http://127.0.0.1:4173/layered-lab.html （原版并排对照，Canvas，无需 Spine 授权；默认游戏尚不替换）
 - 怪物、场景、特效与 UI 美术工坊：http://127.0.0.1:4173/art-lab.html
