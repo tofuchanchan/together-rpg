@@ -102,7 +102,7 @@ export class View{
   }
  }
  veil(alpha=.65){this.c.fillStyle=`rgba(9,27,22,${alpha})`;this.c.fillRect(0,0,W,H);}
- menu(){const c=this.c;this.veil(.45);skin(c,'panel-gold',466,35,508,146);text(c,'TOGETHER  /  ROGUELITE',720,67,13,'#c9d5b4','center');text(c,'同行 · 林间远征',720,121,43,CREAM,'center',900);
+ menu(){const c=this.c;this.veil(.45);skin(c,'panel-gold',466,35,508,146);text(c,'THREEFOLD ODYSSEY',720,67,13,'#c9d5b4','center');text(c,'组建小队',720,121,43,CREAM,'center',900);
   this.button('单人冒险',478,196,228,43,()=>{this.humanCount=1;this.router.awaiting=null;},this.humanCount===1?CYAN:'#9ab38b');this.button('双人同行',734,196,228,43,()=>this.humanCount=2,this.humanCount===2?ORANGE:'#9ab38b');
   for(let i=0;i<2;i++){const x=255+i*485,col=colors[i],h=createHero(this.roles[i],i),ai=i>=this.humanCount;skin(c,`card-${variant(col)}`,x,260,445,265);text(c,ai?'未启用 P2':`PLAYER ${i+1}`,x+28,291,15,col);
    c.save();c.translate(x+87,439);hero(c,{...h,role:this.roles[i],face:i?3:1,action:null,move:{x:0,y:0},gait:0,down:false,hitFlash:0,hitReaction:null,invuln:0},this.animTime,1.3);c.restore();text(c,ROLES[this.roles[i]].name,x+173,340,29);text(c,ROLES[this.roles[i]].skills.join('  /  '),x+173,382,16,'#d0d9ba');

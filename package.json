@@ -9,6 +9,7 @@
     "build:assets": "node tools/prepare-character-sprites.mjs",
     "test:sprites": "node tools/verify-character-sprites.mjs",
     "test:browser": "node tools/verify-coop.mjs",
+    "test:frontend": "node tools/verify-start-screen.mjs",
     "test:legacy": "node tools/verify.mjs",
     "build:legacy": "node tools/bake.mjs",
     "test:roguelite": "node tools/verify-roguelite.mjs",
