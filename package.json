@@ -1,6 +1,6 @@
 {
   "name": "together-rpg",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -31,6 +31,8 @@
     "build:universal-art": "node tools/prepare-universal-art.mjs",
     "test:shop": "node tools/verify-shop.mjs",
     "test:equipment": "node --test tests/equipment.test.mjs tests/recruitment.test.mjs tests/shop.test.mjs",
-    "test:codex": "node tools/verify-codex.mjs"
+    "test:codex": "node tools/verify-codex.mjs",
+    "test:codex-loading": "node tools/verify-codex-loading.mjs",
+    "build:codex": "node tools/build-codex-previews.mjs"
   }
 }

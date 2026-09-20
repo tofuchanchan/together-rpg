@@ -1,5 +1,5 @@
 import {CODEX_CATEGORIES,CODEX_ENTRIES,findCodexEntry,filterCodexEntries} from './codex-data.js';
-import {loadCodexArt,paintCodexArt} from './codex-art.js';
+import {createCodexImage} from './codex-image.js';
 
 const ROLES={all:'全部职业',warrior:'战士',mage:'法师',archer:'弓手',universal:'通用'};
 const KINDS={role:'职业',active:'主动技能',core:'职业核心',form:'技能形态',evolution:'职业进化',passive:'被动组件',awakening:'通用觉醒',attribute:'升级属性',weapon:'武器',armor:'防具',affix:'装备词条','equipment-rarity':'装备品质',enemy:'普通怪物',boss:'首领','enemy-rarity':'怪物稀有度',trait:'怪物词条'};
@@ -25,17 +25,29 @@ export function createCodexView(host,{onClose=null,onSelect=null,initialId=null}
  const detail=el('article','codex-detail');detail.id=`codex-detail-${instance}`;detail.tabIndex=-1;detail.setAttribute('aria-label','条目详情');layout.append(results,detail);
  const note=el('div','codex-note','构筑仍需在冒险中随机获得；装备与怪物数值随关卡和品质变化。');if(onClose)note.append(el('div',null,'I / 手柄 View 打开 · 方向键上下选条目、左右切分类 · A 查看 · Esc / Start 关闭'));const artStatus=el('p','codex-art-status','插画载入中…');artStatus.setAttribute('role','status');
  root.append(heading,tabs,toolbar,roles,layout,note,artStatus);host.replaceChildren(root);
- let visible=[],artReady=false,artFailed=false,disposed=false;
- function preview(entry,className){const canvas=el('canvas',className);canvas.width=className==='codex-preview'?640:320;canvas.height=className==='codex-preview'?380:228;canvas.dataset.entry=entry.id;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',`${entry.name}插画`);if(artReady)draw(canvas,entry);return canvas;}
- function draw(canvas,entry){try{paintCodexArt(canvas,entry,0);}catch(error){canvas.replaceWith(el('span','codex-art-fallback',entry.name));showArtError(error);}}
- function showArtError(error){artFailed=true;root.dataset.art='error';artStatus.textContent='部分插画未能载入，文字资料仍可查阅。刷新页面可重试。';artStatus.hidden=false;console.error('Codex artwork:',error);}
+ let visible=[],artReady=false,artFailed=false,disposed=false,resolveReady;
+ const ready=new Promise(resolve=>{resolveReady=resolve;});
+ function updateArtStatus(changed){
+  if(disposed||(changed&&!root.contains(changed)))return;
+  const illustrations=[...root.querySelectorAll('.codex-art-surface')],primary=detail.querySelector('.codex-preview');
+  // A successful retry also restores failed thumbnails using that same file.
+  if(changed?.dataset.art==='ready'){
+   const source=changed.querySelector('img').src;
+   for(const node of illustrations)if(node.dataset.art==='error'&&node.querySelector('img').src.split('?')[0]===source.split('?')[0]){node.dataset.art='loading';node.setAttribute('aria-busy','true');node.querySelector('img').src=source;}
+  }
+  artReady=primary?.dataset.art==='ready';artFailed=illustrations.some(node=>node.dataset.art==='error');
+  root.dataset.art=artFailed?'partial':artReady?'ready':'loading';
+  artStatus.hidden=!artFailed;artStatus.textContent='部分插画暂未载入，可在对应条目内重试；其他内容可正常查阅。';
+  if(primary&&primary.dataset.art!=='loading')resolveReady();
+ }
+ function preview(entry,className){return createCodexImage(entry,className,updateArtStatus);}
  function select(id,{focus=false,notify=true}={}){const entry=findCodexEntry(id);if(!entry)return false;state.selectedId=id;state.detail=true;root.dataset.detail='true';renderDetail();for(const node of cards.children)node.setAttribute('aria-pressed',String(node.dataset.entry===id));if(focus)detail.focus({preventScroll:true});if(matchMedia('(max-width:800px)').matches){root.scrollTop=0;detail.scrollTop=0;if(!onClose)root.scrollIntoView({block:'start'});}if(notify)onSelect?.(entry);return true;}
  function follow(id){const entry=findCodexEntry(id);if(!entry)return;state.category=entry.category;state.role='all';state.kind='all';state.query='';search.value='';state.visibleCount=36;state.selectedId=id;state.detail=true;render();select(id,{focus:true});}
- function renderDetail(){detail.replaceChildren();const entry=findCodexEntry(state.selectedId);if(!entry){detail.append(el('p','codex-empty-detail','换个关键词，继续翻阅冒险记录。'));return;}
+ function renderDetail(){detail.replaceChildren();const entry=findCodexEntry(state.selectedId);if(!entry){detail.append(el('p','codex-empty-detail','换个关键词，继续翻阅冒险记录。'));updateArtStatus();return;}
   const back=button('codex-back','← 返回条目',()=>{state.detail=false;root.dataset.detail='false';cards.querySelector(`[data-entry="${CSS.escape(entry.id)}"]`)?.focus({preventScroll:true});});
   const intro=el('div','codex-detail-intro');intro.append(el('p','codex-eyebrow',`${scopeName(entry)} / ${KINDS[entry.kind]||entry.kind}`),el('h2',null,entry.name));
   const tags=el('div','codex-tags');for(const tag of entry.tags||[])tags.append(el('span',null,tag));
-  detail.append(back,preview(entry,'codex-preview'),intro,el('p','codex-summary',entry.summary),tags);
+  detail.append(back,preview(entry,'codex-preview'),intro,el('p','codex-summary',entry.summary),tags);updateArtStatus();
   for(const section of entry.sections||[]){const block=el('section','codex-detail-section');block.append(el('h3',null,section.title));const lines=el('ul');for(const line of section.lines||[])lines.append(el('li',null,line));block.append(lines);detail.append(block);}
   const related=(entry.relatedIds||[]).map(findCodexEntry).filter(Boolean);if(related.length){const block=el('section','codex-detail-section');block.append(el('h3',null,'相关条目'));const links=el('div','codex-related');for(const other of related)links.append(button('codex-related-link',`${other.name} ↗`,()=>follow(other.id)));block.append(links);detail.append(block);}
  }
@@ -52,7 +64,6 @@ export function createCodexView(host,{onClose=null,onSelect=null,initialId=null}
   renderCards();renderDetail();
  }
  const start=findCodexEntry(initialId);if(start){state.category=start.category;state.selectedId=start.id;state.detail=true;}render();
- const ready=loadCodexArt().then(()=>{if(disposed)return;artReady=true;root.dataset.art='ready';for(const canvas of root.querySelectorAll('canvas[data-entry]')){const entry=findCodexEntry(canvas.dataset.entry);if(entry)draw(canvas,entry);}artStatus.hidden=!artFailed;}).catch(showArtError);
  function handleInput(input){if(input.left||input.right){const index=CODEX_CATEGORIES.findIndex(c=>c.id===state.category);state.category=CODEX_CATEGORIES[(index+(input.right?1:-1)+CODEX_CATEGORIES.length)%CODEX_CATEGORIES.length].id;state.role='all';state.kind='all';state.detail=false;state.visibleCount=36;render();}if((input.up||input.down)&&visible.length){const index=visible.findIndex(e=>e.id===state.selectedId),next=(index+(input.down?1:-1)+visible.length)%visible.length;state.selectedId=visible[next].id;state.visibleCount=Math.max(state.visibleCount,next+1);renderCards();renderDetail();cards.querySelector(`[data-entry="${CSS.escape(state.selectedId)}"]`)?.scrollIntoView({block:'nearest'});}if(input.confirm&&state.selectedId)select(state.selectedId,{focus:true});}
  return{root,ready,openEntry:follow,handleInput,focus:()=>search.focus({preventScroll:true}),snapshot:()=>({...state,count:visible.length,artReady,artFailed}),destroy(){disposed=true;host.replaceChildren();}};
 }

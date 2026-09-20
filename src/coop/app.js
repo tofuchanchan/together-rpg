@@ -9,7 +9,7 @@ import {BUILD_TRIALS,applyBuildTrial} from './build-presets.js';
 import {InputRouter} from './input.js';
 import {View} from './render.js';
 import {loadCharacterSprites,characterAssetState} from './sprites.js';
-import {createCodexDialog} from './codex-view.js';
+import {createCodexDialog} from './codex-view.js?v=0.9.1';
 import {createCodexSession} from './codex-session.js';
 const world=new World(),router=new InputRouter();let sceneRef,view,manual=false,testPads=null,audio=null,lastSound=0;
 const codexSession=createCodexSession(world,router,()=>document.hasFocus());
