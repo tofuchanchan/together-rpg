@@ -25,14 +25,15 @@ export const startScreen={
   addEventListener('keydown',event=>this.key(event),true);
   const poll=()=>{this.samplePads(Array.from(navigator.getGamepads?.()||[]));requestAnimationFrame(poll);};requestAnimationFrame(poll);
   this.setPhase('loading');
-  withTimeout(document.querySelector('#title-art').decode(),30000,'封面加载超时').then(()=>{this.artReady=true;if(this.pending==='title'&&this.phase==='loading')this.showTitle();}).catch(error=>{this.artError=error;if(this.pending==='title')this.showError('art');});
+  const artLoading=document.querySelector('#title-art').decode().then(()=>{this.artReady=true;this.artError=null;if(this.pending==='title'&&['loading','error'].includes(this.phase))this.showTitle();});
+  withTimeout(artLoading,30000,'封面加载超时').catch(error=>{this.artError=error;if(this.pending==='title')this.showError('art');});
  },
  setPhase(phase){
   this.phase=phase;document.body.dataset.screen=phase;
   this.title.hidden=!['title','settings'].includes(phase);this.loading.hidden=!['loading','error'].includes(phase);this.errorBox.hidden=phase!=='error';this.loading.setAttribute('aria-busy',String(phase==='loading'));
   this.shell.inert=!['setup','game'].includes(phase);this.shell.setAttribute('aria-hidden',String(this.shell.inert));
  },
- connect(bindings){this.bindings=bindings;if(this.gameError)return;this.gameReady=true;bindings.settings(this.settings);if(this.pending==='setup'&&this.phase!=='game')this.showSetup();},
+ connect(bindings){this.bindings=bindings;this.gameError=null;this.gameReady=true;bindings.settings(this.settings);if(this.pending==='setup'&&this.phase!=='game')this.showSetup();},
  failGame(error){this.gameError=error;this.gameReady=false;if(this.pending==='setup')this.showError('game');},
  showError(source){this.setPhase('error');document.querySelector('#loading-error-text').textContent=source==='art'?'封面未能加载，请检查网络后重试。':'远征资源未能加载，请检查网络后重试。';document.querySelector('#loading-back').hidden=!this.artReady;document.querySelector('#retry-loading').focus();},
  requestSetup(){this.pending='setup';if(this.gameError)this.showError('game');else if(this.gameReady)this.showSetup();else this.setPhase('loading');},
