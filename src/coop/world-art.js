@@ -8,7 +8,15 @@ import {reactionPose} from './combat-motion.js';
 export {skin};
 export function icon(c,name,x,y,size=24){drawArt(c,ICON_ALIASES[name]||name,x,y,size*2.35);}
 export function bar(c,x,y,w,h,q,color='#78cd73'){
- skin(c,'button-neutral',x,y,w,h);const value=clamp(q,0,1);if(!value)return;
+ const value=clamp(q,0,1);
+ if(h<=23){
+  // Tiny bars cannot carry the atlas's full illustrated rim without distortion.
+  const inset=h<=10?1.5:2,r=Math.min(h/2,6);c.save();c.beginPath();c.roundRect(x,y,w,h,r);c.fillStyle='#112c25';c.fill();
+  c.beginPath();c.roundRect(x+inset,y+inset,Math.max(0,w-2*inset),Math.max(0,h-2*inset),Math.max(1,r-inset));c.clip();
+  c.fillStyle=color;c.fillRect(x+inset,y+inset,(w-2*inset)*value,h-2*inset);
+  c.fillStyle='#ffffff30';c.fillRect(x+inset,y+inset,(w-2*inset)*value,Math.max(1,(h-2*inset)*.25));c.restore();return;
+ }
+ skin(c,'button-neutral',x,y,w,h);if(!value)return;
  c.save();c.beginPath();c.rect(x+3,y+3,(w-6)*value,Math.max(1,h-6));c.clip();
  const xp=color==='#efd276'||color==='#f1c864';
  if(!xp&&['#e58a6d','#eea467'].includes(color))c.filter='hue-rotate(280deg) saturate(.9)';

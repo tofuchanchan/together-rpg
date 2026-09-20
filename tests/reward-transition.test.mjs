@@ -16,7 +16,7 @@ function fixture(type='attribute'){
  const router={input:[{},{}],slots:[{type:'keyboard',id:0},{type:'keyboard',id:1}],disconnected:[],flushes:0,sample(){return this.input;},flush(){this.flushes++;}};
  // Include the app's closed catalogue state while retaining the shipped update
  // function and the original simultaneous-confirmation assertions.
- const update=new Function('world','router','testPads','actions','view','clearTransition','sound',`let codexPadHeld=false;const codex={isOpen:false};${updateSource};return update;`)(w,router,[],{},null,()=>router.flush(),()=>{});
+ const update=new Function('world','router','testPads','actions','view','clearTransition','sound',`const startScreen={blocksGame:false},codex={isOpen:false};${updateSource};return update;`)(w,router,[],{},null,()=>router.flush(),()=>{});
  return {w,router,update};
 }
 test('shipped update stops stale second-player confirmation when queued XP rebuilds the whole reward page',()=>{

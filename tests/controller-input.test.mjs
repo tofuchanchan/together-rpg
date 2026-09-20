@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {InputRouter} from '../src/coop/input.js';
+const pad=(index,pressed=[],axes=[0,0])=>({index,axes,mapping:'standard',buttons:Array.from({length:17},(_,i)=>({pressed:pressed.includes(i)}))});
+function bound(){const r=new InputRouter();r.bind(0,{type:'gamepad',id:0});r.sample([pad(0)]);return r;}
+test('A confirms without dodging; LB dodges without confirming',()=>{const r=bound();let a=r.sample([pad(0,[0])])[0];assert.equal(a.confirm,true);assert.equal(a.dodge,false);r.sample([pad(0)]);a=r.sample([pad(0,[4])])[0];assert.equal(a.dodge,true);assert.equal(a.confirm,false);assert.deepEqual(r.labels(0),['X','Y','LB']);});
+test('cancel and shoulder navigation are separate edges and never repeat while held',()=>{const r=bound();const a=r.sample([pad(0,[1,4,5])])[0];assert.equal(a.cancel,true);assert.equal(a.tabLeft,true);assert.equal(a.tabRight,true);const held=r.sample([pad(0,[1,4,5])])[0];assert.equal(held.cancel,false);assert.equal(held.dodge,false);assert.equal(held.tabRight,false);});
+test('binding overlay B cancels without binding or confirming the underlying screen',()=>{const r=bound();r.claim(1);r.sample([pad(0,[1]),pad(2)]);assert.equal(r.awaiting,null);assert.equal(r.slots[1].type,'keyboard');assert.equal(r.claimHandled,true);});
+test('new unassigned pads expose menu edges without stealing a player',()=>{const r=bound();r.sample([pad(0),pad(7)]);r.sample([pad(0),pad(7,[0])]);assert.equal(r.padInputs.get(7).confirm,true);assert.deepEqual(r.slots[0],{type:'gamepad',id:0});assert.equal(r.slots[1].type,'keyboard');});
+test('explicit binding uses A or Start and consumes the triggering press',()=>{const r=bound();r.claim(1);r.sample([pad(0),pad(3,[2])]);assert.equal(r.awaiting,1);r.sample([pad(0),pad(3)]);const inputs=r.sample([pad(0),pad(3,[0])]);assert.equal(r.slots[1].id,3);assert.equal(r.awaiting,null);assert.equal(inputs[1].confirm,false);assert.equal(r.claimHandled,true);});
+test('flush prevents held buttons from carrying into a new menu',()=>{const r=bound();r.sample([pad(0,[0,4])]);r.flush();for(let i=0;i<3;i++){const a=r.sample([pad(0,[0,4])])[0];assert.equal(a.confirm,false);assert.equal(a.dodge,false);}r.sample([pad(0)]);assert.equal(r.sample([pad(0,[0])])[0].confirm,true);});

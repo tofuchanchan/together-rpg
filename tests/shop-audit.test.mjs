@@ -17,6 +17,22 @@ test('closing shared details cannot turn a simultaneous partner confirm into a h
 test('opening details survives a partner confirm from the previous screen',()=>{
  const w=shop(),gold=w.gold;frame(w,[{skill1:true},{confirm:true}]);assert.deepEqual(w.shop.inspect,{type:'item',index:0});assert.equal(w.gold,gold);
 });
+
+test('controller B closes details without allowing a simultaneous hidden purchase',()=>{
+ const w=shop(),gold=w.gold;w.shop.inspect={type:'item',index:0};frame(w,[{cancel:true},{confirm:true}]);assert.equal(w.shop.inspect,null);assert.equal(w.gold,gold);assert.equal(w.shop.offers[0].sold,undefined);
+});
+
+test('controller B cancels recruitment replacement and preserves both the old AI and gold',()=>{
+ const w=shop(),old=createHero('mage',2,{ai:true});w.heroes.push(old);w.shop.replacing={slot:0,uid:w.shop.recruit.uid,choices:[2],selection:0};const gold=w.gold;frame(w,[{cancel:true},{confirm:true}]);assert.equal(w.shop.replacing,null);assert.equal(w.heroes[2],old);assert.equal(w.gold,gold);
+});
+
+test('X cannot open unrelated recruitment details from refresh or leave rows',()=>{
+ for(const cursor of [4,5]){const w=shop();w.shop.cursors[0]=cursor;const inspect=w.shop.inspect;frame(w,[{skill1:true},{}]);assert.equal(w.shop.inspect,inspect);assert.equal(w.shop.cursors[0],cursor);}
+});
+
+test('B on the main shop highlights leave without spending money or confirming departure',()=>{
+ const w=shop(),gold=w.gold;frame(w,[{cancel:true},{}]);assert.equal(w.shop.cursors[0],5);assert.equal(w.shop.ready[0],false);assert.equal(w.mode,'shop');assert.equal(w.gold,gold);
+});
 test('cancelling AI replacement cannot also spend the partner old-screen buy input',()=>{
  const w=shop();w.heroes.push(createHero('mage',2,{ai:true}));w.shop.replacing={slot:0,uid:w.shop.recruit.uid,choices:[2],selection:0};const gold=w.gold;
  frame(w,[{reroll:true},{confirm:true}]);assert.equal(w.shop.replacing,null);assert.equal(w.gold,gold);assert.equal(w.shop.offers[0].sold,undefined);

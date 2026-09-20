@@ -1,0 +1,62 @@
+{
+  "warrior": {
+    "src": "assets/portraits/warrior-hd-detail.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaThreshold": 8,
+    "bbox": {
+      "x": 91,
+      "y": 220,
+      "width": 1078,
+      "height": 877
+    },
+    "alphaExtrema": [
+      0,
+      255
+    ],
+    "transparentPixels": 1025149,
+    "totalPixels": 1572516,
+    "bytes": 823706
+  },
+  "mage": {
+    "src": "assets/portraits/mage-hd-detail.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaThreshold": 8,
+    "bbox": {
+      "x": 131,
+      "y": 138,
+      "width": 1065,
+      "height": 993
+    },
+    "alphaExtrema": [
+      0,
+      255
+    ],
+    "transparentPixels": 968509,
+    "totalPixels": 1572516,
+    "bytes": 906606
+  },
+  "archer": {
+    "src": "assets/portraits/archer-hd-detail.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "alphaThreshold": 8,
+    "bbox": {
+      "x": 107,
+      "y": 105,
+      "width": 1025,
+      "height": 1057
+    },
+    "alphaExtrema": [
+      0,
+      255
+    ],
+    "transparentPixels": 866501,
+    "totalPixels": 1572516,
+    "bytes": 966565
+  }
+}
