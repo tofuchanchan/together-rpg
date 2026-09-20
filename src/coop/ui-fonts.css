@@ -1,0 +1,2 @@
+/* Local heading subset; body copy uses a complete system CJK font. */
+@font-face{font-family:"Coop Headings";src:url('../../assets/frontend/fonts/ui-headings.ttf') format('truetype');font-style:normal;font-weight:400;font-display:swap}

@@ -25,10 +25,17 @@ export function drawOutline(c,name,x,y,w,h,color){
  if(!silhouette){silhouette=document.createElement('canvas');silhouette.width=f.w;silhouette.height=f.h;const ctx=silhouette.getContext('2d');ctx.drawImage(images.get(f.page),f.x,f.y,f.w,f.h,0,0,f.w,f.h);ctx.globalCompositeOperation='source-in';ctx.fillStyle=color;ctx.fillRect(0,0,f.w,f.h);outlines.set(key,silhouette);}
  for(let i=0;i<8;i++){const a=i*Math.PI/4;c.drawImage(silhouette,x-f.anchor[0]*w+Math.cos(a)*3,y-f.anchor[1]*h+Math.sin(a)*3,w,h);}
 }
+// Each source has different corner ornaments. Keep those corners uniformly scaled;
+// stretching a generic middle strip used to crush the button's inner rim.
+const SKIN_CORNERS={panel:[64,64,16],card:[48,48,14],button:[52,50,12],skill:[76,76,16]};
+export function skinLayout(name,content,w,h){
+ const [, ,cw,ch]=content,[sx,sy,size]=SKIN_CORNERS[name.split('-')[0]]||SKIN_CORNERS.panel;
+ const scale=Math.min(size/Math.max(sx,sy),w/(sx*2+1),h/(sy*2+1));
+ const dx=sx*scale,dy=sy*scale;
+ return {xs:[0,sx,cw-sx,cw],ys:[0,sy,ch-sy,ch],dx:[0,dx,w-dx,w],dy:[0,dy,h-dy,h]};
+}
 export function skin(c,name,x,y,w,h){
- const f=frameInfo(name),[cx,cy,cw,ch]=f.content,img=images.get(f.page);
- const border=Math.min(cw,ch)*.2,d=Math.min(15,w/3,h/3),xs=[0,border,cw-border,cw],ys=[0,border,ch-border,ch];
- const dx=[0,d,w-d,w],dy=[0,d,h-d,h];
+ const f=frameInfo(name),[cx,cy]=f.content,img=images.get(f.page),{xs,ys,dx,dy}=skinLayout(name,f.content,w,h);
  for(let j=0;j<3;j++)for(let i=0;i<3;i++)c.drawImage(img,f.x+cx+xs[i],f.y+cy+ys[j],xs[i+1]-xs[i],ys[j+1]-ys[j],x+dx[i],y+dy[j],dx[i+1]-dx[i],dy[j+1]-dy[j]);
 }
 export function makeIllustratedGround(){const cv=document.createElement('canvas');cv.width=1600;cv.height=1100;cv.getContext('2d').drawImage(background,0,0,1600,1100);return cv;}

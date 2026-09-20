@@ -13,7 +13,8 @@ export function createCodexView(host,{onClose=null,onSelect=null,initialId=null}
  root.dataset.detail='false';root.setAttribute('aria-label','冒险图鉴');
  const heading=el('div','codex-heading'),titleBlock=el('div');titleBlock.append(el('p','codex-eyebrow','FIELD NOTES / 林间远征'),el('h1',null,'冒险图鉴'),el('p','codex-subtitle','查阅招式，寻找搭配，认识下一场战斗。'));
  const headingRight=el('div','codex-heading-right');headingRight.append(el('span','codex-total',`${CODEX_ENTRIES.length} 条冒险记录`));
- if(onClose)headingRight.append(button('codex-close','关闭 · Esc',onClose));else headingRight.append(el('span','codex-edition','全部条目公开查阅'));
+ const closeButton=onClose?button('codex-close','返回游戏 · Start',onClose):null;
+ if(closeButton)headingRight.append(closeButton);else headingRight.append(el('span','codex-edition','全部条目公开查阅'));
  heading.append(titleBlock,headingRight);
  const tabs=el('nav','codex-tabs');tabs.setAttribute('aria-label','图鉴分类');
  for(const category of CODEX_CATEGORIES){const count=CODEX_ENTRIES.filter(e=>e.category===category.id).length;const tab=button('codex-tab',`${category.name}  ${count}`,()=>{state.category=category.id;state.role='all';state.kind='all';state.visibleCount=36;state.detail=false;render();});tab.dataset.category=category.id;tabs.append(tab);}
@@ -23,9 +24,19 @@ export function createCodexView(host,{onClose=null,onSelect=null,initialId=null}
  const layout=el('div','codex-layout'),results=el('section','codex-results'),resultsHeading=el('div','codex-results-heading'),count=el('span'),clear=button('codex-reset','清除筛选',()=>{state.role='all';state.kind='all';state.query='';search.value='';state.visibleCount=36;state.detail=false;render();});count.setAttribute('aria-live','polite');resultsHeading.append(count,clear);
  const cards=el('div','codex-cards'),more=button('codex-more','查看更多',()=>{state.visibleCount+=36;renderCards();});results.append(resultsHeading,cards,more);
  const detail=el('article','codex-detail');detail.id=`codex-detail-${instance}`;detail.tabIndex=-1;detail.setAttribute('aria-label','条目详情');layout.append(results,detail);
- const note=el('div','codex-note','构筑仍需在冒险中随机获得；装备与怪物数值随关卡和品质变化。');if(onClose)note.append(el('div',null,'I / 手柄 View 打开 · 方向键上下选条目、左右切分类 · A 查看 · Esc / Start 关闭'));const artStatus=el('p','codex-art-status','插画载入中…');artStatus.setAttribute('role','status');
+ const note=el('div','codex-note','构筑仍需在冒险中随机获得；装备与怪物数值随关卡和品质变化。');
+ const controllerHint=el('div','codex-controller-hint');controllerHint.setAttribute('aria-live','polite');note.append(controllerHint);
+ const artStatus=el('p','codex-art-status','插画载入中…');artStatus.setAttribute('role','status');
  root.append(heading,tabs,toolbar,roles,layout,note,artStatus);host.replaceChildren(root);
- let visible=[],artReady=false,artFailed=false,disposed=false,resolveReady;
+ let visible=[],artReady=false,artFailed=false,disposed=false,resolveReady,padActive=false,padFocus=null;
+ const isShown=node=>node&&!node.hidden&&node.getClientRects().length>0;
+ function hint(){controllerHint.textContent=state.detail?'手柄：↑↓ 阅读滚动 · ←→ 选择关联条目 / 重试 · A 确认 · B 返回列表 · LB/RB 分类':'手柄：方向键 / 左摇杆选择 · A 查看 · B 返回游戏 · LB/RB 分类；类型筛选用 ←→ 切换';}
+ function markFocus(node,{scroll=true}={}){
+  if(!node)return;
+  padFocus?.removeAttribute('data-controller-focus');padFocus=node;padActive=true;root.dataset.controller='true';node.dataset.controllerFocus='true';node.focus({preventScroll:true});
+  if(scroll)node.scrollIntoView({block:'nearest',inline:'nearest'});
+ }
+ root.addEventListener('pointerdown',()=>{padActive=false;delete root.dataset.controller;padFocus?.removeAttribute('data-controller-focus');padFocus=null;});
  const ready=new Promise(resolve=>{resolveReady=resolve;});
  function updateArtStatus(changed){
   if(disposed||(changed&&!root.contains(changed)))return;
@@ -41,10 +52,10 @@ export function createCodexView(host,{onClose=null,onSelect=null,initialId=null}
   if(primary&&primary.dataset.art!=='loading')resolveReady();
  }
  function preview(entry,className){return createCodexImage(entry,className,updateArtStatus);}
- function select(id,{focus=false,notify=true}={}){const entry=findCodexEntry(id);if(!entry)return false;state.selectedId=id;state.detail=true;root.dataset.detail='true';renderDetail();for(const node of cards.children)node.setAttribute('aria-pressed',String(node.dataset.entry===id));if(focus)detail.focus({preventScroll:true});if(matchMedia('(max-width:800px)').matches){root.scrollTop=0;detail.scrollTop=0;if(!onClose)root.scrollIntoView({block:'start'});}if(notify)onSelect?.(entry);return true;}
+ function select(id,{focus=false,notify=true}={}){const entry=findCodexEntry(id);if(!entry)return false;state.selectedId=id;state.detail=true;root.dataset.detail='true';renderDetail();detail.scrollTop=0;hint();for(const node of cards.children)node.setAttribute('aria-pressed',String(node.dataset.entry===id));if(focus)detail.focus({preventScroll:true});if(matchMedia('(max-width:800px)').matches){root.scrollTop=0;detail.scrollTop=0;root.scrollIntoView({block:'start'});}if(padActive)markFocus(detail,{scroll:false});if(notify)onSelect?.(entry);return true;}
  function follow(id){const entry=findCodexEntry(id);if(!entry)return;state.category=entry.category;state.role='all';state.kind='all';state.query='';search.value='';state.visibleCount=36;state.selectedId=id;state.detail=true;render();select(id,{focus:true});}
  function renderDetail(){detail.replaceChildren();const entry=findCodexEntry(state.selectedId);if(!entry){detail.append(el('p','codex-empty-detail','换个关键词，继续翻阅冒险记录。'));updateArtStatus();return;}
-  const back=button('codex-back','← 返回条目',()=>{state.detail=false;root.dataset.detail='false';cards.querySelector(`[data-entry="${CSS.escape(entry.id)}"]`)?.focus({preventScroll:true});});
+  const back=button('codex-back','← 返回条目 · B',returnToList);
   const intro=el('div','codex-detail-intro');intro.append(el('p','codex-eyebrow',`${scopeName(entry)} / ${KINDS[entry.kind]||entry.kind}`),el('h2',null,entry.name));
   const tags=el('div','codex-tags');for(const tag of entry.tags||[])tags.append(el('span',null,tag));
   detail.append(back,preview(entry,'codex-preview'),intro,el('p','codex-summary',entry.summary),tags);updateArtStatus();
@@ -61,11 +72,54 @@ export function createCodexView(host,{onClose=null,onSelect=null,initialId=null}
   visible=filterCodexEntries({category:state.category,role:state.role==='universal'?'all':state.role,query:state.query,kind:state.kind}).filter(e=>state.role!=='universal'||e.role==='all');
   if(!visible.some(e=>e.id===state.selectedId))state.selectedId=visible[0]?.id||null;
   state.visibleCount=Math.max(state.visibleCount,visible.findIndex(e=>e.id===state.selectedId)+1);root.dataset.detail=String(state.detail);count.textContent=`${CODEX_CATEGORIES.find(c=>c.id===state.category)?.name||'图鉴'} · ${visible.length} 条记录`;clear.hidden=state.role==='all'&&state.kind==='all'&&!state.query;
-  renderCards();renderDetail();
+  renderCards();renderDetail();hint();
  }
  const start=findCodexEntry(initialId);if(start){state.category=start.category;state.selectedId=start.id;state.detail=true;}render();
- function handleInput(input){if(input.left||input.right){const index=CODEX_CATEGORIES.findIndex(c=>c.id===state.category);state.category=CODEX_CATEGORIES[(index+(input.right?1:-1)+CODEX_CATEGORIES.length)%CODEX_CATEGORIES.length].id;state.role='all';state.kind='all';state.detail=false;state.visibleCount=36;render();}if((input.up||input.down)&&visible.length){const index=visible.findIndex(e=>e.id===state.selectedId),next=(index+(input.down?1:-1)+visible.length)%visible.length;state.selectedId=visible[next].id;state.visibleCount=Math.max(state.visibleCount,next+1);renderCards();renderDetail();cards.querySelector(`[data-entry="${CSS.escape(state.selectedId)}"]`)?.scrollIntoView({block:'nearest'});}if(input.confirm&&state.selectedId)select(state.selectedId,{focus:true});}
- return{root,ready,openEntry:follow,handleInput,focus:()=>search.focus({preventScroll:true}),snapshot:()=>({...state,count:visible.length,artReady,artFailed}),destroy(){disposed=true;host.replaceChildren();}};
+ function selectedCard(){return cards.querySelector(`[data-entry="${CSS.escape(state.selectedId||'')}"]`)||cards.querySelector('.codex-card');}
+ function returnToList(){state.detail=false;root.dataset.detail='false';hint();const target=selectedCard()||kindSelect;if(padActive)markFocus(target);else target.focus({preventScroll:true});}
+ function focusKey(node){return node?.dataset.entry?`entry:${node.dataset.entry}`:node?.dataset.category?`category:${node.dataset.category}`:node?.dataset.role?`role:${node.dataset.role}`:node===kindSelect?'kind':node===clear?'clear':node===more?'more':node===closeButton?'close':node===detail?'reading':node?.classList.contains('codex-image-retry')?'retry':node?.textContent||null;}
+ function rows(){
+  const result=[[...tabs.children],[kindSelect],[clear].filter(isShown),[...roles.children].filter(isShown)].filter(row=>row.length);
+  const entries=[...cards.querySelectorAll('.codex-card')],columns=getComputedStyle(cards).gridTemplateColumns.split(' ').length||1;
+  for(let index=0;index<entries.length;index+=columns)result.push(entries.slice(index,index+columns));
+  if(isShown(more))result.push([more]);if(closeButton)result.push([closeButton]);return result;
+ }
+ function focusCard(node){
+  markFocus(node);if(node?.classList.contains('codex-card')&&node.dataset.entry!==state.selectedId){state.selectedId=node.dataset.entry;for(const card of cards.children)card.setAttribute('aria-pressed',String(card===node));renderDetail();}
+ }
+ function scrollDetail(direction){
+  const amount=Math.max(100,Math.min(260,detail.clientHeight*.65));
+  if(detail.scrollHeight>detail.clientHeight+1)detail.scrollTop+=direction*amount;
+  else if(root.scrollHeight>root.clientHeight+1)root.scrollTop+=direction*amount;
+  else window.scrollBy({top:direction*amount,behavior:'instant'});
+ }
+ function handleInput(input){
+  if(disposed)return;
+  if(input.cancel){if(state.detail)returnToList();else onClose?.();return;}
+  if(input.tabLeft||input.tabRight){const index=CODEX_CATEGORIES.findIndex(c=>c.id===state.category);state.category=CODEX_CATEGORIES[(index+(input.tabRight?1:-1)+CODEX_CATEGORIES.length)%CODEX_CATEGORIES.length].id;state.role='all';state.kind='all';state.detail=false;state.visibleCount=36;render();markFocus(selectedCard()||kindSelect);return;}
+  if(!input.up&&!input.down&&!input.left&&!input.right&&!input.confirm)return;
+  if(state.detail){
+   if(!padActive||!padFocus?.isConnected||!detail.contains(padFocus)&&padFocus!==detail)markFocus(detail,{scroll:false});
+   if(input.up||input.down){scrollDetail(input.down?1:-1);return;}
+   const actions=[detail,...detail.querySelectorAll('button')].filter(isShown);
+   if(input.left||input.right){const current=Math.max(0,actions.indexOf(padFocus));markFocus(actions[(current+(input.right?1:-1)+actions.length)%actions.length]);return;}
+   if(input.confirm&&padFocus!==detail)padFocus.click();return;
+  }
+  const groups=rows();let row=groups.findIndex(nodes=>nodes.includes(padFocus));
+  if(!padActive||row<0){markFocus(selectedCard()||kindSelect);row=groups.findIndex(nodes=>nodes.includes(padFocus));}
+  const column=groups[row].indexOf(padFocus);
+  if((input.left||input.right)&&padFocus===kindSelect){const step=input.right?1:-1,options=[...kindSelect.options];kindSelect.value=options[(kindSelect.selectedIndex+step+options.length)%options.length].value;kindSelect.dispatchEvent(new Event('change'));markFocus(kindSelect);return;}
+  if(input.up||input.down){const next=Math.max(0,Math.min(groups.length-1,row+(input.down?1:-1)));focusCard(groups[next][Math.min(column,groups[next].length-1)]);return;}
+  if(input.left||input.right){focusCard(groups[row][(column+(input.right?1:-1)+groups[row].length)%groups[row].length]);return;}
+  if(input.confirm){
+   if(padFocus===kindSelect){handleInput({right:true});return;}
+   const key=focusKey(padFocus),wasMore=padFocus===more,wasClose=padFocus===closeButton,oldCount=state.visibleCount;padFocus.click();if(wasClose)return;
+   if(state.detail){markFocus(detail,{scroll:false});return;}
+   if(wasMore){markFocus(cards.children[oldCount]||more);return;}
+   markFocus(rows().flat().find(node=>focusKey(node)===key)||selectedCard()||kindSelect);
+  }
+ }
+ return{root,ready,openEntry:follow,handleInput,focus:()=>{padActive=false;padFocus?.removeAttribute('data-controller-focus');padFocus=null;(state.detail?detail:selectedCard()||kindSelect).focus({preventScroll:true});},snapshot:()=>({...state,count:visible.length,artReady,artFailed,controllerFocus:padActive?focusKey(padFocus):null}),destroy(){disposed=true;host.replaceChildren();}};
 }
 
 export function createCodexDialog({onOpen,onClose}={}){

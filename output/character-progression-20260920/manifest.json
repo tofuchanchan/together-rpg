@@ -1,0 +1,164 @@
+[
+  {
+    "role": "warrior",
+    "tier": "advanced",
+    "title": "精钢重甲",
+    "file": "warrior-advanced.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox": [
+      51,
+      65,
+      1205,
+      1192
+    ],
+    "bytes": 1309331,
+    "sha256": "c68849d9c69908a496b10e9f6fbcc3e029e766e5013379e9625262dfa5e6f373",
+    "originalPixelsPreserved": true
+  },
+  {
+    "role": "mage",
+    "tier": "advanced",
+    "title": "符文织袍",
+    "file": "mage-advanced.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox": [
+      80,
+      61,
+      1242,
+      1203
+    ],
+    "bytes": 1340696,
+    "sha256": "56eabaea76652db62d47153b06540b98ea1a94a4d467df1b462629d478adf287",
+    "originalPixelsPreserved": true
+  },
+  {
+    "role": "archer",
+    "tier": "advanced",
+    "title": "狼影猎装",
+    "file": "archer-advanced.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox": [
+      69,
+      88,
+      1202,
+      1182
+    ],
+    "bytes": 1357687,
+    "sha256": "4a3b93c554eecb719a06264306aab4ceab68a2c9e2efa74368cb0755aa885784",
+    "originalPixelsPreserved": true
+  },
+  {
+    "role": "warrior",
+    "tier": "epic",
+    "title": "狮纹统领",
+    "file": "warrior-epic.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox": [
+      13,
+      34,
+      1243,
+      1223
+    ],
+    "bytes": 1788664,
+    "sha256": "51a550db63ab51eb2dd966f167c8d97329f8c8d2f43ff7556abe7697907f832d",
+    "originalPixelsPreserved": true
+  },
+  {
+    "role": "mage",
+    "tier": "epic",
+    "title": "星仪大法师",
+    "file": "mage-epic.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox": [
+      40,
+      23,
+      1250,
+      1208
+    ],
+    "bytes": 1740215,
+    "sha256": "56f5dd7cdf1da8a70c220141e2556678105923747e85a02b3cfa0e9eeeb0a06a",
+    "originalPixelsPreserved": true
+  },
+  {
+    "role": "archer",
+    "tier": "epic",
+    "title": "月枭翎甲",
+    "file": "archer-epic.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox": [
+      40,
+      39,
+      1226,
+      1229
+    ],
+    "bytes": 1911649,
+    "sha256": "f875087fb2c43d10eb62ebe773628ad262f30c8df3805422df285df58df46604",
+    "originalPixelsPreserved": true
+  },
+  {
+    "role": "warrior",
+    "tier": "legendary",
+    "title": "曙光王铠",
+    "file": "warrior-legendary.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox": [
+      48,
+      119,
+      1211,
+      1176
+    ],
+    "bytes": 1694415,
+    "sha256": "10d24ed7ecd763444b56b27bf61bd5dafd4fee3b8971f32641c1394ec2e55783",
+    "originalPixelsPreserved": true
+  },
+  {
+    "role": "mage",
+    "tier": "legendary",
+    "title": "星冠贤者",
+    "file": "mage-legendary.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox": [
+      47,
+      94,
+      1233,
+      1154
+    ],
+    "bytes": 1790070,
+    "sha256": "e949cf3d8cdfda581262a8abe87b2c2089d1310b96957c61673b25d48168fa33",
+    "originalPixelsPreserved": true
+  },
+  {
+    "role": "archer",
+    "tier": "legendary",
+    "title": "森冠神射",
+    "file": "archer-legendary.png",
+    "width": 1254,
+    "height": 1254,
+    "mode": "RGBA",
+    "bbox": [
+      79,
+      46,
+      1213,
+      1221
+    ],
+    "bytes": 1871243,
+    "sha256": "78114923e1ce09d0edadcb77c47dbab7c965d2d04136f011ac28e701227de580",
+    "originalPixelsPreserved": true
+  }
+]
