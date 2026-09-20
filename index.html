@@ -1,4 +1,40 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>同行 · 林间远征</title><link rel="stylesheet" href="codex.css?v=0.9.1"><script src="assets/vendor/phaser.min.js"></script><style>
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#10271f;color:#d7dfbd;font-family:system-ui,"Microsoft YaHei",sans-serif}header,footer{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;font-size:13px;gap:14px}header b{font-size:19px;color:#fff0c7;letter-spacing:3px}header small{font-size:10px;color:#92b091;letter-spacing:2px;margin-left:12px}nav{display:flex;gap:18px;align-items:center}a{color:#b2c5a3;text-decoration:none}a:hover{color:#fff0c7}button{background:transparent;color:#eaf0ce;border:10px solid transparent;border-image:url("assets/world/ui/button-neutral.png") 30 fill stretch;padding:0 7px;cursor:pointer}#game{width:min(100vw,1600px);height:min(calc(100vh - 108px),56.25vw);min-height:300px;margin:auto;outline:none}#game:fullscreen{width:100vw;height:100vh;background:#10271f}canvas{display:block}footer{max-width:1600px;margin:auto;color:#9cb393;font-size:12px}footer span:last-child{color:#72937a}@media(max-width:850px){header{padding:12px}header small,#status,footer span:last-child{display:none}nav{gap:12px}#game{min-height:0;height:56.25vw}footer{padding:12px;line-height:1.7}}@media(max-width:850px){header{flex-wrap:wrap}header>div,nav button{white-space:nowrap}nav{width:100%;flex-wrap:wrap;gap:8px 14px}}
-</style></head><body><header><div><b>同行</b><small>TOGETHER</small></div><span id="status">D 画风 · 全资源插画版</span><nav><button id="open-codex" title="I 或手柄 View 打开图鉴">图鉴 I</button><a href="codex.html">独立图鉴</a><a href="shop-lab.html">商店试玩</a><a href="build-lab.html">构筑试炼</a><a href="cel-lab.html">关键帧小样</a><a href="bean-lab.html">动作工坊</a><a href="art-lab.html">美术工坊</a><a href="output/coop-design/index.html">设计稿</a><button id="fullscreen">全屏 F</button></nav></header><main id="game" aria-label="同行双人战斗游戏"></main><footer><span>自动普攻 · 拾取蓝晶升级 · 清波选择构筑 · 靠近倒地队友 2 秒救援</span><span>本地同屏 / 二十关远征 + 无尽 · I / 手柄 View 图鉴 · P 暂停</span></footer><script type="module" src="src/coop/app.js?v=0.9.1"></script></body></html>
-
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101619"><title>THREEFOLD ODYSSEY · 三人远征</title>
+<link rel="preload" as="image" href="assets/frontend/loading-goblin.png" fetchpriority="high">
+<link rel="preload" as="image" href="assets/frontend/title-background.png">
+<link rel="stylesheet" href="src/coop/start-screen.css?v=0.10.0"><link rel="stylesheet" href="codex.css?v=0.9.1">
+</head>
+<body data-screen="loading">
+<section id="loading-screen" role="status" aria-label="正在加载游戏" aria-busy="true">
+ <div class="loading-monster" aria-hidden="true"></div>
+ <div id="loading-error" role="alert" hidden><p id="loading-error-text"></p><button id="retry-loading">重新加载</button><button id="loading-back">返回标题</button></div>
+</section>
+<section id="title-screen" aria-label="游戏开始菜单" hidden>
+ <div class="title-stage">
+  <img id="title-art" class="title-art" src="assets/frontend/title-background.png" alt="战士、弓手与法师并肩迎战，巨大的林间首领与怪物包围小队" fetchpriority="high" decoding="async">
+  <h1 class="title-wordmark"><span class="title-overline">THREEFOLD<i class="title-emblem" aria-hidden="true"></i></span><span class="title-name">ODYSSEY</span></h1>
+  <nav class="title-menu" aria-label="主菜单">
+   <button id="title-start" class="title-choice title-primary"><span class="menu-number" aria-hidden="true">01</span><span><strong>开始冒险</strong><small>START EXPEDITION</small></span><span class="menu-arrow" aria-hidden="true">⟶</span></button>
+   <a id="title-codex" class="title-choice" href="codex.html"><span class="menu-number" aria-hidden="true">02</span><span><strong>冒险图鉴</strong><small>FIELD ARCHIVE</small></span></a>
+   <button id="title-settings-open" class="title-choice"><span class="menu-number" aria-hidden="true">03</span><span><strong>设置</strong><small>SETTINGS</small></span></button>
+  </nav>
+ </div>
+</section>
+<dialog id="title-settings" aria-labelledby="settings-heading">
+ <div class="settings-heading"><div><small>EXPEDITION / PREFERENCES</small><h2 id="settings-heading">设置</h2></div><button id="settings-close" aria-label="关闭设置">×</button></div>
+ <label class="setting-row"><span><strong>战斗音效</strong><small>攻击、闪避与构筑触发音效</small></span><input type="checkbox" name="sound" checked></label>
+ <label class="setting-row"><span><strong>打击反馈</strong><small>启用战斗反馈与打击音效</small></span><input type="checkbox" name="feedback" checked></label>
+ <label class="setting-row"><span><strong>镜头震动</strong><small>重击与技能的镜头震动</small></span><input type="checkbox" name="shake" checked></label>
+ <div class="settings-footer"><button id="settings-fullscreen">切换全屏</button><small>设置自动保存</small></div>
+</dialog>
+<div id="game-shell" inert aria-hidden="true">
+ <header class="game-header"><b>THREEFOLD ODYSSEY</b><span id="status">准备远征</span><nav><button id="back-title">返回标题</button><button id="open-codex" title="I 或手柄 View 打开图鉴">图鉴 I</button><a href="codex.html">独立图鉴</a><button id="fullscreen">全屏 F</button></nav></header>
+ <main id="game" tabindex="-1" aria-label="三人远征 · 小队冒险"></main>
+ <footer class="game-footer"><span>自动普攻 · 拾取蓝晶升级 · 清波选择构筑 · 靠近倒地队友 2 秒救援</span><details class="game-tools"><summary>试验场</summary><nav><a href="shop-lab.html">商店试玩</a><a href="build-lab.html">构筑试炼</a><a href="cel-lab.html">关键帧小样</a><a href="bean-lab.html">动作工坊</a><a href="art-lab.html">美术工坊</a><a href="output/coop-design/index.html">设计稿</a></nav></details></footer>
+</div>
+<noscript>请启用 JavaScript 后开始远征。</noscript>
+<script type="module" src="src/coop/bootstrap.js?v=0.10.0"></script>
+</body></html>

@@ -9,7 +9,7 @@ const shot=async(name)=>{await p.evaluate(()=>coopTest.render());await p.screens
 const mark=(s)=>{checks.push(s);console.log('PASS',s);};
 try{
  await p.goto('http://127.0.0.1:4173/');await p.waitForFunction(()=>window.assetsReady);await advance(0);assert.equal((await state()).mode,'menu');await shot('menu');mark('menu renders and assets ready');
- await tap('Enter');assert.equal((await state()).mode,'play');mark('Enter starts selected human roles');
+ await p.locator('#title-start').click();assert.equal((await state()).frontend.screen,'setup');await tap('Enter');assert.equal((await state()).mode,'play');mark('Title opens setup; Enter starts selected human roles');
  const before=await state();await p.keyboard.down('d');await p.keyboard.down('ArrowDown');await advance(400);await p.keyboard.up('d');await p.keyboard.up('ArrowDown');await advance(20);const after=await state();assert.ok(after.heroes[0].x>before.heroes[0].x+55);assert.ok(after.heroes[1].y>before.heroes[1].y+50);mark('two simultaneous keyboard players move independently');
  await p.evaluate(()=>{coopTest.world.heroes.forEach(h=>h.skills=[1,1]);});await tap('q');assert.ok((await state()).heroes[0].cooldowns[0]>0);await tap('Numpad2');assert.ok((await state()).heroes[1].cooldowns[1]>0);await advance(120);await tap('Space',80);assert.equal((await state()).heroes[0].action,'dodge');await shot('combat');mark('P1 shield charge and dodge, P2 frost skill');
  await tap('p');assert.equal((await state()).mode,'paused');const frozen=(await state()).time;await advance(1000);assert.equal((await state()).time,frozen);await shot('pause');await tap('p');assert.equal((await state()).mode,'play');mark('pause freezes simulation and resumes');
