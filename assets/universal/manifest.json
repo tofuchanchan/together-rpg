@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "cell": 256,
+  "frames": {
+    "seedling": {
+      "file": "seedling.png",
+      "count": 4,
+      "anchor": [
+        0.5,
+        0.921875
+      ],
+      "scale": 0.6010928961748634,
+      "bounds": [
+        {
+          "left": 150,
+          "top": 185,
+          "width": 331,
+          "height": 350
+        },
+        {
+          "left": 739,
+          "top": 188,
+          "width": 335,
+          "height": 341
+        },
+        {
+          "left": 179,
+          "top": 788,
+          "width": 331,
+          "height": 297
+        },
+        {
+          "left": 781,
+          "top": 777,
+          "width": 366,
+          "height": 308
+        }
+      ]
+    },
+    "dustling": {
+      "file": "dustling.png",
+      "count": 4,
+      "anchor": [
+        0.5,
+        0.921875
+      ],
+      "scale": 0.6358381502890174,
+      "bounds": [
+        {
+          "left": 199,
+          "top": 214,
+          "width": 319,
+          "height": 332
+        },
+        {
+          "left": 744,
+          "top": 217,
+          "width": 336,
+          "height": 337
+        },
+        {
+          "left": 187,
+          "top": 796,
+          "width": 337,
+          "height": 288
+        },
+        {
+          "left": 748,
+          "top": 755,
+          "width": 346,
+          "height": 297
+        }
+      ]
+    },
+    "gnat": {
+      "file": "gnat.png",
+      "count": 4,
+      "anchor": [
+        0.5,
+        0.921875
+      ],
+      "scale": 0.5092592592592593,
+      "bounds": [
+        {
+          "left": 134,
+          "top": 176,
+          "width": 425,
+          "height": 373
+        },
+        {
+          "left": 745,
+          "top": 197,
+          "width": 399,
+          "height": 364
+        },
+        {
+          "left": 127,
+          "top": 783,
+          "width": 420,
+          "height": 294
+        },
+        {
+          "left": 724,
+          "top": 744,
+          "width": 432,
+          "height": 358
+        }
+      ]
+    },
+    "spiritdog": {
+      "file": "spiritdog.png",
+      "count": 4,
+      "anchor": [
+        0.5,
+        0.921875
+      ],
+      "scale": 0.43912175648702595,
+      "bounds": [
+        {
+          "left": 129,
+          "top": 217,
+          "width": 437,
+          "height": 351
+        },
+        {
+          "left": 705,
+          "top": 222,
+          "width": 452,
+          "height": 350
+        },
+        {
+          "left": 119,
+          "top": 736,
+          "width": 452,
+          "height": 385
+        },
+        {
+          "left": 700,
+          "top": 771,
+          "width": 501,
+          "height": 352
+        }
+      ]
+    },
+    "paperbird": {
+      "file": "paperbird.png",
+      "count": 4,
+      "anchor": [
+        0.5,
+        0.921875
+      ],
+      "scale": 0.43222003929273084,
+      "bounds": [
+        {
+          "left": 139,
+          "top": 154,
+          "width": 436,
+          "height": 377
+        },
+        {
+          "left": 718,
+          "top": 166,
+          "width": 457,
+          "height": 361
+        },
+        {
+          "left": 105,
+          "top": 813,
+          "width": 476,
+          "height": 311
+        },
+        {
+          "left": 691,
+          "top": 745,
+          "width": 509,
+          "height": 397
+        }
+      ]
+    },
+    "thornpet": {
+      "file": "thornpet.png",
+      "count": 4,
+      "anchor": [
+        0.5,
+        0.921875
+      ],
+      "scale": 0.5994550408719346,
+      "bounds": [
+        {
+          "left": 203,
+          "top": 161,
+          "width": 315,
+          "height": 367
+        },
+        {
+          "left": 759,
+          "top": 176,
+          "width": 308,
+          "height": 352
+        },
+        {
+          "left": 237,
+          "top": 745,
+          "width": 308,
+          "height": 318
+        },
+        {
+          "left": 792,
+          "top": 757,
+          "width": 329,
+          "height": 326
+        }
+      ]
+    }
+  }
+}

@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {World} from '../src/coop/model.js';
+import {addFixtureCompanions} from './hero-fixture.mjs';
+import {enemyDef} from '../src/coop/enemies.js';
 import {actionTiming,actionPhase,reactionPose} from '../src/coop/combat-motion.js';
 import {spritePose} from '../src/coop/sprite-animation.js';
-const setup=()=>{const w=new World(22);w.reset(['warrior','mage'],1);w.obstacles=[];w.enemies=[];w.waveTimer=-100;w.heroes.forEach((h,i)=>{h.x=i*300;h.y=250;h.attackCd=99;});return w;};
+const setup=()=>{const w=new World(22);w.reset(['warrior','mage'],1);addFixtureCompanions(w);w.obstacles=[];w.enemies=[];w.spawnQueue=[];w.pressure=null;w.waveTimer=-100;w.heroes.forEach((h,i)=>{h.x=i*300;h.y=250;h.attackCd=99;});return w;};
 const bolt=w=>{const h=w.heroes[1];h.x=0;h.y=0;w.shoot(h,{x:1,y:0},'arrow',10,1000);return w.projectiles[0];};
-test('swept projectiles hit the first surface regardless of enemy array order',()=>{const w=setup(),far=w.createEnemy('goblin',180,0),near=w.createEnemy('goblin',100,0);w.enemies=[far,near];bolt(w);w.updateProjectiles(.2);assert.equal(near.hp,near.maxHp-10);assert.equal(far.hp,far.maxHp);assert.equal(w.effects.find(f=>f.type==='contact')?.x,77);});
+test('swept projectiles hit the first surface regardless of enemy array order',()=>{const w=setup(),far=w.createEnemy('goblin',180,0),near=w.createEnemy('goblin',100,0);w.enemies=[far,near];bolt(w);w.updateProjectiles(.2);assert.equal(near.hp,near.maxHp-10);assert.equal(far.hp,far.maxHp);assert.equal(w.effects.find(f=>f.type==='contact')?.x,near.x-enemyDef(near).bodyRadius);});
 test('target before a wall is hit; target behind a wall is protected',()=>{for(const x of [100,200]){const w=setup(),e=w.createEnemy('goblin',x,0);w.enemies=[e];w.obstacles=[{x:150,y:0,r:20}];bolt(w);w.updateProjectiles(.25);assert.equal(e.hp,e.maxHp-(x===100?10:0));assert.equal(w.projectiles.length,0);}});
 test('piercing contact order and damage remain single-hit across subsequent ticks',()=>{const w=setup(),a=w.createEnemy('goblin',100,0),b=w.createEnemy('goblin',180,0);w.enemies=[b,a];const p=bolt(w);p.type='pierce';w.updateProjectiles(.2);assert.deepEqual([...p.hit],[a.id,b.id]);w.updateProjectiles(.01);assert.equal(a.hp,a.maxHp-10);assert.equal(b.hp,b.maxHp-10);});
 test('impact knockback follows incoming projectile, not moving shooter',()=>{const w=setup(),e=w.createEnemy('goblin',100,0);w.enemies=[e];bolt(w);w.heroes[1].x=300;w.updateProjectiles(.1);assert.ok(e.knock.x>0);assert.ok(e.hitReaction);});

@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {applyReward,rollSkills,skillPool} from '../src/coop/builds.js';
+const hero=(role='warrior')=>({role,skills:[0,0],forms:[null,null],evolved:[false,false],passives:{},core:null,power:1,skillPower:1,dotPower:1,shieldPower:1,hp:100,maxHp:100,speedBonus:1,haste:1,crit:0,critDamage:1.5,evasion:0,armor:0,cooldown:0,rangeBonus:1,recovery:1,cd:[0,0]});
+const rng=(seed=17)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+test('second clear cannot force a full core menu',()=>{for(let seed=1;seed<=50;seed++)assert.ok(rollSkills(hero(),rng(seed),{clears:2}).every(o=>o.kind!=='core'));});
+test('shape consumes one reward without a free level',()=>{const h=hero();applyReward(h,'active:0');applyReward(h,'form:0:aegis');assert.equal(h.skills[0],1);});
+test('core and own shape do not satisfy two-component evolution recipe',()=>{const h=hero();h.skills=[3,1];h.core='bulwark';h.forms=['aegis',null];assert.ok(!skillPool(h).some(o=>o.kind==='evolution'));});
+test('fifth passive requires an atomic explicit replacement',()=>{const h=hero();h.passives={momentum:1,harvest:2,thorns:1,focus:1};const before=structuredClone(h.passives);const result=applyReward(h,'passive:chill');assert.equal(result.status,'replace-required');assert.deepEqual(h.passives,before);assert.equal(applyReward(h,'passive:chill',{replaceKey:'harvest'}).ok,true);assert.equal(h.passives.chill,1);assert.ok(!h.passives.harvest);assert.equal(Object.keys(h.passives).length,4);});
+test('same-source damage and shield attributes grow additively',()=>{const h=hero();for(let i=0;i<5;i++)for(const key of ['power','skill','dot','shield'])applyReward(h,key);assert.ok(Math.abs(h.power-1.9)<1e-9);assert.ok(Math.abs(h.skillPower-2)<1e-9);assert.ok(Math.abs(h.dotPower-2)<1e-9);assert.ok(Math.abs(h.shieldPower-2)<1e-9);});

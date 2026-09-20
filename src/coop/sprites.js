@@ -1,3 +1,4 @@
+import {drawEquippedHero} from './equipment-art.js';
 import {loadLayeredWarrior,drawLayeredWarrior,layeredAssetState} from './layered-warrior.js';
 import {equipment} from './layered-pose.js';
 const appearanceQuery=new URLSearchParams(globalThis.location?.search||'');
@@ -36,6 +37,7 @@ export function characterAssetState() {
 
 // Only draw PNG pixels. This function no longer constructs the character from paths.
 export function hero(c, h, time, scale = 1) {
+  if(drawEquippedHero(c,h,0,0,time,scale))return;
   if(layeredPreview&&h.role==='warrior')return drawLayeredWarrior(c,h,time,scale,{gear:previewGear});
   const atlas = atlases.get(h.role);
   if (!atlas) return;
