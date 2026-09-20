@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "source": "source/effects-chroma.png",
+  "frames": {
+    "aegis": {
+      "file": "aegis.png",
+      "width": 473,
+      "height": 393,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    "bloodspin": {
+      "file": "bloodspin.png",
+      "width": 435,
+      "height": 412,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    "inferno": {
+      "file": "inferno.png",
+      "width": 471,
+      "height": 433,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    "icelance": {
+      "file": "icelance.png",
+      "width": 479,
+      "height": 216,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    "markedshot": {
+      "file": "markedshot.png",
+      "width": 459,
+      "height": 261,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    "shadow": {
+      "file": "shadow.png",
+      "width": 464,
+      "height": 245,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    "coldfield": {
+      "file": "coldfield.png",
+      "width": 640,
+      "height": 640,
+      "anchor": [
+        0.5,
+        0.5
+      ],
+      "source": "source/coldfield.png"
+    }
+  }
+}

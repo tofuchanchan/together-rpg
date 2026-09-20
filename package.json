@@ -1,6 +1,6 @@
 {
   "name": "together-rpg",
-  "version": "0.5.1",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -22,6 +22,15 @@
     "build:companions": "node tools/prepare-cel-companions.mjs",
     "test:companions": "node tools/verify-cel-companions.mjs",
     "test:pressure": "node tools/verify-pressure.mjs",
-    "test:kiting": "node tools/simulate-pressure.mjs"
+    "test:kiting": "node tools/simulate-pressure.mjs",
+    "test:builds": "node tools/verify-builds.mjs",
+    "test:build-simulation": "node tools/simulate-builds.mjs",
+    "test:pacing": "node tools/simulate-pacing.mjs",
+    "test:universal": "node --test tests/universal-builds.test.mjs tests/universal-world.test.mjs",
+    "test:v07": "node tools/verify-v07.mjs",
+    "build:universal-art": "node tools/prepare-universal-art.mjs",
+    "test:shop": "node tools/verify-shop.mjs",
+    "test:equipment": "node --test tests/equipment.test.mjs tests/recruitment.test.mjs tests/shop.test.mjs",
+    "test:codex": "node tools/verify-codex.mjs"
   }
 }

@@ -280,7 +280,7 @@ async function main() {
 
   await page.addInitScript({ content: makeVirtualTimeShim() });
   await page.goto(args.url, { waitUntil: "domcontentloaded" });
-  await page.waitForTimeout(500);
+  await page.waitForFunction(() => window.assetsReady === true, null, { timeout: 60000 });
   await page.evaluate(() => {
     window.dispatchEvent(new Event("resize"));
   });
