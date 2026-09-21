@@ -24,13 +24,13 @@ test('support priority retains the actual query range and obstacle visibility',(
  assert.equal(w.nearest(h,100),null);
 });
 
-test('a support cannot override an immediate threat or a dense living group',()=>{
+test('a support cannot override an immediate threat but distant crowd size does not cancel priority',()=>{
  const {w,h,foe}=arena(),near=foe('goblin',100),support=foe('shaman',220);
  assert.equal(w.nearest(h,400),near);
  near.x=101;assert.equal(w.nearest(h,400),support);
  for(let i=0;i<7;i++)foe('goblin',350,i*10);
- assert.equal(w.nearest(h,400),near);
- w.enemies.at(-1).hp=0;assert.equal(w.nearest(h,400),support,'dead enemies do not count toward group size');
+ assert.equal(w.nearest(h,400),support);
+ w.enemies.at(-1).hp=0;assert.equal(w.nearest(h,400),support);
 });
 
 test('personal marks retain priority until the existing 140-unit danger interruption',()=>{

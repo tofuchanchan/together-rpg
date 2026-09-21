@@ -10,6 +10,7 @@ import {loadBuildArt,drawBuildIcon} from './build-art.js';
 import {loadUniversalArt,drawUniversalIcon,drawSwarm} from './universal-art.js';
 import {ENEMIES} from './enemies.js';
 import {BOSS_DEF} from './encounters.js';
+import {loadAdventureArt,drawAdventureSprite} from './adventure-art.js';
 
 let pending,ready=false;
 const previews=new Map(),roles=['warrior','mage','archer'];
@@ -17,7 +18,7 @@ const previews=new Map(),roles=['warrior','mage','archer'];
 // This promise is shared by the catalogue and its detail view. A missing asset
 // rejects to the UI instead of silently replacing the illustration with a glyph.
 export function loadCodexArt(){
- return pending??=Promise.all([loadCharacterSprites(),loadWorldArt(),loadBuildArt(),loadUniversalArt(),loadEquipmentArt(),loadShopEventArt()]).then(()=>{ready=true;});
+ return pending??=Promise.all([loadCharacterSprites(),loadWorldArt(),loadBuildArt(),loadUniversalArt(),loadEquipmentArt(),loadShopEventArt()]).then(()=>loadAdventureArt()).then(()=>{ready=true;});
 }
 
 function previewActor(role){
@@ -40,6 +41,7 @@ function drawPreview(c,art,time){
   return;
  }
  if(art.type==='enemy'){
+  if(['mossbell','nest','beacon'].includes(art.kind)){drawAdventureSprite(c,art.kind,0,0,0,280);return;}
   const kind=art.kind||art.key;const bonusKind=kind==='experienceGrub'?'xp':kind==='coinRunner'?'gold':null;if(bonusKind){c.scale(2.4,2.4);drawBonusCreature(c,{bonusKind,stats:BONUS_CREATURES[bonusKind],stride:time,face:0});return;}const boss=kind==='thornking',stats=boss?BOSS_DEF:ENEMIES[kind];
   if(!stats)throw Error(`未知图鉴怪物：${kind}`);
   const e={kind,boss,stats,phase:1,face:1,x:0,y:0,stride:0,rarity:0,spawnGrace:0,hitFlash:0};

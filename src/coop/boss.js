@@ -1,3 +1,4 @@
+import {warningContains} from './mossbell.js';
 // Deliberate fixed telegraphs: no target tracking after windup begins.
 export const BOSS_SKILLS={slam:'裂地重锤',barrage:'荆种齐射',roots:'缠根围猎',summon:'林卫召集',ultimate:'荆冠天罚'};
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -27,4 +28,19 @@ export function updateBoss(w,e,dt){
  if(e.cd<=0){let key;if(e.phase>=2&&e.ultimateCd<=0){key='ultimate';e.ultimateCd=e.phase===3?13:20;}else{const order=['slam','barrage','roots','summon','barrage'];key=order[e.skillCursor++%order.length];}startBossSkill(w,e,key);return;}
  const target=w.heroes.filter(h=>!h.down).sort((a,b)=>dist(a,e)-dist(b,e))[0];if(target&&dist(target,e)>210){const d=dist(target,e),speed=e.stats.speed;w.moveActor(e,(target.x-e.x)/d*speed*dt,(target.y-e.y)/d*speed*dt,48);e.stride+=dt*speed/70;}
 }
-export function updateBossWarnings(w,dt){for(const a of w.bossWarnings){a.t+=dt;if(!a.hit&&a.t>=a.windup){a.hit=true;const owner=w.enemies.find(e=>e.id===a.owner&&e.hp>0);if(owner){for(const h of w.heroes)if(!h.down&&dist(h,a)<a.r)w.damageHero(h,a.damage,a,owner);w.effects.push({type:a.skill==='roots'?'frost':'blast',x:a.x,y:a.y,r:a.r,life:.4,max:.4});}}}w.bossWarnings=w.bossWarnings.filter(a=>a.t<a.windup+.25&&w.enemies.some(e=>e.id===a.owner&&e.hp>0));}
+export function updateBossWarnings(w,dt){
+ for(const a of w.bossWarnings){a.t+=dt;if(a.hit||a.t<a.windup)continue;a.hit=true;
+  const owner=w.enemies.find(e=>e.id===a.owner&&e.hp>0);if(!owner)continue;
+  for(const h of w.heroes)if(!h.down&&(a.mossbell?warningContains(a,h):dist(h,a)<a.r)){
+   const angle=owner.action?.angle||0,impact=a.mossbell&&a.skill==='leap'?{...a,dx:Math.cos(angle),dy:Math.sin(angle)}:a;
+   w.damageHero(h,a.damage,impact,owner);
+  }
+  if(a.mossbell){
+   // Reuse collision geometry: a ring's safe opening and a root corridor stay readable.
+   w.effects.push({...a,type:'boss-release',life:.62,max:.62});
+   if(w.options.feedback&&w.options.shake)w.shake=Math.max(w.shake,a.skill==='leap'?.24:a.skill==='ultimate'?.18:.09);
+   w.emit('bossImpact',{skill:a.skill,heavy:true});
+  }else w.effects.push({type:a.skill==='roots'?'frost':'blast',x:a.x,y:a.y,r:a.r,life:.4,max:.4});
+ }
+ w.bossWarnings=w.bossWarnings.filter(a=>a.t<a.windup+.25&&w.enemies.some(e=>e.id===a.owner&&e.hp>0));
+}

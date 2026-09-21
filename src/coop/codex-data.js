@@ -160,7 +160,7 @@ const enemyNotes={
  bat:{summary:'高速冲锋敌人，能迅速穿过空旷距离。',behavior:'沿锁定路径高速冲刺，障碍物会截停冲锋。',counter:'横向躲开冲刺线，利用障碍物切断路径。'},
  wolf:{summary:'冲撞距离长、速度快的追猎者。',behavior:'提前预测移动方向，长距离冲刺并造成路径伤害。',counter:'看到起手再侧闪，不要持续沿同一直线撤退。'},
  skeleton:{summary:'保持距离并预判射击的远程弓手。',behavior:'锁定预判位置后射出一支箭；贴近时会后退。',counter:'变向躲箭，接近时留心身后的近战怪。'},
- shaman:{summary:'为附近敌人回复生命，是久战的重要支援目标。',behavior:'施法时给周围 220 距离内的存活敌人各回复 22 生命，包括自己。',counter:'集中输出打断敌群的续航；同场活萨满上限为小队人数，最多 3 只。'},
+ shaman:{summary:'治疗附近受伤怪物，是久战时应优先处理的支援目标。',behavior:'为 220 距离内有视线的最多 3 名受伤怪物各回复 22 生命，不能自疗，也不能治疗其他萨满；狂暴不加快治疗。',counter:'冻结或击晕可以打断施法；首次登场最多 1 只且最高精英，后续同场上限为小队人数。'},
  spider:{summary:'把预判区域变成毒地，迫使玩家离开安全站位。',behavior:'带落点散布的预判毒区持续 3.5 秒，留在区域内会连续受到攻击判定。',counter:'及时换位，避免在多个毒区之间失去退路。'},
  beetle:{summary:'正面硬壳能削减伤害，适合从侧后方处理。',behavior:'正面受击伤害减半；近身时发动重击。',counter:'绕到侧后方输出；不要被它挡住所有弹道。'},
  wisp:{summary:'保持距离的三向弹幕怪，能封住狭窄通路。',behavior:'预判目标后扇形发射三枚火弹。',counter:'从弹道空隙穿过，避免直线后退吃到中间火弹。'},
@@ -188,6 +188,11 @@ const traitNotes={
 for(const [key,name] of Object.entries(AFFIXES))add({id:`trait:${key}`,category:'monsters',kind:'trait',name,summary:traitNotes[key][0],tags:['怪物词条'],art:icon(({vitality:'heart',fury:'sword',haste:'boot',ward:'shield',regen:'heal',vampire:'heart'})[key]),
  sections:[section('词条效果',traitNotes[key][0]),section('应对方式',traitNotes[key][1]),section('出现规则','精英、稀有、传奇怪物分别携带 1、2、3 个不重复词条；词条随机组合。')],relatedIds:RARITIES.slice(1).map((_,index)=>`enemy-rarity:${index+1}`)});
 
+// Chapter one introduces objectives without adding skill reward settlements.
+add({id:'boss:mossbell',category:'monsters',kind:'boss',name:'苔钟守卫',summary:'第10关的独立首领：石槌、树根和铜钟构成三阶段战斗，命中积累失衡，钟芯暴露时受到额外伤害。',tags:['首领','三阶段','失衡'],art:{type:'enemy',kind:'mossbell',key:'mossbell'},sections:[section('形态与阶段','生命降至70%和35%后，在当前动作结束时转阶段。','青铜钟躯、白瓷面具、非对称石槌与藤臂；地面判定对应本体。'),section('五种技能','石槌横扫：扇形锁定，起手后绕向背面。','根径裂地：三条延迟树根，利用缝隙移动。','跃步落钟：锁定落点后跳砸，落地存在恢复窗口。','唤醒侍卫：同时最多6只，整场最多召唤18只。','合围钟鸣：第三阶段释放三道带宽缺口的钟波；绿色缺口安全，大招后钟芯暴露4秒。'),section('失衡与弱点','普攻与技能命中增加失衡，控制带来额外贡献，同一次多段攻击有上限。','失衡蓄满后在当前动作结束时暴露钟芯4秒，受伤增加25%；恢复期间不能连续压入失衡。','单人、双人或带佣兵都可挑战，不要求特定职业。')],relatedIds:['boss:thornking','objective:nest','objective:beacon']});
+add({id:'objective:nest',category:'monsters',kind:'objective',name:'孵化巢穴',summary:'路线任务：摧毁三个孵化巢，切断近战、疾行与冲刺小怪的来源。',tags:['路线目标','摧毁','限时'],art:{type:'enemy',kind:'nest',key:'nest'},sections:[section('目标','第3、6、8关前的岔路只影响下一关；第一波遭遇战，第二波执行任务。','90秒内摧毁全部巢穴；核心发亮时受到额外25%伤害。靠近会优先锁定，仍受射程与墙体限制。'),section('超时与奖励','超时停止孵化，残存巢穴转为精英守卫；有限清场后继续，失去额外路线奖励，保留基础技能选择。','经验路线减少部分金币，装备路线减少部分经验与金币；装备奖励为各自本职业二选一，可放弃，不改技能进阶门槛。','总刷怪与掉落预算有限；暂停与升级停表。')],relatedIds:['objective:beacon','boss:mossbell']});
+add({id:'objective:beacon',category:'monsters',kind:'objective',name:'林灯据点',summary:'路线任务：保护有独立耐久的林灯，拦截主动攻击据点的敌人。',tags:['路线目标','保护','据点'],art:{type:'enemy',kind:'beacon',key:'beacon'},sections:[section('保护规则','守住60秒，角色不需要站在圈内；可以走出去拦截、控制和清除攻城怪。','敌人靠近队员或受到近处攻击会转而交战。AI会优先处理攻城者，并在空闲时守在据点附近。'),section('失守与收益','据点被摧毁后转为有限清场，保留基础技能奖励，失去路线额外收益。','金币路线降低部分经验掉落，成功时追加本段基础金币预算的25%；金币仍掉在地上，由真人各自拾取。','任务不要求多处同时站人，单人也可完成。')],relatedIds:['objective:nest','boss:mossbell']});
+const oldBoss=entries.find(e=>e.id==='boss:thornking');oldBoss.summary='第20关及之后每10关出现的三阶段古王，以重锤、弹幕、根刺和天罚围猎小队。';oldBoss.sections[0].lines[0]='第10关为苔钟守卫；第20关及之后每10关出现荆冠古王。';
 function freeze(value){if(value&&typeof value==='object'&&!Object.isFrozen(value)){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;}
 export const CODEX_ENTRIES=freeze(entries);
 const byId=new Map(CODEX_ENTRIES.map(entry=>[entry.id,entry]));
