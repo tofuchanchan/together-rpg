@@ -1,3 +1,4 @@
+import {MOSSBELL_BODY_RADIUS,warningContains,warningEscape} from './mossbell.js';
 import {equippedSkills} from './skill-pairs.js';
 import {segmentCircle,constrainSharedMove} from './collision.js';
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -7,32 +8,48 @@ const point=(h,v,d)=>({x:h.x+v.x*d,y:h.y+v.y*d});
 // World bodies use 17px while steering keeps a 21px comfort margin. Being in
 // that margin must not reject every path: allow only monotonically outward
 // (including tangent) motion, never an inward shortcut through a solid body.
-function obstaclePathClear(a,b,o){
+function obstaclePathClear(a,b,o,allowOverlap=false){
  const x=a.x-o.x,y=a.y-o.y,dx=b.x-a.x,dy=b.y-a.y,r=o.r+21,start=x*x+y*y;
  if(start>r*r)return segmentCircle(a,b,o,r)===Infinity;
- return start>=(o.r+17)**2-1e-6&&dx*dx+dy*dy>1e-12&&x*dx+y*dy>=-1e-7&&(x+dx)**2+(y+dy)**2>start+1e-8;
+ return (allowOverlap||start>=(o.r+17)**2-1e-6)&&dx*dx+dy*dy>1e-12&&x*dx+y*dy>=-1e-7&&(x+dx)**2+(y+dy)**2>start+1e-8;
 }
 // A character already in the map's 5px steering border can travel along it or
 // toward the interior; it cannot move farther outward or leave the body bound.
 const axisPathClear=(from,to,extent)=>Math.abs(to)<=extent-17&&(Math.abs(to)<extent-22||Math.abs(from)>=extent-22&&Math.abs(to)<=Math.abs(from)+1e-7);
 
 function zoneCenter(p,a){if(!a.from)return a;const dx=a.x-a.from.x,dy=a.y-a.from.y,l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,((p.x-a.from.x)*dx+(p.y-a.from.y)*dy)/l)):0;return{x:a.from.x+dx*t,y:a.from.y+dy*t};}
-const zoneDistance=(p,a)=>distance(p,zoneCenter(p,a));
+const zoneDistance=(p,a)=>a.mossbell?(warningContains(a,p,25)?0:Infinity):distance(p,zoneCenter(p,a));
 export function companionInput(w,h,role,map){
  const foes=w.enemies.filter(e=>e.hp>0),visible=foes.filter(e=>w.lineClear(h,e)),nearest=(visible.length?visible:foes).reduce((best,e)=>!best||distance(h,e)<distance(h,best)?e:best,null),forms=h.forms||[],passives=h.passives||{},shadowReady=h.shadow?.life>0&&!h.shadow.spent;
  const marked=foes.find(e=>e.id===h.huntTarget),keepMark=(h.core==='sniper'||forms[0]==='markedshot')&&marked&&(h.huntStacks||0)>0&&distance(h,marked)<role.range*h.rangeBonus*1.08&&w.lineClear(h,marked)&&(!nearest||distance(h,nearest)>140);
  const healer=visible.filter(e=>e.stats?.behavior==='healer'&&distance(h,e)<500).sort((a,b)=>distance(h,a)-distance(h,b))[0];
- const huntSupport=!keepMark&&!!healer&&foes.length<=8&&(!nearest||distance(h,nearest)>100),target=keepMark?marked:huntSupport?healer:nearest;
- const ally=w.heroes.find(p=>p.down);
- const zones=[...(w.bossWarnings||[]).filter(a=>!a.hit).map(a=>({...a,eta:Math.max(0,a.windup-a.t)})),...foes.filter(e=>e.action&&(!e.action.hit||(e.action.from&&e.action.t<e.action.windup+e.action.travelTime))&&e.action.kind!=='healer').map(e=>({...e.action,source:e,eta:Math.max(0,e.action.windup-e.action.t)})),...w.hazards.filter(f=>f.type==='poison').map(f=>({...f,eta:Math.max(0,f.timer)}))];
+ const huntSupport=!keepMark&&!!healer&&(!nearest||distance(h,nearest)>100);
+ const objectiveTarget=w.objective?.phase==='active'?(w.objective.kind==='defend'?visible.filter(e=>e.siege&&distance(e,w.objective.beacon)<230).sort((a,b)=>distance(a,w.objective.beacon)-distance(b,w.objective.beacon))[0]:w.objective.kind==='nest'&&nearest&&distance(h,nearest)>100?visible.filter(e=>e.objectivePart).sort((a,b)=>distance(h,a)-distance(h,b))[0]:null):null;
+ const target=objectiveTarget||(keepMark?marked:huntSupport?healer:nearest);
+ const downedAlly=w.heroes.find(p=>p.down);
+ const zones=[...(w.bossWarnings||[]).filter(a=>!a.hit).map(a=>({...a,eta:Math.max(0,a.windup-a.t)})),...foes.filter(e=>e.action&&(!e.action.hit||(e.action.from&&e.action.t<e.action.windup+e.action.travelTime))&&!['healer','siege'].includes(e.action.kind)).map(e=>({...e.action,source:e,eta:Math.max(0,e.action.windup-e.action.t)})),...w.hazards.filter(f=>f.type==='poison').map(f=>({...f,eta:Math.max(0,f.timer)}))];
  const bullets=w.projectiles.filter(p=>p.hostile&&p.life>0);
  const risk=(p,horizon=.4)=>zones.reduce((n,a)=>n+(a.eta<horizon&&zoneDistance(p,a)<a.r+25?5+(a.r+25-zoneDistance(p,a))/30:0),0)+bullets.reduce((n,b)=>n+(segmentCircle(b,point(b,{x:b.dx,y:b.dy},b.speed*Math.min(horizon,b.life)),p,29)<Infinity?7:0),0);
- const pathClear=(a,b)=>axisPathClear(a.x,b.x,map.x)&&axisPathClear(a.y,b.y,map.y)&&w.obstacles.every(o=>obstaclePathClear(a,b,o));
+ // A safe cone endpoint can still cut a chord through the bell's large body.
+ // Route around grounded bodies; an actor already overlapped may escape outward.
+ const bossBodies=foes.filter(e=>e.kind==='mossbell'&&!(e.action?.kind==='leap'&&e.action.t>=e.action.windup*.45&&e.action.t<e.action.windup)).map(e=>({x:e.x,y:e.y,r:e.stats.bodyRadius||MOSSBELL_BODY_RADIUS}));
+ const pathClear=(a,b)=>axisPathClear(a.x,b.x,map.x)&&axisPathClear(a.y,b.y,map.y)&&w.obstacles.every(o=>obstaclePathClear(a,b,o))&&bossBodies.every(o=>obstaclePathClear(a,b,o,true));
  const travelPoint=(v,d)=>{const dx=v.x*d,dy=v.y*d,move=constrainSharedMove(h,!h.ai&&w.humanCount===2?w.heroes[1-h.id]:null,dx,dy);return {x:h.x+move.dx,y:h.y+move.dy,limited:move.dx!==dx||move.dy!==dy};};
+ let ally=downedAlly;
+ if(downedAlly){
+  const channeling=distance(h,downedAlly)<82,unguarded=foes.filter(e=>!e.bonusKind&&!e.objectivePart&&!(e.freeze>.8));
+  const unsafe=risk(downedAlly,1)>0||unguarded.filter(e=>distance(e,downedAlly)<170).length>=2||!channeling&&unguarded.some(e=>distance(e,downedAlly)<100);
+  // Clear threats first and require a short stable window before re-entering.
+  // An already safe channel stays committed; actual danger still interrupts it.
+  if(unsafe)h.rescueBlockedUntil=w.time+.65;
+  if((h.rescueBlockedUntil||0)>w.time)ally=null;
+  h.rescueState=ally?(channeling?'channel':'approach'):'clear';
+ }else{h.rescueBlockedUntil=0;h.rescueState=null;}
  let dest=ally||h,stop=ally?48:18,intent=ally?'revive':'patrol';
  // Quiet companions watch their own last combat position instead of following P1.
  if(target)h.sentryAnchor={x:h.x,y:h.y};
- if(!ally&&!target){
+ if(!ally&&!target&&w.objective?.kind==='defend'&&w.objective.phase==='active'){dest=w.objective.beacon;stop=160;intent='defend';}
+ if(!ally&&!target&&intent!=='defend'){
   h.sentryAnchor??={x:h.x,y:h.y};
   const phase=Math.floor(w.time/3.5)+h.id*2.4,anchor=h.sentryAnchor;
   dest={x:Math.max(-map.x+50,Math.min(map.x-50,anchor.x+Math.cos(phase)*56)),y:Math.max(-map.y+50,Math.min(map.y-50,anchor.y+Math.sin(phase)*56))};
@@ -44,10 +61,15 @@ export function companionInput(w,h,role,map){
   const low=huntSupport?85:frostSetup?155*h.rangeBonus:ranged?Math.min(sniper?285:235,role.range*h.rangeBonus*(sniper?.72:.65)):85,high=huntSupport?115:frostSetup?175*h.rangeBonus:ranged?role.range*h.rangeBonus*(sniper?.92:.84):125;
   // Hysteresis prevents one-step retreat/advance oscillation at the firing boundary.
   h.kiting=ranged&&(d<low||(h.kiting&&d<low+35));
-  if(target.bonusKind){h.kiting=false;dest=d>role.range*h.rangeBonus*.7?target:h;stop=0;intent=dest===target?'approach':'attack';}
+  if(target.bonusKind||target.objectivePart){h.kiting=false;dest=d>role.range*h.rangeBonus*.7?target:h;stop=0;intent=dest===target?'approach':'attack';}
+  else if(!ranged&&target.kind==='mossbell'&&d<(target.stats.bodyRadius||MOSSBELL_BODY_RADIUS)+42){const away=unit(h.x-target.x,h.y-target.y);dest=point(h,away,(target.stats.bodyRadius||MOSSBELL_BODY_RADIUS)+60-d);stop=0;intent='space';}
   else if(h.kiting){const away=unit(h.x-target.x,h.y-target.y);dest=point(h,Math.hypot(away.x,away.y)?away:h.lastMove,150);intent='kite';stop=0;}
   else if(d>high||!w.lineClear(h,target)){dest=target;stop=0;intent='approach';}
   else{dest=h;stop=0;intent='attack';}
+  if(ranged&&w.objective?.kind==='defend'&&w.objective.phase==='active'&&target.siege&&d>110&&!foes.some(e=>!e.siege&&distance(h,e)<115)){
+   // Siege targets threaten the lamp, so hold a firing lane instead of kiting away from it.
+   h.kiting=false;dest=d>role.range*h.rangeBonus*.8?target:h;stop=0;intent=dest===target?'intercept':'attack';
+  }
   // Casting consumes E's cooldown before its ring is released. Keep that brief
   // release window in range instead of reverting to ordinary ranged retreat.
   // Loot, healing and danger steering below can still override this position.
@@ -56,7 +78,7 @@ export function companionInput(w,h,role,map){
   // position; danger, nearby enemies, healing and rescue still take precedence.
   if(h.role==='mage'&&h.skillAdvances?.[3]&&d>=235&&d<480&&w.lineClear(h,target)&&w.skillFields?.some(f=>f.kind==='orbit'&&f.owner===h.id&&f.life>.6&&distance(h,f)<f.r*.85)){dest=h;stop=0;intent='attack';h.kiting=false;}
  }
- if(!ally){
+ if(!ally&&!(w.objective?.kind==='defend'&&w.objective.phase==='active')){
   const safeGap=h.role==='warrior'?250:175,lootReach=h.role==='warrior'?110:Math.max(185,(h.pickupRadius||75)+50),lootGap=h.role==='warrior'?150:110;
   const collectible=(actor,p)=>(p.type==='xp'||p.type==='gold'&&!actor.ai)||['magnet','amber','wisp'].includes(p.type)&&p.owner===actor.id||p.type==='supply'&&(actor.shield||0)<Math.min(40,actor.maxHp*.2)&&distance(actor,p)<320;
   const loot=w.pickups.filter(p=>collectible(h,p)&&p.life!==0&&distance(p,h)<650&&risk(p,.9)===0&&pathClear(h,p)&&(!target||distance(h,target)>safeGap&&distance(p,h)<lootReach&&foes.every(e=>distance(p,e)>lootGap)))
@@ -73,7 +95,7 @@ export function companionInput(w,h,role,map){
  const impending=zones.filter(a=>zoneDistance(h,a)<a.r+22).sort((a,b)=>a.eta-b.eta)[0];
  const bulletThreats=bullets.map(b=>({b,t:segmentCircle(b,point(b,{x:b.dx,y:b.dy},b.speed*Math.min(.45,b.life)),h,29)})).filter(v=>v.t<Infinity).map(v=>({...v,eta:v.t*Math.min(.45,v.b.life)})).sort((a,b)=>a.eta-b.eta),bullet=bulletThreats[0];
  let desired=distance(h,dest)>stop?unit(dest.x-h.x,dest.y-h.y):{x:0,y:0};
- if(impending){const center=zoneCenter(h,impending);desired=unit(h.x-center.x,h.y-center.y);if(!Math.hypot(desired.x,desired.y))desired=h.lastMove;intent='evade';}
+ if(impending){const center=zoneCenter(h,impending),safe=impending.mossbell?warningEscape(impending,h):null;desired=safe?unit(safe.x-h.x,safe.y-h.y):unit(h.x-center.x,h.y-center.y);if(!Math.hypot(desired.x,desired.y))desired=h.lastMove;intent='evade';}
  if(bullet){desired={x:-bullet.b.dy,y:bullet.b.dx};if(!pathClear(h,travelPoint(desired,124)))desired={x:-desired.x,y:-desired.y};intent='evade';}
  const exitDistance=impending?impending.r+22-zoneDistance(h,impending):0;
  // If one roll cannot leave a large circle, align its invulnerability with impact.
@@ -103,7 +125,8 @@ export function companionInput(w,h,role,map){
   let s=(p.limited?((p.x-h.x)*desired.x+(p.y-h.y)*desired.y)/travel:v.x*desired.x+v.y*desired.y)*2-risk(p,dodge?.45:.6)*12;
   // Check the route too: a safe endpoint alone can still cross a poison pool.
   s-=risk(travelPoint(v,travel*.5),.2)*4;
-  if(['heal','revive','approach','loot','patrol'].includes(intent))s+=(distance(h,dest)-distance(p,dest))/60;
+  if(['heal','revive','approach','intercept','defend','space','loot','patrol'].includes(intent))s+=(distance(h,dest)-distance(p,dest))/60;
+  if(w.objective?.kind==='defend'&&w.objective.phase==='active'&&!['heal','revive'].includes(intent))s-=Math.max(0,distance(p,w.objective.beacon)-260)/35;
   if(h.role!=='warrior'&&intent!=='heal')for(const e of foes)if(!e.bonusKind&&!(huntSupport&&e===target))s-=Math.max(0,135-distance(p,e))/25;
   for(const p2 of w.heroes)if(p2!==h&&!p2.down)s-=Math.max(0,44-distance(p,p2))/22;
   // A blocked goal needs a short sideways detour. Without this preference a
@@ -148,5 +171,11 @@ export function companionInput(w,h,role,map){
  if(h.role==='archer'&&wanted[1]&&wanted[3])wanted[1]=false;
  if(h.role==='warrior'&&h.skillAdvances?.[3]&&wanted[1]&&wanted[3])wanted[1]=false;
  const loadout=equippedSkills(h);
+ // Ease into the melee firing pocket instead of using full-speed on/off input
+ // across a 5px band. This keeps delayed samples from oscillating into contact.
+ if(h.role==='warrior'&&target?.kind==='mossbell'&&!dodge&&!guard&&!holdingGuard&&['space','approach','attack'].includes(intent)){
+  const standOff=(target.stats.bodyRadius||MOSSBELL_BODY_RADIUS)+60,toward=((target.x-h.x)*move.x+(target.y-h.y)*move.y)/Math.max(1,d);
+  if(d<standOff+64&&Math.abs(toward)>.5){const margin=toward>0?d-standOff:standOff-d,factor=Math.max(0,Math.min(1,margin/64));move={x:move.x*factor,y:move.y*factor};}
+ }
  return {...move,dodge:dodge&&Math.hypot(move.x,move.y)>.5,skill1:!!wanted[loadout[0]],skill2:!!wanted[loadout[1]]};
 }

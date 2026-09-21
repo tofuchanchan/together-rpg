@@ -13,7 +13,7 @@ export const startScreen={
  init(){
   this.initialized=true;this.settings=readSettings();
   this.title=document.querySelector('#title-screen');this.loading=document.querySelector('#loading-screen');this.errorBox=document.querySelector('#loading-error');this.dialog=document.querySelector('#title-settings');this.shell=document.querySelector('#game-shell');
-  const params=new URLSearchParams(location.search);this.pending=params.has('trial')||params.has('shopTrial')?'setup':'title';
+  const params=new URLSearchParams(location.search);this.pending=params.has('trial')||params.has('shopTrial')||['nest','defend','routes','boss'].includes(params.get('adventureTrial'))?'setup':'title';
   document.querySelector('#title-start').onclick=()=>this.requestSetup();
   document.querySelector('#title-settings-open').onclick=()=>this.openSettings();
   document.querySelector('#settings-close').onclick=()=>this.dialog.close();

@@ -30,6 +30,20 @@ export function pressureTick(plan,state,{elapsed,alive}){
 }
 const SWARM=['seedling','dustling','gnat'];
 const SPECIAL=['goblin','mushroom','slime','bat','wolf','skeleton','spider','wisp','shaman','beetle'];
+// Limit only the late first-chapter combinations that close every firing lane.
+// Replacing an excess specialist preserves the wave's full crowd and budget.
+export function pressureSpawn(room,wave,kind,rank,enemies,partySize){
+ const alive=enemies.filter(e=>e.hp>0),intro=room===9&&wave===2,size=Math.max(1,Math.min(3,partySize));
+ if(kind==='shaman'){
+  if(alive.filter(e=>e.kind==='shaman').length>=(intro?1:size))kind=room>=7&&room<=9?'seedling':'skeleton';
+  else if(intro)rank=Math.min(1,rank);
+ }
+ if(room>=7&&room<=9){
+  const group=['beetle','shaman'].includes(kind)?['beetle','shaman']:['wisp','spider'].includes(kind)?['wisp','spider']:null;
+  if(group&&alive.filter(e=>group.includes(e.kind)).length>=size+1)kind=kind==='wisp'||kind==='spider'?'dustling':'seedling';
+ }
+ return {kind,rank};
+}
 export function pressureKind(room,wave,index,random){
  const progress=(room-1)*2+wave,special=SPECIAL.filter(k=>ENEMY_PROGRESS[k].wave<=progress),swarm=SWARM.filter(k=>ENEMY_PROGRESS[k].wave<=progress);
  // Both scheduled and random spawns obey the same introduction gate.

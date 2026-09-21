@@ -231,14 +231,14 @@ test('displayed drop percentages and values are the actual independent loot roll
  assert.deepEqual(lootRoll({boss:true,kind:'thornking',rarity:0},()=>.999999),[{type:'xp',value:24},{type:'gold',value:10},{type:'potion',value:35}]);
 });
 
-test('healer copy matches actual radius, self healing and non-offensive cast',()=>{
+test('healer copy matches actual radius, no self healing and non-offensive cast',()=>{
  const w=new World(17);w.reset(['warrior'],1);w.obstacles=[];const h=w.heroes[0];h.x=0;h.y=0;
  const shaman=w.createEnemy('shaman',0,0),near=w.createEnemy('goblin',219,0),far=w.createEnemy('goblin',221,0);
  w.enemies=[shaman,near,far];for(const e of w.enemies)e.hp=e.maxHp-30;
  shaman.action={t:.99,windup:1,x:0,y:0,r:110,kind:'healer'};const hp=h.hp;
  w.updateEnemy(shaman,.02);
- assert.equal(shaman.hp,shaman.maxHp-8);assert.equal(near.hp,near.maxHp-8);assert.equal(far.hp,far.maxHp-30);assert.equal(h.hp,hp);
- const copy=text(findCodexEntry('enemy:shaman'));assert.match(copy,/220 距离/);assert.match(copy,/22 生命，包括自己/);assert.match(copy,/治疗本身不会主动攻击玩家/);
+ assert.equal(shaman.hp,shaman.maxHp-30);assert.equal(near.hp,near.maxHp-8);assert.equal(far.hp,far.maxHp-30);assert.equal(h.hp,hp);
+ const copy=text(findCodexEntry('enemy:shaman'));assert.match(copy,/220 距离/);assert.match(copy,/22 生命/);assert.match(copy,/不能自疗/);assert.match(copy,/治疗本身不会主动攻击玩家/);
 });
 
 test('basic fireball copy distinguishes direct damage from 65 percent splash using actual projectile hits',()=>{
