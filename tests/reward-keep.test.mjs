@@ -7,7 +7,7 @@ import {selectAiReward} from '../src/coop/ai-build.js';
 
 const recorded={ember:3,boneWhistle:1,commandWhistle:3,elementFeed:1};
 function fixture(humans=2){
- const w=new World(22);w.reset(['mage','warrior'],humans);w.pressure=null;w.enemies=[];w.obstacles=[];w.effects=[];w.room=18;w.wave=2;w.clears=35;w.bossRoom=false;w.gold=123;
+ const w=new World(22);w.reset(['mage','warrior'],humans);w.pressure=null;w.enemies=[];w.obstacles=[];w.effects=[];w.room=18;w.wave=2;w.clears=35;w.bossRoom=false;w.heroes[0].gold=123;
  const h=w.heroes[0];h.level=17;h.skills=[3,3];h.passives={...recorded};h.awakening='hiveHorn';h.rerolls=0;
  w.beginReward('skill');w.offers[0]=['magnetAstrolabe','shatter','momentum'].map(key=>skillPool(h,{clears:36}).find(o=>o.key===`passive:${key}`));
  return w;
@@ -19,7 +19,7 @@ test('recorded mage seed22 clear36 menu can preserve all four synergies with zer
  const originals=structuredClone(w.offers[0]),before=structuredClone(h);let draws=0;w.random=()=>{draws++;return .5;};
  const choices=w.rewardChoices(0);assert.equal(choices.length,4);assert.deepEqual(choices.slice(0,3),originals);assert.equal(choices[3].key,'reward:keep');
  w.choose(0,3);w.confirm(0);assert.equal(w.ready[0],true);assert.equal(w.ready[1],false);assert.equal(w.mode,'upgrade');
- assert.deepEqual(h,before);assert.deepEqual(w.offers[0],originals);assert.equal(w.gold,123);assert.equal(draws,0);
+ assert.deepEqual(h,before);assert.deepEqual(w.offers[0],originals);assert.equal(w.heroes[0].gold,123);assert.equal(draws,0);
 });
 
 test('keep is an independent action, never inserted into or rerolled with random offers',()=>{
@@ -30,7 +30,7 @@ test('keep is an independent action, never inserted into or rerolled with random
 test('players confirm keep independently and the wave advances exactly once',()=>{
  const w=fixture();w.heroes[1].passives={needleMagazine:1,mineShoes:1,orbitBlades:1,kineticWheel:1};let finishes=0;const finish=w.finishReward.bind(w);w.finishReward=()=>{finishes++;finish();};
  assert.equal(w.keepReward(0),true);assert.equal(w.keepReward(0),false);assert.equal(w.ready[1],false);assert.equal(finishes,0);
- assert.equal(w.keepReward(1),true);assert.equal(finishes,1);assert.equal(w.mode,'complete');assert.equal(w.keepReward(1),false);assert.equal(finishes,1);assert.equal(w.gold,123);
+ assert.equal(w.keepReward(1),true);assert.equal(finishes,1);assert.equal(w.mode,'complete');assert.equal(w.keepReward(1),false);assert.equal(finishes,1);assert.equal(w.heroes[0].gold,123);
 });
 
 test('cancel replacement restores the original card cursor and does not confirm keep',()=>{

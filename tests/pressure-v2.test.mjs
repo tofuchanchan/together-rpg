@@ -89,8 +89,13 @@ test('AI collects loose XP but low health routes to actual medicine rather than 
  h.hp=10;input=companionInput(w,h,role,map);assert.equal(h.aiIntent,'heal');assert.ok(input.y<-.8);
 });
 
+test('companions leave coins for humans but still gather safe XP',()=>{
+ const {w,h,role,map}=aiArena();w.pickups=[{id:20,type:'gold',x:80,y:0}];companionInput(w,h,role,map);assert.notEqual(h.aiIntent,'loot');assert.equal(h.lootTarget,null);
+ w.pickups.push({id:21,type:'xp',x:0,y:-160});const input=companionInput(w,h,role,map);assert.equal(h.lootTarget,21);assert.ok(input.y<0);
+});
+
 test('AI ignores poisoned loose loot and keeps rescue ahead of gathering',()=>{
- const {w,h,role,map}=aiArena();w.pickups=[{id:20,type:'xp',x:80,y:0},{id:21,type:'gold',x:0,y:-160}];w.hazards=[{type:'poison',x:80,y:0,r:55,timer:.1}];
+ const {w,h,role,map}=aiArena();w.pickups=[{id:20,type:'xp',x:80,y:0},{id:21,type:'xp',x:0,y:-160}];w.hazards=[{type:'poison',x:80,y:0,r:55,timer:.1}];
  let input=companionInput(w,h,role,map);assert.equal(h.aiIntent,'loot');assert.ok(input.y<0);
  w.hazards=[];Object.assign(w.heroes[0],{x:80,y:0,down:true});input=companionInput(w,h,role,map);assert.equal(h.aiIntent,'revive');assert.ok(input.x>0);
 });

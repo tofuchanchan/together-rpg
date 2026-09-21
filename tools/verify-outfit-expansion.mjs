@@ -14,14 +14,14 @@ try{
  for(const outfit of outfits){
   const offer=await page.evaluate(async outfit=>{
    const {rollEquipment}=await import('/src/coop/equipment.js');coopTest.start([outfit.role],1);
-   const w=coopTest.world;w.enemies=[];w.pressure=null;w.room=5;w.mode='complete';w.gold=500;w.enterShop();
+   const w=coopTest.world;w.enemies=[];w.pressure=null;w.room=5;w.mode='complete';w.heroes.forEach(h=>h.gold=500);w.enterShop();
    let seed=37;const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);let item;
    for(let i=0;i<1000;i++){item=rollEquipment(outfit.role,'armor',5,random,'outfit-'+i);if(item.visualKey===outfit.key)break;}
    if(item.visualKey!==outfit.key)throw Error('New armor never rolls: '+outfit.key);
-   w.shop.offers[0]=item;return{uid:item.uid,price:item.price};
+   w.shop.stalls[0].offers[0]=item;return{uid:item.uid,price:item.price};
   },outfit);
   await tap('e');
-  const purchase=await page.evaluate(()=>{const w=coopTest.world;return{armor:w.heroes[0].equipment.armor?.visualKey,gold:w.gold,sold:w.shop.offers[0].sold};});
+  const purchase=await page.evaluate(()=>{const w=coopTest.world;return{armor:w.heroes[0].equipment.armor?.visualKey,gold:w.heroes[0].gold,sold:w.shop.stalls[0].offers[0].sold};});
   assert.equal(purchase.armor,outfit.key);assert.equal(purchase.gold,500-offer.price);assert.equal(purchase.sold,true);
   if(records.length%3===0)await page.screenshot({path:`${out}/${outfit.role}-shop.png`});
   await page.evaluate(()=>{const w=coopTest.world;w.leaveShop(0);w.nextRoom();w.enemies=[];w.pressure=null;w.waveTimer=-100;w.obstacles=[];const h=w.heroes[0];h.x=h.y=0;h.skills=[1,1,1,1];h.cd=[0,0,0,0,0];window.outfitFrames=[];});

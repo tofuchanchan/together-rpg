@@ -30,11 +30,11 @@ try{
  await page.evaluate(()=>{coopTest.start(['warrior','mage'],2);coopTest.world.pause('手柄暂时离线，请重新绑定');});await shot('paused');
  assert.ok((await page.evaluate(()=>coopTest.view.navigationSnapshot())).items.some(i=>i.id==='pause-resume'));
  mark('Pause menu retains binding, settings and return navigation');
- await page.evaluate(async()=>{const w=coopTest.world,{rollEquipment,applyEquipment}=await import('/src/coop/equipment.js');w.mode='complete';w.room=5;w.wave=2;w.level=12;w.heroes.forEach(h=>h.level=12);w.gold=1000;w.enterShop();w.shop.offers=['warrior','mage','archer'].map((role,index)=>rollEquipment(role,index===1?'weapon':'armor',15,()=>.01,`sharpness-${index}`));const h=w.shop.recruit.hero;for(const slot of ['weapon','armor'])applyEquipment(h,rollEquipment(h.role,slot,15,()=>.01,`sharpness-recruit-${slot}`));});
- await shot('shop');assert.equal((await state()).shop.offers.length,3);assert.ok((await state()).shop.offers.every(item=>item.affixes.length===3));
- await page.evaluate(()=>{coopTest.world.shop.inspect={type:'item',index:0};});await shot('shop-item-details');
- await page.evaluate(()=>{coopTest.world.shop.inspect={type:'recruit'};});await shot('shop-recruit-details');
- await page.evaluate(()=>{coopTest.world.shop.inspect=null;const w=coopTest.world;w.buyEquipment(0,0,0,w.shop.offers[0].uid);});assert.equal((await state()).shop.offers[0].sold,true);
+ await page.evaluate(async()=>{const w=coopTest.world,{rollEquipment,applyEquipment}=await import('/src/coop/equipment.js');w.mode='complete';w.room=5;w.wave=2;w.level=12;w.heroes.forEach(h=>h.level=12);w.heroes[0].gold=1000;w.enterShop();w.shop.stalls[0].offers=Array.from({length:5},(_,index)=>rollEquipment(w.heroes[0].role,index===1?'weapon':'armor',15,()=>.01,`sharpness-${index}`));const h=w.shop.stalls[0].recruits[0].hero;for(const slot of ['weapon','armor'])applyEquipment(h,rollEquipment(h.role,slot,15,()=>.01,`sharpness-recruit-${slot}`));});
+ await shot('shop');assert.equal((await state()).shop.stalls[0].offers.length,3);assert.ok((await state()).shop.stalls[0].offers.every(item=>item.affixes.length===3));
+ await page.evaluate(()=>{coopTest.world.shop.stalls[0].inspect={type:'item',index:0};});await shot('shop-item-details');
+ await page.evaluate(()=>{coopTest.world.shop.stalls[0].inspect={type:'recruit',index:0};});await shot('shop-recruit-details');
+ await page.evaluate(()=>{coopTest.world.shop.stalls[0].inspect=null;const w=coopTest.world;w.buyEquipment(0,0,0,w.shop.stalls[0].offers[0].uid);});assert.equal((await state()).shop.stalls[0].offers[0].sold,true);
  mark('Shop names, prices, affixes and recruit details remain readable and matching-role purchase succeeds');
  assert.deepEqual(errors,[]);mark('No browser errors during UI rendering and real menu transactions');
 }finally{

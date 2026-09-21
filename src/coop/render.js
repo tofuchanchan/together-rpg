@@ -1,3 +1,4 @@
+import {drawBonusCreature} from './shop-event-art.js';
 import {drawEquipmentEffect,drawEquipmentObject} from './equipment-effects.js';
 import {createHero} from './recruitment.js';
 import {drawShop,handleShopInput} from './shop-view.js';
@@ -73,14 +74,14 @@ export class View{
     let drawH=h;if(h.visualStop>0&&w.options.feedback&&this.displayPoses.has(h.id)){const cached=h.hitPose||this.displayPoses.get(h.id);drawH={...h,action:cached.action,stride:h.stride};}else this.displayPoses.set(h.id,{action:h.action?{...h.action}:null,stride:h.stride});
     hero(c,drawH,w.time);
    }else{
-    if(!drawSwarm(c,h,w.time))enemy(c,h,w.time);
+    if(!drawBonusCreature(c,h)&&!drawSwarm(c,h,w.time))enemy(c,h,w.time);
    }
    c.restore();
   }
   if(buffered){c.restore();c=output;c.drawImage(this.sceneCanvas,0,0,W,H);c.save();c.translate(720+sx-w.camera.x*w.camera.zoom,369+sy-w.camera.y*.707*w.camera.zoom);c.scale(w.camera.zoom,w.camera.zoom);}
   // Nameplates and health bars are a separate high-DPI overlay, never occluded by foreground effects.
   const statusTargets=new Set(w.heroes.filter(h=>!h.down).flatMap(h=>[w.nearest(h,520)?.id,h.huntTarget]).filter(id=>id!==undefined&&id!==null));
-  for(const h of [...w.enemies,...w.heroes]){c.save();c.translate(h.x,h.y*.707);if(h.role){const col=colors[h.id],top=h.role==='mage'?-126:-116;skin(c,`button-${h.ai?'neutral':variant(col)}`,-18,top-29,36,25);text(c,h.ai?'AI':`P${h.id+1}`,0,top-16,13,CREAM,'center');bar(c,-28,top,56,10,h.hp/h.maxHp,h.down?'#eea467':'#9edb7b');if(h.down){text(c,'靠近救援',0,24,13,CREAM,'center');bar(c,-31,36,62,10,h.revive/2,'#efd276');}}else{if(h.hp<h.maxHp||h.rarity)bar(c,-25,-enemyDef(h).size-16,50,9,h.hp/h.maxHp,'#e58a6d');if(h.rarity){text(c,`${RARITIES[h.rarity].name} · ${h.affixes.map(a=>AFFIXES[a]).join(' / ')}`,0,-enemyDef(h).size-31,12,RARITIES[h.rarity].color,'center');}this.enemyBuildStatus(h,statusTargets.has(h.id)||h.boss);}c.restore();}
+  for(const h of [...w.enemies,...w.heroes]){c.save();c.translate(h.x,h.y*.707);if(h.role){const col=colors[h.id],top=h.role==='mage'?-126:-116;skin(c,`button-${h.ai?'neutral':variant(col)}`,-18,top-29,36,25);text(c,h.ai?'AI':`P${h.id+1}`,0,top-16,13,CREAM,'center');bar(c,-28,top,56,10,h.hp/h.maxHp,h.down?'#eea467':'#9edb7b');if(h.down){text(c,'靠近救援',0,24,13,CREAM,'center');bar(c,-31,36,62,10,h.revive/2,'#efd276');}}else if(h.bonusKind){if(h.bonusKind==='gold')text(c,'命中掉金',0,-82,12,'#ffdb78','center');}else{if(h.hp<h.maxHp||h.rarity)bar(c,-25,-enemyDef(h).size-16,50,9,h.hp/h.maxHp,'#e58a6d');if(h.rarity){text(c,`${RARITIES[h.rarity].name} · ${h.affixes.map(a=>AFFIXES[a]).join(' / ')}`,0,-enemyDef(h).size-31,12,RARITIES[h.rarity].color,'center');}this.enemyBuildStatus(h,statusTargets.has(h.id)||h.boss);}c.restore();}
   if(w.options.feedback)for(const f of w.effects){
    if(f.type==='number'){c.save();c.globalAlpha=Math.min(1,f.life*3);c.shadowColor='#253323';c.shadowBlur=2;text(c,f.text,f.x,f.y*.707-(f.height||107)-(1-f.life/f.max)*28,20,f.color,'center',900);c.restore();}
   }
@@ -99,20 +100,30 @@ export class View{
  }
  hud(){const c=this.c,w=this.world;
   w.heroes.filter(h=>h.ai).forEach((ai,index)=>{const x=23+index*218;skin(c,'panel-neutral',x,18,215,73);drawArt(c,'portrait-frame',x+39,56,60);c.save();c.translate(x+38,80);hero(c,{...ai,action:null,face:1,move:{x:0,y:0},gait:0,down:false,hitFlash:0,hitReaction:null,invuln:0},0,.45);c.restore();text(c,`${ai.name} · ${ROLES[ai.role].name}`,x+73,42,16);bar(c,x+73,59,116,13,ai.hp/ai.maxHp);});
-  skin(c,'panel-neutral',572,17,286,65);text(c,`林间遗迹  ${String(w.room).padStart(2,'0')}`,715,40,20,CREAM,'center',700);text(c,w.bossRoom?`首领战 · ${w.enemies.length} 敌人`:`第 ${w.wave}/2 波 · ${w.enemies.length} 敌人 · 入场 ${w.waveSpawned}`,715,63,14,'#d1dcc0','center');
+  skin(c,'panel-neutral',572,17,286,65);text(c,`林间遗迹  ${String(w.room).padStart(2,'0')}`,715,40,20,CREAM,'center',700);text(c,w.bonusEvent?`限时奖励 · ${w.enemies.length} 只` : w.bossRoom?`首领战 · ${w.enemies.length} 敌人`:`第 ${w.wave}/2 波 · ${w.enemies.length} 敌人 · 入场 ${w.waveSpawned}`,715,63,14,'#d1dcc0','center');
   this.iconButton('pause',865,23,40,40,()=>this.actions.pause());this.iconButton(w.options.sound?'sound':'muted',920,23,40,40,()=>{w.options.sound=!w.options.sound;});
   skin(c,'panel-neutral',1230,18,186,125);c.save();c.beginPath();c.roundRect(1247,35,152,89,7);c.clip();c.globalAlpha=.7;c.drawImage(this.ground,1247,35,152,89);c.globalAlpha=1;
-  for(const e of w.enemies)ellipse(c,1323+e.x*.118/MAP_SCALE,79+e.y*.1/MAP_SCALE,3,3,'#ee9472',null);for(const h of w.heroes)ellipse(c,1323+h.x*.118/MAP_SCALE,79+h.y*.1/MAP_SCALE,4,4,colors[h.id],null);c.restore();
-  text(c,`击败 ${w.kills}`,1209,40,16,CREAM,'right');text(c,`金币 ${w.gold} · 商店 ${Math.ceil(w.room/5)*5}关`,1209,64,14,'#f3d58b','right');
+  for(const e of w.enemies)ellipse(c,1323+e.x*.118/MAP_SCALE,79+e.y*.1/MAP_SCALE,3,3,e.bonusKind==='xp'?'#80e6ff':e.bonusKind==='gold'?'#ffcf66':'#ee9472',null);for(const h of w.heroes)ellipse(c,1323+h.x*.118/MAP_SCALE,79+h.y*.1/MAP_SCALE,4,4,colors[h.id],null);c.restore();
+  if(w.mode==='play'&&w.bonusEvent?.kind==='gold'&&w.bonusEvent.phase==='active'){
+   const markers=[];
+   for(const e of w.enemies){const px=720+(e.x-w.camera.x)*w.camera.zoom,py=369+(e.y-w.camera.y)*.707*w.camera.zoom;
+    if(px>=62&&px<=1190&&py>=190&&py<=607)continue;
+    const dx=px-720,dy=py-380,factor=Math.min(1,dx>0?470/dx:dx<0?-658/dx:1,dy>0?227/dy:dy<0?-190/dy:1),x=720+dx*factor,y=380+dy*factor,near=markers.find(m=>Math.hypot(m.x-x,m.y-y)<58);
+    if(near)near.count++;else markers.push({x,y,angle:Math.atan2(dy,dx),e,count:1});
+   }
+   for(const m of markers){c.save();c.translate(m.x,m.y);skin(c,'button-neutral',-24,-23,48,46);c.save();c.translate(0,4);drawBonusCreature(c,{...m.e,face:0,stats:{...m.e.stats,size:24}});c.restore();if(m.count>1)text(c,`×${m.count}`,24,-16,12,'#ffda75','center',700);c.translate(0,13);c.rotate(m.angle);c.beginPath();c.moveTo(7,0);c.lineTo(-4,-5);c.lineTo(-4,5);c.closePath();c.fillStyle='#ffda75';c.fill();c.restore();}
+  }
+  text(c,`击败 ${w.kills}`,1209,40,16,CREAM,'right');text(c,`金币各自持有 · 商店 ${Math.ceil(w.room/5)*5}关`,1209,64,14,'#f3d58b','right');
   for(let i=0;i<w.humanCount;i++)this.playerHUD(i,w.humanCount===1?422:i===0?24:820);bar(c,476,783,488,23,w.xp/w.xpNext,'#f1c864');c.save();c.beginPath();c.roundRect(604,785,232,19,5);c.fillStyle='#102d24db';c.fill();text(c,`小队 Lv.${w.level}  ·  ${w.xp} / ${w.xpNext}`,720,795,14,'#fff4cf','center',700);c.restore();
-  if(w.mode==='play'){text(c,w.enraged?'狂暴 · 小怪移速 +35% / 伤害 +30% / 冷却恢复 +40%':`狂暴倒计时 ${Math.max(0,Math.ceil(w.enrageAt-w.waveElapsed))} 秒`,720,158,14,w.enraged?'#ff986e':'#c9d5b4','center');const boss=w.enemies.find(e=>e.boss);if(boss){skin(c,'panel-gold',427,83,586,57);text(c,`荆冠古王 · 阶段 ${boss.phase}/3  ${boss.action?BOSS_SKILLS[boss.action.kind]:''}`,720,99,18,CREAM,'center');bar(c,447,118,546,12,boss.hp/boss.maxHp,'#e58a6d');}else{const remaining=Math.max(0,Math.ceil(w.waveDuration-w.waveElapsed));text(c,remaining&&!w.pressureClosed?`${w.eliteChallenge?'精英挑战 · ':''}持续增援 ${remaining} 秒 · 击杀立即补位`:w.enemies.length?'增援停止 · 清理残敌后选择构筑':'清波奖励即将开启…',720,104,16,CREAM,'center');}}
-  if(w.mode==='play'&&w.time<8){skin(c,'button-neutral',440,620,560,32);text(c,'自动普攻 · 拾取蓝晶获得经验 · 接触怪物会受伤',720,636,14,'#edf0ca','center');}
+  if(w.mode==='play'&&w.bonusEvent){const b=w.bonusEvent,col=b.kind==='xp'?'#8ee5ff':'#ffdb78';skin(c,'panel-gold',455,89,530,75);text(c,`${b.phase==='collect'?'拾取奖励':b.name}  ·  ${Math.ceil(b.remaining)} 秒`,720,110,22,col,'center',700);text(c,b.phase==='collect'?'奖励怪已离场 · 走近拾取地面战利品':b.kind==='xp'?`不断补充的无害虫潮 · 击败 ${b.killed} 只 · 必掉经验`:`追上逃跑的钱袋 · 每次命中掉金 · 已掉落 ${b.goldDropped} 金`,720,137,14,CREAM,'center');bar(c,478,152,484,5,b.remaining/(b.phase==='collect'?6:b.duration),col);}
+  if(w.mode==='play'&&!w.bonusEvent){text(c,w.enraged?'狂暴 · 小怪移速 +35% / 伤害 +30% / 冷却恢复 +40%':`狂暴倒计时 ${Math.max(0,Math.ceil(w.enrageAt-w.waveElapsed))} 秒`,720,158,14,w.enraged?'#ff986e':'#c9d5b4','center');const boss=w.enemies.find(e=>e.boss);if(boss){skin(c,'panel-gold',427,83,586,57);text(c,`荆冠古王 · 阶段 ${boss.phase}/3  ${boss.action?BOSS_SKILLS[boss.action.kind]:''}`,720,99,18,CREAM,'center');bar(c,447,118,546,12,boss.hp/boss.maxHp,'#e58a6d');}else{const remaining=Math.max(0,Math.ceil(w.waveDuration-w.waveElapsed));text(c,remaining&&!w.pressureClosed?`${w.eliteChallenge?'精英挑战 · ':''}持续增援 ${remaining} 秒 · 击杀立即补位`:w.enemies.length?'增援停止 · 清理残敌后选择构筑':'清波奖励即将开启…',720,104,16,CREAM,'center');}}
+  if(w.mode==='play'&&!w.bonusEvent&&w.time<8){skin(c,'button-neutral',440,620,560,32);text(c,'自动普攻 · 拾取蓝晶获得经验 · 接触怪物会受伤',720,636,14,'#edf0ca','center');}
  }
  iconButton(name,x,y,w,h,action){skin(this.c,'button-neutral',x,y,w,h);icon(this.c,name,x+w/2,y+h/2,13);this.regions.push({x,y,w,h,action});}
  playerHUD(i,x){const c=this.c,w=this.world,h=w.heroes[i],color=colors[i];
   skin(c,`panel-${variant(color)}`,x,665,596,107);drawArt(c,'portrait-frame',x+51,720,89);
   c.save();c.translate(x+51,749);hero(c,{...h,face:i===0?1:3,action:null,move:{x:0,y:0},gait:0,down:false,hitFlash:0,hitReaction:null,invuln:0},0,.59);c.restore();
-  text(c,`P${i+1} · ${ROLES[h.role].name}`,x+101,685,18,CREAM,'left',700);text(c,this.fit(this.router.describe(i),177,12),x+101,702,12,'#d0dcc0');bar(c,x+100,714,177,14,h.hp/h.maxHp);text(c,`${Math.ceil(h.hp)} / ${h.maxHp}`,x+101,739,14);text(c,`盾 ${Math.ceil(h.shield||0)}${h.core!=='bulwark'&&h.storedGuard>0?' · 蓄 '+Math.round(h.storedGuard):''}`,x+277,739,12,'#cad7b8','right');
+  text(c,`P${i+1} · ${ROLES[h.role].name}`,x+101,685,18,CREAM,'left',700);text(c,`${h.gold} 金`,x+277,685,13,'#f3d58b','right');text(c,this.fit(this.router.describe(i),177,12),x+101,702,12,'#d0dcc0');bar(c,x+100,714,177,14,h.hp/h.maxHp);text(c,`${Math.ceil(h.hp)} / ${h.maxHp}`,x+101,739,14);text(c,`盾 ${Math.ceil(h.shield||0)}${h.core!=='bulwark'&&h.storedGuard>0?' · 蓄 '+Math.round(h.storedGuard):''}`,x+277,739,12,'#cad7b8','right');
   const resourceName=h.passives.storage?'盾能':h.passives.volleyCharge?'齐射':h.core==='berserker'||h.passives.rageEdge?'怒气':h.core==='sniper'||h.forms?.[0]==='markedshot'?'猎印':null,markMax=h.core==='sniper'?5:3,amount=resourceName==='盾能'?(h.storedGuard||0):(h.resource||0),resource=resourceName==='猎印'?(h.huntStacks||0)/markMax:amount/100;
   if(resourceName){bar(c,x+100,749,177,6,resource,'#f1c864');text(c,`${resourceName}  ${resourceName==='猎印'?`${h.huntStacks||0} / ${markMax}`:Math.round(amount)+' / 100'}`,x+101,763,12,resource>=1?'#fff2ad':'#d1dcbc');}
   else text(c,this.fit(Object.entries(h.passives).map(([key,rank])=>`${PASSIVES[key].title}${rank}`).join(' · ')||'被动：0 / 4',177,12),x+101,759,12,'#d6dfc0');
@@ -169,7 +180,7 @@ export class View{
    this.button('继续 · B / Start',491,450,458,44,()=>this.actions.pause(),CYAN,this.router.disconnected.some(i=>i<w.humanCount),'pause-resume');
    this.button('冒险图鉴',440,512,270,36,()=>this.actions.codex(),'#9ab38b',false,'pause-codex');this.button('全屏 / 窗口',730,512,270,36,()=>this.actions.fullscreen(),'#9ab38b',false,'pause-fullscreen');
    if(this.router.disconnected.some(i=>i<w.humanCount))text(c,'重连后按 A 认领原位置；也可选择“绑定手柄”换设备',720,370,12,'#ffe79a','center');
-  }else {if(w.mode==='complete')text(c,'清波休整已结算 · 进入下一间再回复 12% 最大生命',720,326,15,'#d1dcbc','center');this.button(w.mode==='victory'?'进入无尽挑战 →':w.mode==='complete'?'继续下一间 →':'重新出发',491,373,458,58,()=>this.actions.proceed(),CYAN,false,'result-proceed');if(w.canChallenge())this.button(w.challengeNext?'已选精英挑战 · 高阶奖励':'下一间挑战精英 · 更高风险',491,453,458,42,()=>w.toggleChallenge(),w.challengeNext?ORANGE:CYAN,false,'result-challenge');if(w.mode==='victory')text(c,`累计金币 ${w.gold} · 本局等级 ${w.level} · 可结束冒险或继续无尽`,720,475,15,'#d1dcbc','center');icon(c,w.mode==='complete'?'door':'retry',526,402,17);}
+  }else {if(w.mode==='complete')text(c,'清波休整已结算 · 进入下一间再回复 12% 最大生命',720,326,15,'#d1dcbc','center');this.button(w.mode==='victory'?'进入无尽挑战 →':w.mode==='complete'?'继续下一间 →':'重新出发',491,373,458,58,()=>this.actions.proceed(),CYAN,false,'result-proceed');if(w.canChallenge())this.button(w.challengeNext?'已选精英挑战 · 高阶奖励':'下一间挑战精英 · 更高风险',491,453,458,42,()=>w.toggleChallenge(),w.challengeNext?ORANGE:CYAN,false,'result-challenge');if(w.mode==='victory')text(c,`持有金币 ${w.heroes.filter(h=>!h.ai).map(h=>`P${h.id+1}: ${h.gold}`).join(' / ')} · 本局等级 ${w.level} · 可结束冒险或继续无尽`,720,475,15,'#d1dcbc','center');icon(c,w.mode==='complete'?'door':'retry',526,402,17);}
   this.button('返回选人',440,583,270,38,()=>this.actions.menu(),'#839f76',false,w.mode==='paused'?'pause-setup':'result-setup');this.button('返回标题',730,583,270,38,()=>this.actions.title(),'#839f76',false,w.mode==='paused'?'pause-title':'result-title');text(c,'方向键 / 摇杆选择 · A 确认 · B 返回',720,677,14,'#d1dcbc','center');if(this.router.awaiting!==null)this.claimOverlay();
  }
 }
