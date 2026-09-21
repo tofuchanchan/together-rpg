@@ -13,6 +13,7 @@ export const EQUIPMENT_AFFIXES={
  panicMagnet:{title:'应急牵引',slot:'armor',desc:'实际失血时牵引附近经验与金币，需要走近拾取；间隔8秒'},
 };
 export const EQUIPMENT_STAT_NAMES={power:'普攻强度',skillPower:'技能强度',haste:'攻击速度',crit:'暴击率',cooldown:'冷却缩短',maxHp:'生命上限',armor:'减伤',speedBonus:'移动速度',pickupRadius:'拾取范围'};
+export const EQUIPMENT_PREFIXES={power:'强袭',skillPower:'秘法',haste:'迅捷',crit:'鹰眼',cooldown:'灵感',maxHp:'坚韧',armor:'守御',speedBonus:'疾风',pickupRadius:'寻宝'};
 const weaponStats={warrior:[['power',.10,.16],['haste',.05,.085],['crit',.025,.045]],mage:[['skillPower',.11,.17],['power',.08,.13],['cooldown',.025,.045]],archer:[['power',.10,.15],['haste',.055,.09],['crit',.03,.05]]};
 const armorStats={warrior:[['maxHp',20,32],['armor',.015,.03],['speedBonus',.035,.055],['pickupRadius',12,20]],mage:[['maxHp',12,20],['armor',.015,.03],['speedBonus',.035,.055],['pickupRadius',12,20]],archer:[['maxHp',14,23],['armor',.015,.03],['speedBonus',.035,.055],['pickupRadius',12,20]]};
 const pick=(list,rng)=>list[Math.min(list.length-1,Math.floor(rng()*list.length))];
@@ -27,9 +28,9 @@ export function rollEquipment(role,slot,room,rng,uid){
  const growth=1+Math.min(59,level-1)*.014,quality=1+(rarity-1)*.23;
  const value=round((min+(max-min)*rng())*growth*quality,['maxHp','pickupRadius'].includes(stat)?0:3);
  const pool=Object.keys(EQUIPMENT_AFFIXES).filter(k=>EQUIPMENT_AFFIXES[k].slot===slot),affixes=[];
- for(let i=0;i<EQUIPMENT_RARITIES[rarity].affixes;i++){const index=Math.min(pool.length-1,Math.floor(rng()*pool.length)),key=pool.splice(index,1)[0];affixes.push({key,strength:round((.9+rng()*.2)*(1+(rarity-2)*.18)*(1+Math.min(59,level-1)*.008))});}
+ for(let i=0;i<EQUIPMENT_RARITIES[rarity].affixes;i++){const index=Math.min(pool.length-1,Math.floor(rng()*pool.length)),key=pool.splice(index,1)[0];affixes.push({key,strength:round((.95+rng()*.1)*(1+(rarity-2)*.25)*(1+Math.min(59,level-1)*.008))});}
  const price=equipmentPrice(rarity,level);
- return {uid,role,slot,appearance:shape.key,visualKey:shape.key,rarity,level,name:shape.name,main:{stat,value},affixes,price,sellPrice:Math.floor(price*.25)};
+ return {uid,role,slot,appearance:shape.key,visualKey:shape.key,rarity,level,baseName:shape.name,name:`${EQUIPMENT_RARITIES[rarity].name}·${EQUIPMENT_PREFIXES[stat]}·${shape.name}`,main:{stat,value},affixes,price,sellPrice:Math.floor(price*.25)};
 }
 export function validEquipment(item){
  return !!(item&&item.uid!==undefined&&item.uid!==null&&EQUIPMENT_APPEARANCES[item.role]?.[item.slot]?.some(s=>s.key===item.visualKey)&&item.appearance===item.visualKey&&EQUIPMENT_RARITIES[item.rarity]&&Number.isFinite(item.main?.value)&&item.main.value>0&&(item.slot==='weapon'?weaponStats:armorStats)[item.role].some(s=>s[0]===item.main.stat)&&Array.isArray(item.affixes)&&item.affixes.length<=EQUIPMENT_RARITIES[item.rarity].affixes&&new Set(item.affixes.map(a=>a.key)).size===item.affixes.length&&item.affixes.every(a=>EQUIPMENT_AFFIXES[a.key]?.slot===item.slot&&Number.isFinite(a.strength)&&a.strength>0));

@@ -92,6 +92,8 @@ export const CODEX_PREVIEW_FILES=Object.freeze({
   "enemy-spider": "enemy-spider-971bc48d9d78.webp",
   "enemy-beetle": "enemy-beetle-60e44be2e043.webp",
   "enemy-wisp": "enemy-wisp-e0f20cbd51ec.webp",
+  "enemy-experienceGrub": "enemy-experienceGrub-9ce57e6d66a7.webp",
+  "enemy-coinRunner": "enemy-coinRunner-a46ba903e937.webp",
   "enemy-thornking": "enemy-thornking-1ff1d3b137af.webp",
   "icon-skull": "icon-skull-0b1a87294172.webp"
 });

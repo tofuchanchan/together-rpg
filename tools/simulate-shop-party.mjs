@@ -35,14 +35,14 @@ export function simulateShopParty(role,seed,size=1,{variant='scaled',goal='shop'
  w.damageHero=(h,...args)=>{const before=h.hp;hurt(h,...args);if(h.hp<before){record.damage+=before-h.hp;record.damageEvents++;}};
  let lastClear=0;
  for(let frame=0;frame<limit*60+3000&&w.time<limit&&!['defeat','shop'].includes(w.mode);frame++){
-  if(w.clears>lastClear){record.waves.push({clear:w.clears,time:+w.time.toFixed(2),gold:w.gold,level:w.level});lastClear=w.clears;if(goal==='wave')break;}
+  if(w.clears>lastClear){record.waves.push({clear:w.clears,time:+w.time.toFixed(2),gold:w.heroes.filter(h=>!h.ai).reduce((n,h)=>n+h.gold,0),level:w.level});lastClear=w.clears;if(goal==='wave')break;}
   if(w.mode==='upgrade'){
    for(let id=0;id<w.humanCount;id++)if(!w.ready[id]){const h=w.heroes[id],offers=w.offers[id],index=offers.reduce((best,o,i)=>priority(h,o)>priority(h,offers[best])?i:best,0);w.choose(id,index);record.choices.push({id,key:offers[index]?.key});w.confirm(id);}
   }else if(w.mode==='complete')w.nextRoom();else w.advance(1/60,w.heroes.slice(0,w.humanCount).map(h=>w.aiInput(h)));
  }
  record.remainingEnemies=w.enemies.filter(e=>e.hp>0).map(e=>({kind:e.kind,hp:+e.hp.toFixed(1),maxHp:+e.maxHp.toFixed(1),rank:e.rarity,distance:Math.round(Math.hypot(e.x-w.heroes[0].x,e.y-w.heroes[0].y))}));
- const available=w.shop?.offers.filter(o=>w.heroes.some(h=>h.role===o.role))||[],common=available.filter(o=>o.rarity===1);
- return {...record,mode:w.mode,time:+w.time.toFixed(1),level:w.level,clears:w.clears,kills:w.kills,room:w.room,wave:w.wave,alive:w.enemies.filter(e=>e.hp>0).length,hp:w.heroes.map(h=>+h.hp.toFixed(1)),gold:w.gold,damage:Math.round(record.damage),reachedShop:w.mode==='shop',affordOrdinary:w.mode==='shop'&&w.gold>=24,affordOfferedCommon:common.some(i=>i.price<=w.gold),affordAnyOffered:available.some(i=>i.price<=w.gold),affordRecruit:!!w.shop?.recruit&&w.shop.recruit.price<=w.gold,offers:available.map(i=>({role:i.role,rarity:i.rarity,price:i.price})),recruit:w.shop?.recruit?{price:w.shop.recruit.price,rarity:w.shop.recruit.rarity,role:w.shop.recruit.hero.role}:null,builds:w.heroes.map(h=>({role:h.role,skills:h.skills,core:h.core,forms:h.forms,passives:h.passives}))};
+ const shops=(w.shop?.stalls||[]).map((s,owner)=>({owner,gold:w.heroes[owner].gold,offers:s.offers.map(i=>({role:i.role,rarity:i.rarity,price:i.price})),recruit:{price:s.recruits[0].price,rarity:s.recruits[0].rarity,role:s.recruits[0].hero.role}}));
+ return {...record,mode:w.mode,time:+w.time.toFixed(1),level:w.level,clears:w.clears,kills:w.kills,room:w.room,wave:w.wave,alive:w.enemies.filter(e=>e.hp>0).length,hp:w.heroes.map(h=>+h.hp.toFixed(1)),gold:w.heroes.filter(h=>!h.ai).reduce((n,h)=>n+h.gold,0),wallets:w.heroes.filter(h=>!h.ai).map(h=>h.gold),damage:Math.round(record.damage),reachedShop:w.mode==='shop',affordOrdinary:shops.some(s=>s.gold>=24),affordOfferedCommon:shops.some(s=>s.offers.some(i=>i.rarity===1&&i.price<=s.gold)),affordAnyOffered:shops.some(s=>s.offers.some(i=>i.price<=s.gold)),affordRecruit:shops.some(s=>s.recruit.price<=s.gold),shops,builds:w.heroes.map(h=>({role:h.role,skills:h.skills,core:h.core,forms:h.forms,passives:h.passives}))};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const option=(key,fallback)=>process.argv.find(a=>a.startsWith('--'+key+'='))?.split('=')[1]||fallback;

@@ -1,3 +1,5 @@
+import {loadShopEventArt,drawBonusCreature} from './shop-event-art.js';
+import {BONUS_CREATURES} from './bonus-events.js';
 import {loadCharacterSprites,hero} from './sprites.js';
 import {loadEquipmentArt,drawEquippedHero} from './equipment-art.js';
 import {EQUIPMENT_APPEARANCES} from './equipment-data.js';
@@ -15,7 +17,7 @@ const previews=new Map(),roles=['warrior','mage','archer'];
 // This promise is shared by the catalogue and its detail view. A missing asset
 // rejects to the UI instead of silently replacing the illustration with a glyph.
 export function loadCodexArt(){
- return pending??=Promise.all([loadCharacterSprites(),loadWorldArt(),loadBuildArt(),loadUniversalArt(),loadEquipmentArt()]).then(()=>{ready=true;});
+ return pending??=Promise.all([loadCharacterSprites(),loadWorldArt(),loadBuildArt(),loadUniversalArt(),loadEquipmentArt(),loadShopEventArt()]).then(()=>{ready=true;});
 }
 
 function previewActor(role){
@@ -38,7 +40,7 @@ function drawPreview(c,art,time){
   return;
  }
  if(art.type==='enemy'){
-  const kind=art.kind||art.key,boss=kind==='thornking',stats=boss?BOSS_DEF:ENEMIES[kind];
+  const kind=art.kind||art.key;const bonusKind=kind==='experienceGrub'?'xp':kind==='coinRunner'?'gold':null;if(bonusKind){c.scale(2.4,2.4);drawBonusCreature(c,{bonusKind,stats:BONUS_CREATURES[bonusKind],stride:time,face:0});return;}const boss=kind==='thornking',stats=boss?BOSS_DEF:ENEMIES[kind];
   if(!stats)throw Error(`未知图鉴怪物：${kind}`);
   const e={kind,boss,stats,phase:1,face:1,x:0,y:0,stride:0,rarity:0,spawnGrace:0,hitFlash:0};
   c.scale(1.7,1.7);if(!drawSwarm(c,e,time))enemy(c,e,time);return;

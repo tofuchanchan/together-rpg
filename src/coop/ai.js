@@ -44,7 +44,8 @@ export function companionInput(w,h,role,map){
   const low=huntSupport?85:frostSetup?155*h.rangeBonus:ranged?Math.min(sniper?285:235,role.range*h.rangeBonus*(sniper?.72:.65)):85,high=huntSupport?115:frostSetup?175*h.rangeBonus:ranged?role.range*h.rangeBonus*(sniper?.92:.84):125;
   // Hysteresis prevents one-step retreat/advance oscillation at the firing boundary.
   h.kiting=ranged&&(d<low||(h.kiting&&d<low+35));
-  if(h.kiting){const away=unit(h.x-target.x,h.y-target.y);dest=point(h,Math.hypot(away.x,away.y)?away:h.lastMove,150);intent='kite';stop=0;}
+  if(target.bonusKind){h.kiting=false;dest=d>role.range*h.rangeBonus*.7?target:h;stop=0;intent=dest===target?'approach':'attack';}
+  else if(h.kiting){const away=unit(h.x-target.x,h.y-target.y);dest=point(h,Math.hypot(away.x,away.y)?away:h.lastMove,150);intent='kite';stop=0;}
   else if(d>high||!w.lineClear(h,target)){dest=target;stop=0;intent='approach';}
   else{dest=h;stop=0;intent='attack';}
   // Casting consumes E's cooldown before its ring is released. Keep that brief
@@ -57,7 +58,7 @@ export function companionInput(w,h,role,map){
  }
  if(!ally){
   const safeGap=h.role==='warrior'?250:175,lootReach=h.role==='warrior'?110:Math.max(185,(h.pickupRadius||75)+50),lootGap=h.role==='warrior'?150:110;
-  const collectible=(actor,p)=>['xp','gold'].includes(p.type)||['magnet','amber','wisp'].includes(p.type)&&p.owner===actor.id||p.type==='supply'&&(actor.shield||0)<Math.min(40,actor.maxHp*.2)&&distance(actor,p)<320;
+  const collectible=(actor,p)=>(p.type==='xp'||p.type==='gold'&&!actor.ai)||['magnet','amber','wisp'].includes(p.type)&&p.owner===actor.id||p.type==='supply'&&(actor.shield||0)<Math.min(40,actor.maxHp*.2)&&distance(actor,p)<320;
   const loot=w.pickups.filter(p=>collectible(h,p)&&p.life!==0&&distance(p,h)<650&&risk(p,.9)===0&&pathClear(h,p)&&(!target||distance(h,target)>safeGap&&distance(p,h)<lootReach&&foes.every(e=>distance(p,e)>lootGap)))
    .sort((a,b)=>{
     const score=p=>distance(p,h)-(p.id===h.lootTarget?50:0)-(p.type==='gold'?30:0)-(p.type==='supply'?Math.max(0,40-(h.shield||0)):0)+(w.heroes.some(other=>other!==h&&other.ai&&!other.down&&collectible(other,p)&&distance(other,p)+30<distance(h,p))?180:0);
@@ -103,7 +104,7 @@ export function companionInput(w,h,role,map){
   // Check the route too: a safe endpoint alone can still cross a poison pool.
   s-=risk(travelPoint(v,travel*.5),.2)*4;
   if(['heal','revive','approach','loot','patrol'].includes(intent))s+=(distance(h,dest)-distance(p,dest))/60;
-  if(h.role!=='warrior'&&intent!=='heal')for(const e of foes)if(!(huntSupport&&e===target))s-=Math.max(0,135-distance(p,e))/25;
+  if(h.role!=='warrior'&&intent!=='heal')for(const e of foes)if(!e.bonusKind&&!(huntSupport&&e===target))s-=Math.max(0,135-distance(p,e))/25;
   for(const p2 of w.heroes)if(p2!==h&&!p2.down)s-=Math.max(0,44-distance(p,p2))/22;
   // A blocked goal needs a short sideways detour. Without this preference a
   // zero vector wins by being microscopically closer to a target behind a rock.

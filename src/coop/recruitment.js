@@ -23,7 +23,7 @@ const pick=(values,rng)=>values[Math.min(values.length-1,Math.floor(rng()*values
 export function createHero(role,id,{ai=false,level=1,name,rarity=1}={}){
  const definition=HERO_ROLES[role];if(!definition)throw Error(`Invalid hero role: ${role}`);
  const rank=rarityOf(rarity),bonus=RECRUIT_RARITIES[rank],hp=definition.hp+bonus.hp;
- return {id,role,ai:!!ai,name:name||definition.name,rarity:rank,level:integer(level),x:-140+id*120,y:id===2?110:35,
+ return {id,role,ai:!!ai,gold:0,name:name||definition.name,rarity:rank,level:integer(level),x:-140+id*120,y:id===2?110:35,
   hp,maxHp:hp,power:1+bonus.power,speedBonus:1,skillPower:1+bonus.skillPower,rangeBonus:1,haste:1,crit:0,critDamage:1.5,evasion:0,armor:0,cooldown:0,recovery:1,dotPower:1,shieldPower:1,pickupRadius:105,
   evolutionBranches:[null,null],awakening:null,forms:[null,null],resource:0,storedGuard:0,huntStacks:0,huntTarget:null,shadow:null,rerolls:3,guardUntil:0,
   loadout:[0,1],skillAdvances:[false,false,false,false],pairMastery:{},skills:[0,0,0,0],evolved:[false,false,false,false],passives:{},core:null,runes:[null,null],shield:0,casts:0,swings:0,directHits:0,charged:0,empowered:0,cd:[0,0,0,0],dodgeCd:0,attackCd:0,action:null,
