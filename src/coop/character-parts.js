@@ -20,7 +20,7 @@ export function splitAccessory(image,frame,size,role){
 }
 // Locate enclosed dark eye/visor pixels, then change only those pixels to a pained squint.
 // Back views deliberately have no face expression.
-export function hurtFace(image,frame,size,row,role){
+export function hurtFace(image,frame,size,row,role,faceBounds=null,metalFloor=95){
  const c=canvas(size),ctx=c.getContext('2d');ctx.drawImage(image,frame.x,frame.y,size,size,0,0,size,size);
  if([3,4,5].includes(row))return c;
  const data=ctx.getImageData(0,0,size,size),seen=new Uint8Array(size*size),eyes=[];
@@ -31,6 +31,7 @@ export function hurtFace(image,frame,size,row,role){
   for(let y=70;y<150;y++)for(let x=55;x<200;x++){const n=y*size+x;if(visited[n]||!skin(n))continue;const q=[n];visited[n]=1;let l=x,r=x,t=y,b=y;for(let k=0;k<q.length;k++){const z=q[k],zx=z%size,zy=Math.floor(z/size);l=Math.min(l,zx);r=Math.max(r,zx);t=Math.min(t,zy);b=Math.max(b,zy);for(const next of [z-1,z+1,z-size,z+size]){const nx=next%size,ny=Math.floor(next/size);if(nx>=55&&nx<200&&ny>=70&&ny<150&&!visited[next]&&skin(next)){visited[next]=1;q.push(next);}}}faces.push({l,r,t,b,area:q.length});}
   const face=faces.sort((a,b)=>b.area-a.area)[0];if(face&&face.area>100)bounds={l:face.l+3,r:face.r-3,t:Math.floor(face.t+(face.b-face.t)*.34),b:Math.ceil(face.t+(face.b-face.t)*.9)};
  }
+ if(faceBounds)bounds=faceBounds;
  const dark=n=>data.data[n*4+3]>180&&data.data[n*4]<60&&data.data[n*4+1]<60&&data.data[n*4+2]<60;
  for(let y=bounds.t;y<=bounds.b;y++)for(let x=bounds.l;x<=bounds.r;x++){const n=y*size+x;if(seen[n]||!dark(n))continue;const q=[n];seen[n]=1;let l=x,r=x,t=y,b=y;
   for(let k=0;k<q.length;k++){const z=q[k],zx=z%size,zy=Math.floor(z/size);l=Math.min(l,zx);r=Math.max(r,zx);t=Math.min(t,zy);b=Math.max(b,zy);for(const next of [z-1,z+1,z-size,z+size])if(next%size>=bounds.l&&next%size<=bounds.r&&Math.floor(next/size)>=bounds.t&&Math.floor(next/size)<=bounds.b&&!seen[next]&&dark(next)){seen[next]=1;q.push(next);}}
@@ -38,7 +39,7 @@ export function hurtFace(image,frame,size,row,role){
  }
  const selected=eyes.sort((a,b)=>b.pixels.length-a.pixels.length).slice(0,role==='warrior'?3:2).sort((a,b)=>a.l-b.l);
  const original=data.data.slice();
- for(const eye of selected){for(let y=eye.t-2;y<=eye.b+2;y++)for(let x=eye.l-2;x<=eye.r+2;x++){const n=y*size+x;if(role!=='warrior'&&(x<bounds.l||x>bounds.r))continue;let best=null,score=Infinity;for(let dy=-12;dy<=12;dy++)for(let dx=-12;dx<=12;dx++){const xx=x+dx,yy=y+dy;if(xx<0||xx>=size||yy<0||yy>=size)continue;const at=(yy*size+xx)*4,r=original[at],g=original[at+1],b=original[at+2],valid=original[at+3]>200&&(role==='warrior'?r>95&&Math.abs(r-g)<25&&Math.abs(g-b)<25:r>165&&g>125&&r>b*1.1);const d=dx*dx+dy*dy;if(valid&&!selected.some(eye=>xx>=eye.l-3&&xx<=eye.r+3&&yy>=eye.t-3&&yy<=eye.b+3)&&d<score){score=d;best=at;}}if(best!==null)for(let k=0;k<3;k++)data.data[n*4+k]=original[best+k];}}
+ for(const eye of selected){for(let y=eye.t-2;y<=eye.b+2;y++)for(let x=eye.l-2;x<=eye.r+2;x++){const n=y*size+x;if(role!=='warrior'&&(x<bounds.l||x>bounds.r))continue;let best=null,score=Infinity;for(let dy=-12;dy<=12;dy++)for(let dx=-12;dx<=12;dx++){const xx=x+dx,yy=y+dy;if(xx<0||xx>=size||yy<0||yy>=size)continue;const at=(yy*size+xx)*4,r=original[at],g=original[at+1],b=original[at+2],valid=original[at+3]>200&&(role==='warrior'?r>metalFloor&&Math.abs(r-g)<25&&Math.abs(g-b)<25:r>165&&g>125&&r>b*1.1);const d=dx*dx+dy*dy;if(valid&&!selected.some(eye=>xx>=eye.l-3&&xx<=eye.r+3&&yy>=eye.t-3&&yy<=eye.b+3)&&d<score){score=d;best=at;}}if(best!==null)for(let k=0;k<3;k++)data.data[n*4+k]=original[best+k];}}
  ctx.putImageData(data,0,0);ctx.strokeStyle='#181b16';ctx.lineWidth=2.8;ctx.lineCap='round';ctx.lineJoin='round';
  for(const [index,{l,r,t,b}] of selected.entries()){const cy=(t+b)/2,cx=(l+r)/2,half=Math.min(5,(r-l)/2),leftEye=index===0,tip=leftEye?cx+half:cx-half,outer=leftEye?cx-half:cx+half;ctx.beginPath();if(role==='warrior'&&selected.length===3&&index===1){ctx.moveTo((l+r)/2,cy-3);ctx.lineTo((l+r)/2,cy+3);}else{ctx.moveTo(outer,cy-3);ctx.lineTo(tip,cy);ctx.lineTo(outer,cy+3);}ctx.stroke();}
 

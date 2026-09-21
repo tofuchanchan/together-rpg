@@ -10,13 +10,13 @@ test('shared factory preserves all combat defaults and fresh nested state',()=>{
  for(const role of Object.keys(HERO_ROLES)){
   const a=createHero(role,0),b=createHero(role,1);
   assert.equal(a.hp,HERO_ROLES[role].hp);assert.equal(a.maxHp,a.hp);assert.equal(a.level,1);assert.equal(a.ai,false);
-  assert.equal(a.power,1);assert.equal(a.skillPower,1);assert.equal(a.critDamage,1.5);assert.equal(a.rerolls,3);assert.equal(a.pickupRadius,75);
-  assert.deepEqual(a.skills,[0,0]);assert.deepEqual(a.equipment,{weapon:null,armor:null});assert.equal(a.core,null);assert.equal(a.action,null);
+  assert.equal(a.power,1);assert.equal(a.skillPower,1);assert.equal(a.critDamage,1.5);assert.equal(a.rerolls,3);assert.equal(a.pickupRadius,105);
+  assert.deepEqual(a.skills,[0,0,0,0]);assert.deepEqual(a.equipment,{weapon:null,armor:null});assert.equal(a.core,null);assert.equal(a.action,null);
   for(const key of ['skills','passives','forms','evolutionBranches','runes','move','lastMove','cd','equipment','evolved'])assert.notEqual(a[key],b[key]);
   for(const key of ['shield','casts','swings','directHits','charged','empowered','dodgeCd','attackCd','stride','gait','hitFlash','visualStop','invuln','revive','damageDone','resource','storedGuard','huntStacks','guardUntil'])assert.equal(a[key],0,key);
  }
  assert.throws(()=>createHero('rogue',0));
- const high=createHero('mage',2,{level:12,ai:true,name:'雪芽'});assert.equal(high.level,12);assert.equal(high.ai,true);assert.equal(high.name,'雪芽');assert.equal(high.power,1);assert.deepEqual(high.skills,[0,0]);
+ const high=createHero('mage',2,{level:12,ai:true,name:'雪芽'});assert.equal(high.level,12);assert.equal(high.ai,true);assert.equal(high.name,'雪芽');assert.equal(high.power,1);assert.deepEqual(high.skills,[0,0,0,0]);
 });
 
 test('candidate level rounds human average, excluding high AI levels and room number',()=>{
@@ -48,8 +48,8 @@ test('generation is seeded and has no world mutation or temporary combat objects
 
 test('same-role hires are eligible and starting levels do not receive free skills',()=>{
  const w=world(1),c=rollRecruit(w,()=>.2,'same');assert.equal(c.role,'warrior');assert.equal(c.hero.role,w.heroes[0].role);
- assert.equal(c.attributePoints,0);assert.equal(c.buildPoints,0);assert.equal(c.buildPointsUsed,0);assert.deepEqual(c.hero.skills,[0,0]);assert.deepEqual(c.hero.passives,{});assert.equal(c.hero.core,null);
- const level2=rollRecruit(world(2),random(2),'level2');assert.equal(level2.attributePointsUsed,1);assert.equal(level2.buildPointsUsed,0);assert.deepEqual(level2.hero.skills,[0,0]);
+ assert.equal(c.attributePoints,0);assert.equal(c.buildPoints,0);assert.equal(c.buildPointsUsed,0);assert.deepEqual(c.hero.skills,[0,0,0,0]);assert.deepEqual(c.hero.passives,{});assert.equal(c.hero.core,null);
+ const level2=rollRecruit(world(2),random(2),'level2');assert.equal(level2.attributePointsUsed,1);assert.equal(level2.buildPointsUsed,0);assert.deepEqual(level2.hero.skills,[0,0,0,0]);
 });
 
 test('1000 seeded recruits replay only legal selections within separate level budgets',()=>{

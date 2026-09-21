@@ -26,7 +26,7 @@ for(const role of ['warrior','mage','archer'])test(`${role} escapes the recorded
 for(const role of ['warrior','mage','archer'])test(`${role} leaves the inner clearance tangentially when its target is behind the obstacle`,()=>{
  const {w,h,foe}=arena(role);let escaped=false;const before=distance(h,foe);
  for(let i=0;i<120;i++){
-  const input=w.aiInput(h);assert.ok(Math.hypot(input.x,input.y)>.1||distance(h,foe)<ROLES[role].range,'no idle deadlock outside attack range');assertSafeSegment(h,input,w.obstacles,input.dodge?112:64);
+  const input=w.aiInput(h);assert.ok(Math.hypot(input.x,input.y)>.1||distance(h,foe)<ROLES[role].range,'no idle deadlock outside attack range');assertSafeSegment(h,input,w.obstacles,input.dodge?124:64);
   w.advance(1/120,[input]);const d=distance(h,w.obstacles[0]);assert.ok(d>=43-1e-6);if(escaped)assert.ok(d>=47-1e-5,'walking does not oscillate back into clearance');escaped ||= d>=47;
  }
  assert.ok(escaped);assert.ok(distance(h,foe)<before-30,'escapes then progresses toward the target');
@@ -52,12 +52,12 @@ test('map-edge clearance and an obstacle corner do not erase a legal physical co
 
 test('escaping navigation clearance still prioritizes an imminent poison area',()=>{
  const {w,h}=arena();w.hazards=[{type:'poison',x:46,y:60,r:50,timer:.1,life:3,damage:8}];
- const input=w.aiInput(h);assert.equal(h.aiIntent,'evade');assert.equal(input.dodge,true);assert.equal(input.skill1,false);assert.equal(input.skill2,false);assert.ok(input.y<-.5);assertSafeSegment(h,input,w.obstacles,112);
+ const input=w.aiInput(h);assert.equal(h.aiIntent,'evade');assert.equal(input.dodge,true);assert.equal(input.skill1,false);assert.equal(input.skill2,false);assert.ok(input.y<-.5);assertSafeSegment(h,input,w.obstacles,124);
 });
 
 test('escaping navigation clearance still rolls away from a threatening projectile',()=>{
  const {w,h}=arena();w.projectiles=[{hostile:true,x:46,y:-80,dx:0,dy:1,speed:400,life:2,damage:10}];
- const input=w.aiInput(h);assert.equal(h.aiIntent,'evade');assert.equal(input.dodge,true);assert.ok(input.x>.5,'cannot evade left through the obstacle');assertSafeSegment(h,input,w.obstacles,112);
+ const input=w.aiInput(h);assert.equal(h.aiIntent,'evade');assert.equal(input.dodge,true);assert.ok(input.x>.5,'cannot evade left through the obstacle');assertSafeSegment(h,input,w.obstacles,124);
 });
 
 test('a blocked goal does not force a detour when every legal detour crosses poison',()=>{

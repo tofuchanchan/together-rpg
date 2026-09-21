@@ -1,3 +1,4 @@
+import {equippedSkills} from './skill-pairs.js';
 import {refundCooldown} from './build-combat.js';
 import {segmentCircle} from './collision.js';
 import {enemyDef} from './enemies.js';
@@ -98,7 +99,7 @@ export function universalPostHit(w,e,h,source,ctx={},dealt=0){
   const valid=u.mark&&u.mark.until>w.time&&w.enemies.some(t=>t.id===u.mark.id&&t.hp>0);
   if((source==='skill'||!valid)&&once(h,'command',event))u.mark={id:e.id,until:w.time+3+rank(h,'commandWhistle')};
  }
- if(has(h,'stepCircuit')&&u.stepUntil>w.time){u.stepUntil=0;const slot=h.cd[0]>=h.cd[1]?0:1;if(h.skills[slot]&&h.cd[slot]>0)refundCooldown(h,slot,.25+rank(h,'stepCircuit')*.1);}
+ if(has(h,'stepCircuit')&&u.stepUntil>w.time){u.stepUntil=0;const slot=[...equippedSkills(h)].sort((a,b)=>(h.cd[b]||0)-(h.cd[a]||0))[0];if(h.skills[slot]&&h.cd[slot]>0)refundCooldown(h,slot,.25+rank(h,'stepCircuit')*.1);}
  if(source!=='attack')return;
  if(has(h,'boneWhistle')&&e.boss&&once(h,'bossAttack',event)){u.bossHits=(u.bossHits||0)+1;if(u.bossHits%8===0&&w.time>=(u.next.dog??0)&&w.random()<.25){u.next.dog=w.time+1.5;addPet(w,h,'dog');}}
  if(!once(h,'attack',event))return;

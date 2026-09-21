@@ -4,10 +4,11 @@ export const BOSS_DEF={name:'荆冠古王',hp:2600,speed:55,range:220,radius:150
 export const waveNumber=(room,wave)=>(room-1)*2+wave;
 export function rareRoll(random,progress){
  const r=random(),bonus=Math.min(.08,(progress-1)*.002);
+ if(progress<=3)return 0;
  // Keep early elite pressure, but introduce multi-affix HP/haste combinations gradually.
- const rare=(.06+bonus*.5)*Math.min(1,Math.max(0,(progress-2)/4));
- const legendary=(.015+bonus*.2)*Math.min(1,Math.max(0,(progress-6)/4));
- const elite=Math.min(.19,.08+Math.max(0,progress-1)*.012)+Math.min(.08,Math.max(0,progress-11)*.002);
+ const rare=(.06+bonus*.5)*Math.min(1,Math.max(0,(progress-7)/4));
+ const legendary=(.015+bonus*.2)*Math.min(1,Math.max(0,(progress-13)/4));
+ const elite=(Math.min(.19,.08+Math.max(0,progress-1)*.012)+Math.min(.08,Math.max(0,progress-11)*.002))*Math.min(1,(progress-3)/4);
  return r<legendary?3:r<rare?2:r<elite?1:0;
 }
 export function scaledEnemy(base,progress,rank,random){
@@ -19,6 +20,7 @@ export function scaledEnemy(base,progress,rank,random){
  stats.damage=base.damage*attackGrowth;stats.contactDamage=(base.contactDamage||0)*attackGrowth;
  stats.speed=base.speed*(1+Math.min(.36,n*.011))*(has('haste')?1+.1*rank:1);
  stats.cd=base.cd/(1+Math.min(.65,n*.012)+(has('haste')?.08*rank:0));
+ if(base.swarm&&n<4){stats.hp=Math.max(1,Math.round(stats.hp*(.6+n*.1)));stats.damage*=.65+n*.0875;stats.contactDamage*=.65+n*.0875;stats.speed*=.78+n*.055;}
  stats.armor=has('ward')?.08+.06*rank:0;stats.xp=Math.ceil(base.xp*(1+rank*.8));
  return{stats,affixes,rarity:rank,progress};
 }

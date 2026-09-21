@@ -157,7 +157,7 @@ export function buildProjectileHit(w,p,e,h,dir){
 export function tickBuild(w,h,dt){
  h.buildReadyFlash=Math.max(0,(h.buildReadyFlash||0)-dt);
  if(h.shadow){h.shadow.life-=dt;if(h.shadow.life<=0||h.down)h.shadow=null;}
- if(h.action?.form!=='aegis'&&h.core!=='bulwark')h.guardUntil=0;
+ if(!['aegis','pairwall'].includes(h.action?.form)&&h.core!=='bulwark')h.guardUntil=0;
  if(h.huntTarget){const e=w.enemies.find(e=>e.id===h.huntTarget&&e.hp>0),mark=e?.huntMarks?.[h.id];if(!e||!mark||w.time-mark.last>4){if(mark)mark.stacks=0;h.huntTarget=null;h.huntStacks=0;}else h.huntStacks=mark.stacks;}
  if(h.down){h.resource=0;h.storedGuard=0;h.guardUntil=0;}
  if(!h.down&&h.passives.fieldFocus&&w.time>=(h.fieldRefundAt||0)&&w.hazards.some(f=>f.type==='coldfield'&&f.owner===h.id&&f.life>0&&distance(f,h)<f.r)){h.fieldRefundAt=w.time+1;refundCooldown(h,0,.12+h.passives.fieldFocus*.06);}

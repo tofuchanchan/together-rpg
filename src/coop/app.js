@@ -60,7 +60,7 @@ function update(seconds){
  // Whole reward-page identity isolates queued XP; local submenus keep P2 independent.
  if(world.mode==='upgrade'){const page=world.offers;let confirmed=false;for(let i=0;i<world.humanCount&&world.mode==='upgrade'&&world.offers===page;i++){
   if(input[i].cancel&&!world.ready[i]){if(world.cancelReplacement(i))router.flush();continue;}
-  if(input[i].reroll&&!world.ready[i]){if(world.rewardMenus[i]?.type==='replace')world.cancelReplacement(i);else world.reroll(i);continue;}
+  if(input[i].reroll&&!world.ready[i]){if(['replace','skill-replace'].includes(world.rewardMenus[i]?.type))world.cancelReplacement(i);else world.reroll(i);continue;}
   if(input[i].skill1&&!world.ready[i])world.setFeedElement(i,world.heroes[i].universal?.feedElement==='chill'?'burn':'chill');
   const count=world.rewardChoices(i).length;if(input[i].up)world.choose(i,(world.selection[i]+count-1)%count);if(input[i].down)world.choose(i,(world.selection[i]+1)%count);if(input[i].confirm&&!world.ready[i]){world.confirm(i);confirmed=true;}
  }if(confirmed)router.flush();return;}

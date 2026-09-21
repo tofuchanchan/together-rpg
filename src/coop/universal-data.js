@@ -1,3 +1,4 @@
+import {equippedSkills} from './skill-pairs.js';
 import {validEquipment} from './equipment-data.js';
 // Shared cards use the same four passive slots as class components.
 const card=(title,icon,desc,tag,quality,tags)=>({title,icon,desc,tag,quality,tags});
@@ -31,12 +32,12 @@ export const UNIVERSAL_PASSIVES={
 
 export function universalSources(h){
  const p=h.passives||{},skills=h.skills||[0,0],forms=h.forms||[],active=skills.some(Boolean);
- const burn=h.core==='pyromancer'||!!(active&&p.ember);
+ const burn=h.core==='pyromancer'||!!(active&&p.ember)||!!(h.role==='mage'&&h.skills[0]>0&&h.skillAdvances?.[0]);
  const chill=!!(p.chill||h.core==='frostweaver'||h.role==='mage'&&skills[1]||forms.includes('icelance')||forms.includes('coldfield'));
  const bleed=!!(forms.includes('bloodspin')||((h.crit>0||p.momentum)&&(p.blood||h.core==='executioner')));
  const basicPet=!!(p.boneWhistle||active&&p.paperCrow);
  const equippedWard=validEquipment(h.equipment?.armor)&&h.equipment.armor.role===h.role&&h.equipment.armor.affixes.some(a=>a.key==='spellWard');
- const shield=!!(p.bloodAmber||active&&p.supplyPack||basicPet&&p.homeGift&&h.awakening!=='hiveHorn'||active&&p.guard||forms.includes('aegis')||active&&equippedWard);
+ const shield=!!(h.role==='warrior'&&h.skillAdvances?.[0]&&skills[0]||p.bloodAmber||active&&p.supplyPack||basicPet&&p.homeGift&&h.awakening!=='hiveHorn'||active&&p.guard||forms.includes('aegis')||active&&equippedWard);
  const pet=!!(basicPet||shield&&p.shieldBrood);
  return{active,burn,chill,bleed,shield,pet,healing:!!(p.harvest||h.core==='executioner'&&bleed),anomalies:[burn&&'burn',chill&&'chill',bleed&&'bleed'].filter(Boolean)};
 }
@@ -54,7 +55,7 @@ export function universalAvailable(h,key){
  if(key==='healingWave')return s.healing;
  if(key==='transferNeedle')return s.active&&s.anomalies.length>0;
  if(key==='mixedFuse')return s.active&&s.anomalies.length>=2;
- if(key==='duetMeter')return h.skills?.every(level=>level>0);
+ if(key==='duetMeter')return equippedSkills(h).every(slot=>h.skills?.[slot]>0);
  return true;
 }
 export const AWAKENINGS={

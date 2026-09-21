@@ -92,7 +92,7 @@ test('all 13 enemies, Boss skills, rarity and traits are documented with base-st
  assert.equal(count('enemy'),Object.keys(ENEMIES).length);
  for(const [key,enemy] of Object.entries(ENEMIES)){
   const entry=findCodexEntry(`enemy:${key}`);assert.equal(entry.name,enemy.name);assert.equal(entry.art.kind,key);
-  assert.ok(text(entry).includes(`生命 ${enemy.hp}`));assert.match(text(entry),/第 1 波普通个体/);
+  assert.ok(text(entry).includes(`生命 ${enemy.hp}`));assert.match(text(entry),/物种原始基础值/);
  }
  const boss=text(findCodexEntry('boss:thornking'));
  for(const skill of Object.values(BOSS_SKILLS))assert.ok(boss.includes(skill));
@@ -220,7 +220,7 @@ test('displayed drop percentages and values are the actual independent loot roll
  for(let rank=0;rank<RARITIES.length;rank++){
   const copy=findCodexEntry(`enemy-rarity:${rank}`).sections.find(section=>section.title==='普通击杀掉落').lines;
   for(const [index,type] of types.entries()){
-   const chance=Number(copy[index].match(/：([\d.]+)%/)[1])/100;
+   const chance=Number((Number(copy[index].match(/：([\d.]+)%/)[1])/100).toFixed(10));
    const value=Number(copy[index].match(index===2?/回复 (\d+)/:/概率，(\d+)/)[1]);
    const run=roll=>{let cursor=0;return lootRoll({rarity:rank},()=>cursor++===index?roll:.999999);};
    assert.deepEqual(run(chance-1e-8),[{type,value}],`${rank}:${type}: below boundary`);

@@ -3,9 +3,9 @@ import {rollEquipment,applyEquipment} from './equipment.js';
 import {aiRewardPriority} from './ai-build.js';
 
 export const HERO_ROLES={
- warrior:{name:'战士',hp:200,speed:175,range:145,damage:19,interval:.57,skills:['盾冲','旋风斩'],cd:[3.2,5]},
- mage:{name:'法师',hp:90,speed:170,range:340,damage:13,interval:.76,skills:['火球','冰霜环'],cd:[2.8,5]},
- archer:{name:'弓手',hp:105,speed:188,range:370,damage:12,interval:.5,skills:['贯穿箭','箭雨扇射'],cd:[3,4.5]},
+ warrior:{name:'战士',hp:200,speed:175,range:145,damage:19,interval:.57,skills:['盾冲','踩踏','旋风斩','剑气斩'],cd:[3.2,5,5.8,4.8]},
+ mage:{name:'法师',hp:90,speed:170,range:340,damage:13,interval:.76,skills:['火球','冰霜环','奥术弹幕','星轨法球'],cd:[2.8,5,4.8,6.4]},
+ archer:{name:'弓手',hp:105,speed:188,range:370,damage:12,interval:.5,skills:['贯穿箭','钉穿箭','散射','箭雨'],cd:[3,4.5,5.2,6.5]},
 };
 export const RECRUIT_RARITIES=[null,
  {name:'普通',hp:0,power:0,skillPower:0,fee:0},
@@ -24,9 +24,9 @@ export function createHero(role,id,{ai=false,level=1,name,rarity=1}={}){
  const definition=HERO_ROLES[role];if(!definition)throw Error(`Invalid hero role: ${role}`);
  const rank=rarityOf(rarity),bonus=RECRUIT_RARITIES[rank],hp=definition.hp+bonus.hp;
  return {id,role,ai:!!ai,name:name||definition.name,rarity:rank,level:integer(level),x:-140+id*120,y:id===2?110:35,
-  hp,maxHp:hp,power:1+bonus.power,speedBonus:1,skillPower:1+bonus.skillPower,rangeBonus:1,haste:1,crit:0,critDamage:1.5,evasion:0,armor:0,cooldown:0,recovery:1,dotPower:1,shieldPower:1,pickupRadius:75,
+  hp,maxHp:hp,power:1+bonus.power,speedBonus:1,skillPower:1+bonus.skillPower,rangeBonus:1,haste:1,crit:0,critDamage:1.5,evasion:0,armor:0,cooldown:0,recovery:1,dotPower:1,shieldPower:1,pickupRadius:105,
   evolutionBranches:[null,null],awakening:null,forms:[null,null],resource:0,storedGuard:0,huntStacks:0,huntTarget:null,shadow:null,rerolls:3,guardUntil:0,
-  skills:[0,0],evolved:[false,false],passives:{},core:null,runes:[null,null],shield:0,casts:0,swings:0,directHits:0,charged:0,empowered:0,cd:[0,0],dodgeCd:0,attackCd:0,action:null,
+  loadout:[0,1],skillAdvances:[false,false,false,false],pairMastery:{},skills:[0,0,0,0],evolved:[false,false,false,false],passives:{},core:null,runes:[null,null],shield:0,casts:0,swings:0,directHits:0,charged:0,empowered:0,cd:[0,0,0,0],dodgeCd:0,attackCd:0,action:null,
   move:{x:0,y:0},lastMove:{x:1,y:0},face:0,stride:0,gait:0,hitFlash:0,visualStop:0,invuln:0,down:false,revive:0,buffer:null,damageDone:0,equipment:{weapon:null,armor:null}};
 }
 
@@ -67,7 +67,7 @@ export function rollRecruit(w,rng,uid){
   if(applyReward(hero,choice.key).ok)attributeChoices.push(choice.key);
  }
  for(let step=0;step<buildPoints;step++){
-  const clears=step+1,foundation=hero.skills.some(n=>!n);
+  const clears=step+1,foundation=hero.skills.filter(Boolean).length<2;
   // The first two training points buy the basic buttons; these are not free
   // skills. Remaining points still draw random legal build components.
   const offers=foundation?skillPool(hero,{clears}).filter(o=>o.kind==='active'&&!hero.skills[o.slot]):rollSkills(hero,rng,{clears});let chosen=null;

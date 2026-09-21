@@ -1,3 +1,4 @@
+import {SKILL_PAIRS,equippedSkills,pairReady,advanceInfo,masteryReady} from './skill-pairs.js';
 import {ACTIVE,ATTRIBUTES,CORES,FORMS,PASSIVES,RUNES} from './builds.js';
 import {CLASS_COMPONENTS,ROUTES,BRANCHES} from './progression-data.js';
 import {UNIVERSAL_PASSIVES,AWAKENINGS,universalAvailable,awakeningAvailable,universalSources} from './universal-data.js';
@@ -7,19 +8,19 @@ const COMMON=new Set(['ember','chill','guard','harvest','momentum','blood','thor
 export function formInfo(h,slot){const f=FORMS[h.forms?.[slot]];return f?.role===h.role&&f.slot===slot?f:null;}
 export function routeFor(h,slot){return Object.entries(ROUTES).find(([,r])=>r.role===h.role&&r.slot===slot&&(r.form?(h.forms?.[slot]===r.form):!h.forms?.[slot]))?.[0]||null;}
 export function evolutionStatus(h,slot){
- const route=routeFor(h,slot),r=ROUTES[route];if(!r)return{ready:false,route:null,recipes:[],branches:[]};
+ if(h.skillAdvances?.[slot])return{ready:false,route:null,recipes:[],branches:[]};const route=routeFor(h,slot),r=ROUTES[route];if(!r)return{ready:false,route:null,recipes:[],branches:[]};
  const recipes=r.recipes.map(keys=>({keys,parts:keys.map(key=>({key,title:PASSIVES[key]?.title||key,level:h.passives?.[key]||0})),ready:keys.every(k=>(h.passives?.[k]||0)>0)&&keys.some(k=>(h.passives?.[k]||0)>=2)}));
  return{route,recipes,branches:r.branches,ready:h.skills[slot]>=3&&!h.evolved[slot]&&recipes.some(r=>r.ready)};
 }
-export function evolutionText(h,slot){const branch=h.evolutionBranches?.[slot];return BRANCHES[branch]?.desc||formInfo(h,slot)?.evolution||ACTIVE[h.role][slot].detail.split('进化：')[1];}
-export function skillName(h,slot){const f=formInfo(h,slot),branch=BRANCHES[h.evolutionBranches?.[slot]];return branch?`${f?.title||ACTIVE[h.role][slot].title}·${branch.title}`:f?`${f.title}${h.evolved[slot]?'·进化':''}`:h.evolved[slot]?ACTIVE[h.role][slot].evolved:ACTIVE[h.role][slot].title;}
+export function evolutionText(h,slot){const advanced=advanceInfo(h,slot);if(advanced)return advanced.desc;const branch=h.evolutionBranches?.[slot];return BRANCHES[branch]?.desc||formInfo(h,slot)?.evolution||ACTIVE[h.role][slot].detail.split('进化：')[1];}
+export function skillName(h,slot){const advanced=advanceInfo(h,slot);if(advanced)return advanced.title;const f=formInfo(h,slot),branch=BRANCHES[h.evolutionBranches?.[slot]];return branch?`${f?.title||ACTIVE[h.role][slot].title}·${branch.title}`:f?`${f.title}${h.evolved[slot]?'·进化':''}`:h.evolved[slot]?ACTIVE[h.role][slot].evolved:ACTIVE[h.role][slot].title;}
 function sources(h){
  const active=h.skills.some(n=>n>0),p=h.passives||{},forms=h.forms||[];
  const critical=h.crit>0||p.momentum>0;
- const burn=h.core==='pyromancer'||active&&p.ember>0;
+ const burn=h.core==='pyromancer'||active&&p.ember>0||h.role==='mage'&&h.skills[0]>0&&h.skillAdvances?.[0];
  const bleed=critical&&(p.blood>0||h.core==='executioner')||forms.includes('bloodspin');
  const frost=p.chill>0||h.core==='frostweaver'||h.role==='mage'&&h.skills[1]>0||forms.includes('icelance');
- const shield=p.guard>0&&active||forms.includes('aegis')||p.bloodAmber>0||p.supplyPack>0||universalSources(h).shield;
+ const shield=h.role==='warrior'&&h.skillAdvances?.[0]&&h.skills[0]>0||p.guard>0&&active||forms.includes('aegis')||p.bloodAmber>0||p.supplyPack>0||universalSources(h).shield;
  const marks=h.core==='sniper'||forms.includes('markedshot');
  const shadow=forms.includes('shadowvolley')||p.afterimage>0;
  return{active,critical,burn,bleed,frost,shield,dot:burn||bleed,marks,shadow};
@@ -48,18 +49,22 @@ function passiveAvailable(h,key){
  return true;
 }
 export function shuffle(pool,random){const a=[...pool];for(let i=a.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-export function attributePool(h){const s=sources(h);return ATTRIBUTES.filter(o=>!({speed:h.speedBonus>=1.6,haste:h.haste>=2,crit:h.crit>=.65,evasion:h.evasion>=.35,armor:h.armor>=.4,cooldown:h.cooldown>=.4,range:h.rangeBonus>=1.5,pickup:(h.pickupRadius||75)>=195,dot:!s.dot,shield:!s.shield}[o.key]));}
+export function attributePool(h){const s=sources(h);return ATTRIBUTES.filter(o=>!({speed:h.speedBonus>=1.6,haste:h.haste>=2,crit:h.crit>=.65,evasion:h.evasion>=.35,armor:h.armor>=.4,cooldown:h.cooldown>=.4,range:h.rangeBonus>=1.5,pickup:(h.pickupRadius||105)>=225,dot:!s.dot,shield:!s.shield}[o.key]));}
 function recipeText(status){return status.recipes.map(r=>r.parts.map(p=>`${p.title} ${p.level?'I'.repeat(p.level):'缺失'}`).join(' + ')).join(' / ')+'；任一路两件且一件 II';}
 export function skillPool(h,context={}){
  const result=[],clears=context.clears??99;
  if(!h.core&&clears>=3)for(const [key,c] of Object.entries(CORES))if(c.role===h.role&&(key!=='bulwark'||h.skills[0]>0)&&(key!=='arcanist'||h.skills.some(Boolean))&&(key!=='executioner'||sources(h).critical))result.push({key:`core:${key}`,kind:'core',quality:'uncommon',category:'class',icon:c.icon,title:`核心 · ${c.title}`,desc:c.desc,detail:'一个核心槽 · 不保证下次给配套'});
  ACTIVE[h.role].forEach((s,slot)=>{
-  const level=h.skills[slot],f=formInfo(h,slot),title=f?.title||s.title;
-  if(level<3)result.push({key:`active:${slot}`,slot,form:f?.key||null,kind:'active',quality:'common',category:'class',icon:f?.icon||s.icon,title:`${level?'强化':'习得'} · ${title} Lv.${level+1}`,desc:f?.desc||s.detail.split('；')[0],detail:'只提高技能等级 · 形态另选'});
+  const level=h.skills[slot]||0,f=formInfo(h,slot),title=advanceInfo(h,slot)?.title||f?.title||s.title;
+  if(level<3)result.push({key:`active:${slot}`,slot,form:f?.key||null,kind:'active',quality:'common',category:'class',icon:f?.icon||s.icon,title:`${level?'强化':'习得'} · ${title} Lv.${level+1}`,desc:advanceInfo(h,slot)?.desc||f?.desc||s.detail.split('；')[0],detail:!level&&h.skills.filter(Boolean).length>=2?'替换一项主动，从 I 重新培养；可取消':'最多装备两个主动 · 单独升级至 III'});
   const evolution=evolutionStatus(h,slot);
   if(evolution.ready)for(const branch of evolution.branches)result.push({key:`evolve:${slot}:${branch}`,slot,branch,form:f?.key||null,kind:'evolution',quality:'rare',category:'class',icon:f?.icon||s.icon,title:`进化 · ${BRANCHES[branch].title}`,desc:BRANCHES[branch].desc,detail:`${title} III；${recipeText(evolution)}；同槽分支互斥`});
-  if(level>=1&&!f&&!h.evolved[slot])for(const [key,shape] of Object.entries(FORMS))if(shape.role===h.role&&shape.slot===slot)result.push({key:`form:${slot}:${key}`,slot,form:key,kind:'form',quality:'uncommon',category:'class',icon:shape.icon,title:`形态 · ${shape.title}`,desc:shape.desc,detail:'保持当前等级 · 每个主动选一个形态'});
+  if(level>=1&&!f&&!h.evolved[slot]&&!h.skillAdvances?.[slot])for(const [key,shape] of Object.entries(FORMS))if(shape.role===h.role&&shape.slot===slot)result.push({key:`form:${slot}:${key}`,slot,form:key,kind:'form',quality:'uncommon',category:'class',icon:shape.icon,title:`形态 · ${shape.title}`,desc:shape.desc,detail:'保持当前等级 · 每个主动选一个形态'});
  });
+ for(const [key,pair] of Object.entries(SKILL_PAIRS))if(pair.role===h.role){
+  if(clears>=8)pair.slots.forEach((slot,index)=>{if(pairReady(h,slot))result.push({key:'advance:'+slot,kind:'advance',slot,quality:'uncommon',category:'class',icon:ACTIVE[h.role][slot].icon,title:'进阶 · '+pair.advances[index],desc:pair.descs[index],detail:pair.slots.map(s=>ACTIVE[h.role][s].title+' II').join(' + ')+'；占本次奖励，保持等级'});});
+  if(clears>=16&&masteryReady(h,key))result.push({key:'mastery:'+key,kind:'mastery',quality:'rare',category:'class',icon:ACTIVE[h.role][pair.slots[0]].icon,title:'精通 · '+pair.title,desc:pair.mastery,detail:'双进阶 III + '+PASSIVES[pair.component].title+' II；组合失效时暂停'});
+ }
  const occupied=Object.keys(h.passives||{}).length;
  for(const [key,p] of Object.entries(PASSIVES)){const level=h.passives?.[key]||0;if(level<3&&passiveAvailable(h,key))result.push({key:`passive:${key}`,kind:'passive',quality:p.quality||(COMMON.has(key)?'common':RARE.has(key)?'rare':'uncommon'),category:UNIVERSAL_PASSIVES[key]||SHARED.has(key)?'universal':'class',icon:p.icon,title:`${level?'强化':'被动'} · ${p.title} Lv.${level+1}`,desc:p.desc,detail:`${p.tag} · ${!level&&occupied>=4?'需替换一件已持有被动':`被动 ${occupied}/4`}`});}
  if(context.highReward&&clears>=19&&!h.awakening)for(const [key,a] of Object.entries(AWAKENINGS))if(awakeningAvailable(h,key))result.push({key:`awakening:${key}`,kind:'awakening',quality:'legendary',category:'universal',icon:a.icon,title:`觉醒 · ${a.title}`,desc:a.desc,detail:'一个觉醒槽 · 与其他觉醒互斥'});
@@ -116,17 +121,28 @@ export function rollReshape(h,random,type='core'){
 export function replacementImpacts(h,removeKey){const key=String(removeKey||'').replace(/^passive:/,''),probe={...h,passives:{...h.passives}};delete probe.passives[key];return Object.keys(probe.passives).filter(k=>passiveAvailable(h,k)&&!passiveAvailable(probe,k)).map(k=>({key:k,title:PASSIVES[k]?.title||k}));}
 function resetBuildResources(h){h.resource=0;h.storedGuard=0;h.shadow=null;h.huntTarget=null;h.huntStacks=0;h.guardUntil=0;h.counterReady=false;h.weakpointUntil=0;h.shadowRefundUntil=0;h.buildBonusEvent=null;h.buildBonus=1;h.fragmentEvents={};h.resourceEvents=new Set();h.casts=0;h.swings=0;}
 export function applyReward(h,key,options={}){
- const [kind,value,detail,fourth]=String(key).split(':'),ok=(extra={})=>({ok:true,status:'applied',...extra}),invalid=()=>({ok:false,status:'invalid'});h.passives??={};h.forms??=[null,null];h.evolutionBranches??=[null,null];
+ const [kind,value,detail,fourth]=String(key).split(':'),ok=(extra={})=>({ok:true,status:'applied',...extra}),invalid=()=>({ok:false,status:'invalid'});h.passives??={};h.forms??=[null,null];h.evolutionBranches??=[null,null];h.skillAdvances??=[false,false,false,false];h.runes??=[null,null];h.cd??=[0,0,0,0];
  if(kind==='core'){if(!h.core&&CORES[value]?.role===h.role){h.core=value;h.casts=0;h.swings=0;return ok();}return invalid();}
- if(kind==='form'){const slot=+value,definition=FORMS[detail];if(definition?.role===h.role&&definition.slot===slot&&h.skills[slot]>=1&&!h.forms[slot]&&!h.evolved[slot]){h.forms[slot]=detail;return ok();}return invalid();}
+ if(kind==='form'){const slot=+value,definition=FORMS[detail];if(definition?.role===h.role&&definition.slot===slot&&h.skills[slot]>=1&&!h.forms[slot]&&!h.evolved[slot]&&!h.skillAdvances?.[slot]){h.forms[slot]=detail;return ok();}return invalid();}
  if(kind==='rune'){h.runes??=[null,null];if(h.skills[+value]>=2&&!h.runes[+value]&&RUNES[detail]){h.runes[+value]=detail;return ok();}return invalid();}
- if(kind==='active'){if(![0,1].includes(+value)||h.skills[+value]>=3)return invalid();h.skills[+value]++;return ok();}
+ if(kind==='active'){
+  const slot=Number(value);if(!Number.isInteger(slot)||!ACTIVE[h.role][slot]||(h.skills[slot]||0)>=3)return invalid();
+  h.loadout??=[0,1];
+  if(!h.skills[slot]){
+   const existing=h.loadout.indexOf(slot),free=existing>=0?existing:h.loadout.findIndex(s=>!h.skills[s]);
+   if(free>=0)h.loadout[free]=slot;
+   else{const old=Number(options.replaceSkill),button=h.loadout.indexOf(old);if(options.replaceSkill===undefined)return{ok:false,status:'skill-replace-required',options:[...h.loadout]};if(button<0||old===slot)return invalid();h.skills[old]=0;h.forms[old]=null;h.evolved[old]=false;h.evolutionBranches[old]=null;h.skillAdvances[old]=false;h.runes[old]=null;h.cd[old]=0;h.loadout[button]=slot;}
+  }
+  h.skills[slot]=(h.skills[slot]||0)+1;h.cd[slot]??=0;return ok({clearOwnedObjects:options.replaceSkill!==undefined});
+ }
+ if(kind==='advance'){const slot=Number(value);if(!pairReady(h,slot))return invalid();h.skillAdvances??=[false,false,false,false];h.skillAdvances[slot]=true;return ok();}
+ if(kind==='mastery'){if(!masteryReady(h,value))return invalid();h.pairMastery??={};h.pairMastery[value]=true;return ok();}
  if(kind==='evolve'){const status=evolutionStatus(h,+value),branch=detail||status.branches[0];if(!status.ready||!status.branches.includes(branch))return invalid();h.evolved[+value]=true;h.evolutionBranches[+value]=branch;return ok();}
  if(kind==='awakening'){if(h.awakening||!AWAKENINGS[value]||!awakeningAvailable(h,value))return invalid();h.awakening=value;return ok();}
  if(kind==='reshape'){
   if(h.reshaped)return invalid();
   if(value==='core'&&CORES[detail]?.role===h.role&&detail!==h.core)h.core=detail;
-  else if(value==='form'&&h.skills[+detail]&&((fourth==='base'&&h.forms[+detail])||FORMS[fourth]?.role===h.role&&FORMS[fourth]?.slot===+detail&&h.forms[+detail]!==fourth)){h.forms[+detail]=fourth==='base'?null:fourth;h.evolved[+detail]=false;h.evolutionBranches[+detail]=null;}
+  else if(value==='form'&&h.skills[+detail]&&((fourth==='base'&&h.forms[+detail])||FORMS[fourth]?.role===h.role&&FORMS[fourth]?.slot===+detail&&h.forms[+detail]!==fourth)){h.forms[+detail]=fourth==='base'?null:fourth;h.evolved[+detail]=false;h.skillAdvances[+detail]=false;h.evolutionBranches[+detail]=null;}
   else return invalid();h.reshaped=true;resetBuildResources(h);return ok({clearOwnedObjects:true});
  }
  if(kind==='passive'){
@@ -149,7 +165,7 @@ export function applyReward(h,key,options={}){
  if(key==='shield')h.shieldPower=(h.shieldPower??1)+.2;
  if(key==='cooldown')h.cooldown=Math.min(.4,h.cooldown+.08);
  if(key==='range')h.rangeBonus=Math.min(1.5,h.rangeBonus+.1);
- if(key==='pickup')h.pickupRadius=Math.min(195,(h.pickupRadius??75)+20);
+ if(key==='pickup')h.pickupRadius=Math.min(225,(h.pickupRadius??105)+20);
  if(key==='recovery'){h.recovery+=.2;h.hp=Math.min(h.maxHp,h.hp+25);}
  if(key==='heal')h.hp=Math.min(h.maxHp,h.hp+55);
  return ok();

@@ -1,3 +1,4 @@
+import {EXTRA_SKILLS} from './skill-pairs.js';
 import {CLASS_COMPONENTS} from './progression-data.js';
 import {UNIVERSAL_PASSIVES,AWAKENINGS} from './universal-data.js';
 // All rolls use the world's seeded RNG. Descriptions state the exact applied effect.
@@ -16,7 +17,7 @@ export const ATTRIBUTES = [
  {key:'cooldown',title:'快速咏唱',desc:'技能冷却缩短 8%（上限 40%）',icon:'frost'},
  {key:'range',title:'战场掌控',desc:'普攻与技能范围 +10%（上限 +50%）',icon:'spin'},
  {key:'recovery',title:'药草知识',desc:'药瓶回复 +20%，立即回复 25',icon:'heal'},
- {key:'pickup',title:'拾荒直觉',desc:'拾取范围 +20（基础 75，上限 195）',icon:'focus'},
+ {key:'pickup',title:'拾荒直觉',desc:'拾取范围 +20（基础 105，上限 225）',icon:'focus'},
 ];
 export const PASSIVES = {
  ember:{title:'余烬',icon:'fire',desc:'技能命中燃烧 3 秒，每秒 4 / 8 / 12 ×技能强度×持续伤害强度',tag:'燃烧'},
@@ -54,8 +55,9 @@ export const ACTIVE = {
  mage:[{type:'fireball',title:'火球',icon:'fire',need:'ember',evolved:'烈焰新星',detail:'爆炸伤害 42 / 56 / 70；进化：爆炸范围 +50%，留下火区'},
        {type:'frost',title:'冰霜环',icon:'frost',need:'chill',evolved:'极寒领域',detail:'范围伤害 23 / 31 / 39；进化：冻结 1.5 秒，伤害 +50%'}],
  archer:[{type:'pierce',title:'贯穿箭',icon:'pierce',need:'blood',evolved:'裂魂穿刺',detail:'穿透伤害 45 / 60 / 75；进化：每次命中额外 +25% 暴击率'},
-         {type:'fan',title:'箭雨扇射',icon:'fan',need:'echo',evolved:'回响箭雨',detail:'扇射 5 箭，每箭 20 / 27 / 34；进化：延迟再发一轮'}],
+         {type:'fan',title:'散射',icon:'fan',need:'echo',evolved:'回响箭雨',detail:'扇射 5 箭，每箭 20 / 27 / 34；进化：延迟再发一轮'}],
 };
+for(const role of Object.keys(ACTIVE))ACTIVE[role].push(...EXTRA_SKILLS[role]);
 export const FORMS={
  aegis:{key:'aegis',role:'warrior',slot:0,title:'迎击盾阵',icon:'shield',tags:['melee','shield','counter'],desc:'原地正面盾阵持续 0.9 秒，获得 50 护盾；替换盾冲，不再位移',evolution:'盾阵持续 1.2 秒，入阵护盾提高至 75，受护盾效能加成'},
  bloodspin:{key:'bloodspin',role:'warrior',slot:1,title:'血刃旋风',icon:'spin',tags:['melee','bleed','area'],desc:'边移动边连续轮斩 5 次，以多段近战维持伤口；轮斩不提供无敌',evolution:'连续轮斩由 5 次增加至 6 次'},

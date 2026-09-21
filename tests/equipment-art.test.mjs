@@ -4,11 +4,21 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {equipmentVisual,equipmentPose,equipmentAttackPulse,equipmentLocalMotion,drawEquippedHero,equipmentAssetState} from '../src/coop/equipment-art.js';
 const manifest=JSON.parse(fs.readFileSync(new URL('../assets/equipment/manifest.json',import.meta.url)));
-test('equipment art ships nine distinct full-body 32-cel atlases and six independent eight-view weapons',()=>{
- assert.equal(Object.keys(manifest.bodies).length,9);assert.equal(Object.keys(manifest.weapons).length,6);const hashes=new Set();
- for(const [key,entry]of [...Object.entries(manifest.bodies),...Object.entries(manifest.weapons)]){const data=fs.readFileSync(new URL('../assets/equipment/'+entry.image,import.meta.url)),body=key.includes('_armor_')||key.includes('_body_');assert.equal(data.subarray(1,4).toString(),'PNG');assert.equal(data.readUInt32BE(16),1024);assert.equal(data.readUInt32BE(20),body?2048:512);assert.equal(entry.frames.length,body?32:8);hashes.add(createHash('sha256').update(data).digest('hex'));
+test('equipment art ships eighteen distinct bodies and six independent eight-view weapons',()=>{
+ assert.equal(Object.keys(manifest.bodies).length,18);assert.equal(Object.keys(manifest.weapons).length,6);const hashes=new Set();
+ assert.equal(Object.values(manifest.bodies).filter(e=>e.frames.length===32).length,9);
+ assert.equal(Object.values(manifest.bodies).filter(e=>e.frames.length===8).length,9);
+ for(const [key,entry]of [...Object.entries(manifest.bodies),...Object.entries(manifest.weapons)]){const data=fs.readFileSync(new URL('../assets/equipment/'+entry.image,import.meta.url));assert.equal(data.subarray(1,4).toString(),'PNG');assert.equal(data.readUInt32BE(16),1024);assert.equal(data.readUInt32BE(20),entry.frames.length===32?2048:512);assert.ok([8,32].includes(entry.frames.length));hashes.add(createHash('sha256').update(data).digest('hex'));
  for(const f of entry.frames){assert.ok(f.grip.every(n=>Number.isFinite(n)&&n>10&&n<246));assert.ok(f.x>=0&&f.y>=0);}}
- assert.equal(hashes.size,15);assert.deepEqual(manifest.directionRows,['S','SW','W','NW','N','NE','E','SE']);
+ assert.equal(hashes.size,24);assert.deepEqual(manifest.directionRows,['S','SW','W','NW','N','NE','E','SE']);
+});
+test('nine new armor atlases resolve all eight directions without requiring duplicate motion frames',()=>{
+ for(const [key,entry]of Object.entries(manifest.bodies).filter(([,v])=>v.frames.length===8)){
+  assert.deepEqual(entry.frames.map(f=>f.row),[0,1,2,3,4,5,6,7]);
+  assert.equal(new Set(entry.frames.map(f=>`${f.x},${f.y}`)).size,8);
+  for(const f of entry.frames){assert.equal(f.column,0);assert.ok(f.x+256<=1024&&f.y+256<=512);}
+  assert.equal(equipmentVisual({role:entry.role,equipment:{armor:{visualKey:key}}}).body,key);
+ }
 });
 test('weapon-only, armor-only and mixed slots resolve without baked old weapons',()=>{
  for(const role of ['warrior','mage','archer']){const armor=Object.keys(manifest.bodies).find(k=>k.startsWith(role+'_armor')),weapon=Object.keys(manifest.weapons).find(k=>k.startsWith(role));
