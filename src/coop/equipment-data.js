@@ -1,8 +1,8 @@
 export const EQUIPMENT_RARITIES=[null,{name:'普通',color:'#c6c8ce',affixes:0},{name:'精良',color:'#74dca0',affixes:1},{name:'稀有',color:'#85aaff',affixes:2},{name:'传奇',color:'#ffc86f',affixes:3}];
 export const EQUIPMENT_APPEARANCES={
- warrior:{weapon:[{key:'warrior_weapon_iron',name:'守卫铁剑'},{key:'warrior_weapon_cleaver',name:'赤刃重剑'}],armor:[{key:'warrior_armor_plate',name:'银钢板甲'},{key:'warrior_armor_raider',name:'赤铜战甲'}]},
- mage:{weapon:[{key:'mage_weapon_crystal',name:'霜晶法杖'},{key:'mage_weapon_ember',name:'余烬法杖'}],armor:[{key:'mage_armor_star',name:'黑星法袍'},{key:'mage_armor_leaf',name:'翠叶法袍'}]},
- archer:{weapon:[{key:'archer_weapon_longbow',name:'林卫长弓'},{key:'archer_weapon_crossbow',name:'猎鹰短弩'}],armor:[{key:'archer_armor_scout',name:'狼首猎装'},{key:'archer_armor_ranger',name:'鸮羽猎装'}]},
+ warrior:{weapon:[{key:'warrior_weapon_iron',name:'守卫铁剑'},{key:'warrior_weapon_cleaver',name:'赤刃重剑'}],armor:[{key:'warrior_armor_plate',name:'银钢板甲'},{key:'warrior_armor_raider',name:'赤铜战甲'},{key:'warrior_armor_ram',name:'蛮角重甲'},{key:'warrior_armor_sun',name:'日曜翼盔'},{key:'warrior_armor_crescent',name:'赤月武铠'}]},
+ mage:{weapon:[{key:'mage_weapon_crystal',name:'霜晶法杖'},{key:'mage_weapon_ember',name:'余烬法杖'}],armor:[{key:'mage_armor_star',name:'黑星法袍'},{key:'mage_armor_leaf',name:'翠叶法袍'},{key:'mage_armor_constellation',name:'星穹法袍'},{key:'mage_armor_rune',name:'秘纹兜帽'},{key:'mage_armor_grove',name:'森冠祭服'}]},
+ archer:{weapon:[{key:'archer_weapon_longbow',name:'林卫长弓'},{key:'archer_weapon_crossbow',name:'猎鹰短弩'}],armor:[{key:'archer_armor_scout',name:'狼首猎装'},{key:'archer_armor_ranger',name:'鸮羽猎装'},{key:'archer_armor_fox',name:'赤狐猎装'},{key:'archer_armor_hawk',name:'鹰羽游侠'},{key:'archer_armor_ermine',name:'雪貂猎装'}]},
 };
 export const EQUIPMENT_AFFIXES={
  dodgeLoad:{title:'闪步装填',slot:'weapon',desc:'闪避后3秒内的下一次普攻发射两颗副弹；触发间隔3秒'},

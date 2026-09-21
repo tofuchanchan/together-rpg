@@ -1,3 +1,4 @@
+import {SKILL_PAIRS} from './skill-pairs.js';
 import {ATTRIBUTES,CORES,applyReward,skillPool,buildMaturity} from './builds.js';
 import {ROUTES} from './progression-data.js';
 import {withEquipmentBase} from './equipment.js';
@@ -11,8 +12,9 @@ function usable(h,key){return skillPool({...h,passives:{...h.passives,[key]:Math
 function buildValue(h){const keys=related(h);return Object.entries(h.passives).reduce((n,[key,level])=>n+(usable(h,key)?level*(keys.has(key)?8:5):0),0)+buildMaturity(h).reduce((n,m)=>n+(m.complete?30:15),0);}
 export function aiRewardPriority(h,o){
  const key=o.key.split(':')[1],keys=related(h);
- if(o.kind==='active'&&!h.skills[o.slot])return 120;
+ if(o.kind==='active'&&!h.skills[o.slot])return 120+(Object.values(SKILL_PAIRS).some(p=>p.role===h.role&&p.slots.includes(o.slot)&&p.slots.some(s=>s!==o.slot&&h.skills[s]))?20:0);
  if(h.hp/h.maxHp<.55&&['hp','recovery','high:hp','passive:harvest','passive:guard'].includes(o.key))return 115;
+ if(o.kind==='mastery')return 108;if(o.kind==='advance')return 100;
  if(o.kind==='awakening')return 105;
  if(o.kind==='evolution')return 100;
  if(o.kind==='core')return 70+(CORES[key]?.tags||[]).reduce((n,p)=>n+(h.passives[p]||0)*8,0);

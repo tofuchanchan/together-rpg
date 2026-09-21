@@ -1,3 +1,4 @@
+import {equippedSkills} from './skill-pairs.js';
 import {segmentCircle,constrainSharedMove} from './collision.js';
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const unit=(x,y)=>{const n=Math.hypot(x,y);return n?{x:x/n,y:y/n}:{x:0,y:0};};
@@ -50,6 +51,9 @@ export function companionInput(w,h,role,map){
   // release window in range instead of reverting to ordinary ranged retreat.
   // Loot, healing and danger steering below can still override this position.
   if(h.role==='mage'&&h.action?.type==='frost'&&!h.action.form&&!h.action.fired){dest=h;stop=0;intent='attack';}
+  // The arcane station can reach farther than basic attacks. Keep its safe firing
+  // position; danger, nearby enemies, healing and rescue still take precedence.
+  if(h.role==='mage'&&h.skillAdvances?.[3]&&d>=235&&d<480&&w.lineClear(h,target)&&w.skillFields?.some(f=>f.kind==='orbit'&&f.owner===h.id&&f.life>.6&&distance(h,f)<f.r*.85)){dest=h;stop=0;intent='attack';h.kiting=false;}
  }
  if(!ally){
   const safeGap=h.role==='warrior'?250:175,lootReach=h.role==='warrior'?110:Math.max(185,(h.pickupRadius||75)+50),lootGap=h.role==='warrior'?150:110;
@@ -69,7 +73,7 @@ export function companionInput(w,h,role,map){
  const bulletThreats=bullets.map(b=>({b,t:segmentCircle(b,point(b,{x:b.dx,y:b.dy},b.speed*Math.min(.45,b.life)),h,29)})).filter(v=>v.t<Infinity).map(v=>({...v,eta:v.t*Math.min(.45,v.b.life)})).sort((a,b)=>a.eta-b.eta),bullet=bulletThreats[0];
  let desired=distance(h,dest)>stop?unit(dest.x-h.x,dest.y-h.y):{x:0,y:0};
  if(impending){const center=zoneCenter(h,impending);desired=unit(h.x-center.x,h.y-center.y);if(!Math.hypot(desired.x,desired.y))desired=h.lastMove;intent='evade';}
- if(bullet){desired={x:-bullet.b.dy,y:bullet.b.dx};if(!pathClear(h,travelPoint(desired,112)))desired={x:-desired.x,y:-desired.y};intent='evade';}
+ if(bullet){desired={x:-bullet.b.dy,y:bullet.b.dx};if(!pathClear(h,travelPoint(desired,124)))desired={x:-desired.x,y:-desired.y};intent='evade';}
  const exitDistance=impending?impending.r+22-zoneDistance(h,impending):0;
  // If one roll cannot leave a large circle, align its invulnerability with impact.
  const urgentZone=impending&&impending.eta<(exitDistance<105?.24:.13),urgent=urgentZone||!!bullet;
@@ -81,17 +85,17 @@ export function companionInput(w,h,role,map){
  let dodge=!!urgent&&h.dodgeCd<=0&&canInterrupt&&!finishShot;
  // A shield is a timed response to a direct attack, never a reason to stand in poison.
  const guardThreat=bullet&&(!impending||bullet.eta<impending.eta)?{source:bullet.b,eta:bullet.eta}:impending,guardSource=guardThreat?.source;
- const guard=!!(forms[0]==='aegis'&&h.skills[0]>0&&h.cd[0]===0&&(!h.action||h.action.type==='attack')&&!ally&&h.hp/h.maxHp>=.45&&intent!=='heal'&&!urgentZone&&guardSource&&guardThreat.kind!=='poison'&&guardThreat.eta>=.28&&guardThreat.eta<=.62&&w.lineClear(h,guardSource)&&!zones.some(a=>a.type==='poison'&&zoneDistance(h,a)<a.r+22));
+ const guard=!!((forms[0]==='aegis'||h.role==='warrior'&&h.skillAdvances?.[0])&&h.skills[0]>0&&h.cd[0]===0&&(!h.action||h.action.type==='attack')&&!ally&&h.hp/h.maxHp>=.45&&intent!=='heal'&&!urgentZone&&guardSource&&guardThreat.kind!=='poison'&&guardThreat.eta>=.28&&guardThreat.eta<=.62&&w.lineClear(h,guardSource)&&!zones.some(a=>a.type==='poison'&&zoneDistance(h,a)<a.r+22));
  const heldThreats=[...zones.filter(a=>a.eta<.45&&zoneDistance(h,a)<a.r+22).map(a=>({source:a.source,eta:a.eta,damage:a.source?.stats?.damage??Infinity,poison:a.kind==='poison'||a.type==='poison'})),...bulletThreats.map(v=>({source:v.b,eta:v.eta,damage:v.b.damage??Infinity}))],guardDir=h.guardDir||h.action?.dir||h.lastMove;
- const holdingGuard=h.action?.form==='aegis'&&heldThreats.length>0&&heldThreats.every(a=>{if(!a.source||a.poison||(h.guardUntil||0)-w.time<a.eta+.02)return false;const v=unit(a.source.x-h.x,a.source.y-h.y);return v.x*guardDir.x+v.y*guardDir.y>.35;})&&(h.shield||0)>=heldThreats.reduce((sum,a)=>sum+a.damage,0);
+ const holdingGuard=['aegis','pairwall'].includes(h.action?.form)&&heldThreats.length>0&&heldThreats.every(a=>{if(!a.source||a.poison||(h.guardUntil||0)-w.time<a.eta+.02)return false;const v=unit(a.source.x-h.x,a.source.y-h.y);return v.x*guardDir.x+v.y*guardDir.y>.35;})&&(h.shield||0)>=heldThreats.reduce((sum,a)=>sum+a.damage,0);
  if(guard||holdingGuard){desired=guard?unit(guardSource.x-h.x,guardSource.y-h.y):{x:0,y:0};intent='guard';dodge=false;}
  // Spend one safe sideways roll to establish a second firing origin, only when E is ready.
  if(!guard&&!urgent&&!ally&&!['heal','evade','loot','patrol'].includes(intent)&&(forms[1]==='shadowvolley'||passives.afterimage)&&h.skills[1]>0&&h.cd[1]===0&&!shadowReady&&!(h.evolutionBranches?.[1]==='garrison'&&h.shadow?.life>0)&&target&&distance(h,target)>170&&distance(h,target)<380*h.rangeBonus&&h.dodgeCd<=0&&canInterrupt){
   const toward=unit(target.x-h.x,target.y-h.y),sides=[{x:-toward.y,y:toward.x},{x:toward.y,y:-toward.x}];
-  const side=sides.find(v=>distance(h,travelPoint(v,112))>80&&pathClear(h,travelPoint(v,112))&&risk(travelPoint(v,112),.7)===0&&risk(travelPoint(v,56),.4)===0&&foes.every(e=>distance(travelPoint(v,112),e)>120));
+  const side=sides.find(v=>distance(h,travelPoint(v,124))>80&&pathClear(h,travelPoint(v,124))&&risk(travelPoint(v,124),.7)===0&&risk(travelPoint(v,62),.4)===0&&foes.every(e=>distance(travelPoint(v,124),e)>120));
   if(side){desired=side;dodge=true;intent='shadow';}
  }
- const travel=dodge?112:64,projectedGoal=travelPoint(desired,travel),blockedIntent=Math.hypot(desired.x,desired.y)>.5&&(!pathClear(h,projectedGoal)||distance(h,projectedGoal)<travel*.2);
+ const travel=dodge?124:64,projectedGoal=travelPoint(desired,travel),blockedIntent=Math.hypot(desired.x,desired.y)>.5&&(!pathClear(h,projectedGoal)||distance(h,projectedGoal)<travel*.2);
  const candidates=[desired,...Array.from({length:16},(_,i)=>({x:Math.cos(i*Math.PI/8),y:Math.sin(i*Math.PI/8)}))];
  if(!urgent)candidates.push({x:0,y:0});
  const score=v=>{const p=travelPoint(v,travel);if(!pathClear(h,p))return -1e6;
@@ -118,6 +122,7 @@ export function companionInput(w,h,role,map){
  const d=target?distance(h,target):Infinity,near=foes.filter(e=>distance(h,e)<185*h.rangeBonus&&w.lineClear(h,e));
  let skill1=!!canCast&&h.skills[0]>0&&h.cd[0]===0&&d<(h.role==='warrior'?210:450)*h.rangeBonus,skill2=!!canCast&&h.skills[1]>0&&h.cd[1]===0&&d<(h.role==='archer'?380:185)*h.rangeBonus;
  if(forms[0]==='aegis')skill1=guard;
+ else if(h.role==='warrior'&&h.skillAdvances?.[0])skill1=guard||skill1;
  const guardEnergy=h.storedGuard||h.shield*.4||0;
  if(passives.guardRelease)skill2=skill2&&(guardEnergy>0||near.length>=3);
  if(passives.rageEdge)skill2=skill2&&((h.resource||0)>=30||near.length>=3);
@@ -133,5 +138,14 @@ export function companionInput(w,h,role,map){
  if((forms[0]==='markedshot'||h.core==='sniper')&&passives.markCashout&&skill1)skill1=h.huntTarget===target.id&&(h.huntStacks||0)>=3||target.hp<target.maxHp*.2;
  if(passives.delayedVolley&&skill2)skill2=shadowReady||(h.resource||0)>=60;
  if(skill2&&(shadowReady||passives.guardRelease&&guardEnergy>0||passives.rageEdge&&(h.resource||0)>=30))skill1=false;
- return {...move,dodge:dodge&&Math.hypot(move.x,move.y)>.5,skill1,skill2};
+ const wanted=[skill1,skill2];
+ for(const slot of [2,3]){const range=h.role==='warrior'&&slot===2?190:480;wanted[slot]=!!canCast&&(h.skills[slot]||0)>0&&h.cd[slot]===0&&d<range*h.rangeBonus;}
+ // Set up the paired field/pin before spending its finisher, regardless of button order.
+ if(h.role==='mage'&&wanted[2]&&wanted[3])wanted[2]=false;
+ if(h.role==='mage'&&h.skillAdvances?.[1]&&wanted[0]&&wanted[1])wanted[0]=false;
+ if(h.role==='archer'&&wanted[0]&&wanted[2]&&!(target.pinnedBy?.[h.id]>w.time))wanted[0]=false;
+ if(h.role==='archer'&&wanted[1]&&wanted[3])wanted[1]=false;
+ if(h.role==='warrior'&&h.skillAdvances?.[3]&&wanted[1]&&wanted[3])wanted[1]=false;
+ const loadout=equippedSkills(h);
+ return {...move,dodge:dodge&&Math.hypot(move.x,move.y)>.5,skill1:!!wanted[loadout[0]],skill2:!!wanted[loadout[1]]};
 }

@@ -1,6 +1,7 @@
 import {chromium} from 'file:///C:/Users/fuweicheng/.codex/skills/node_modules/playwright/index.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import {CODEX_ENTRIES} from '../src/coop/codex-data.js';
 const base=(process.env.CODEX_BASE_URL||'http://127.0.0.1:4173').replace(/\/$/,''),out=process.env.CODEX_VERIFY_OUT||'output/verification/codex-loading';fs.mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({headless:true}),checks=[],errors=[],requests=[];
 const mark=label=>{checks.push(label);console.log('PASS',label);};
@@ -47,8 +48,8 @@ try{
   for(const entry of CODEX_ENTRIES){const image=new Image();image.src=codexImageUrl(entry);await image.decode();ctx.clearRect(0,0,320,190);ctx.drawImage(image,0,0,320,190);const data=ctx.getImageData(0,0,320,190).data;let foreground=0;for(let i=0;i<data.length;i+=4){const low=Math.min(data[i],data[i+1],data[i+2]),high=Math.max(data[i],data[i+1],data[i+2]);if(low<160||high-low>60)foreground++;}results.push({id:entry.id,width:image.naturalWidth,height:image.naturalHeight,foreground});}
   return results;
  });
- assert.equal(images.length,159);for(const image of images){assert.equal(image.width,640,image.id);assert.equal(image.height,380,image.id);assert.ok(image.foreground>20,`${image.id}: actual artwork, not just a background gradient`);}
- mark('all 159 entries decode and contain visible original-art silhouettes');
+ assert.deepEqual(images.map(i=>i.id),CODEX_ENTRIES.map(e=>e.id));for(const image of images){assert.equal(image.width,640,image.id);assert.equal(image.height,380,image.id);assert.ok(image.foreground>20,`${image.id}: actual artwork, not just a background gradient`);}
+ mark(`all ${images.length} entries decode and contain visible original-art silhouettes`);
  await page.setViewportSize({width:1440,height:980});await page.goto(`${base}/codex.html#role%3Awarrior`);await ready();await page.screenshot({path:`${out}/desktop.png`});
  const resources=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.includes('/assets/')).map(r=>({url:r.name,bytes:r.encodedBodySize})));
  assert.ok(resources.every(r=>r.url.includes('/assets/codex/')));assert.deepEqual(errors,[]);mark('desktop catalogue uses only independent lightweight previews, with no script errors');

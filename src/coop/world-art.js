@@ -55,7 +55,7 @@ export function projectile(c,p,time){
  const angle=Math.atan2(p.dy*.707,p.dx),offset=p.type==='arrow'||p.type==='pierce'?width*.35:0;
  drawArt(c,key,p.x-Math.cos(angle)*offset,p.y*.707-31-Math.sin(angle)*offset,width,width,{rotation:angle,filter:p.hostile?'sepia(.8) saturate(3) hue-rotate(320deg)':undefined});
 }
-export function heroAction(c,h){const a=h.action,layout=actionLayout(h);if(!a||!layout)return;const q=clamp(a.t/a.duration,0,.999),angle=Math.atan2(a.dir.y*.707,a.dir.x);c.save();c.translate(layout.x,layout.y*.707);
+export function heroAction(c,h){const a=h.action,layout=actionLayout(h);if(!a||!layout||a.pairSkill)return;const q=clamp(a.t/a.duration,0,.999),angle=Math.atan2(a.dir.y*.707,a.dir.x);c.save();c.translate(layout.x,layout.y*.707);
  const start=a.windup??a.duration*.33,end=a.activeEnd??a.duration*.56,fx=clamp((a.t-start)/Math.max(.001,end-start+.07),0,1);
  if(a.type==='attack'&&a.t>=start&&fx<1)drawArt(c,effectFrame('slash',fx),0,-28,layout.size,layout.size,{rotation:angle,alpha:.92*(1-fx*.6)});
  if(a.type==='spin'&&a.t>=(a.windup??.12)){c.scale(1,.707);drawArt(c,effectFrame('spin',q),0,0,layout.size,layout.size,{rotation:q*Math.PI,alpha:.75});}

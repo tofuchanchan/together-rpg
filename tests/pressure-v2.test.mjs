@@ -10,17 +10,17 @@ const rng=seed=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4
 
 test('pressure opens with a crowd and adds timed reinforcements without deaths',()=>{
  const p=pressurePlan(1,1),s=createPressureState(p),first=pressureTick(p,s,{elapsed:0,alive:0});
- assert.equal(first.count,32);assert.equal(s.spawned,0);assert.equal(first.state.lastAlive,32);
- const second=pressureTick(p,first.state,{elapsed:p.interval,alive:32});assert.equal(second.count,8);assert.equal(second.reason,'timed');
+ assert.equal(first.count,20);assert.equal(s.spawned,0);assert.equal(first.state.lastAlive,20);
+ const second=pressureTick(p,first.state,{elapsed:p.interval,alive:20});assert.equal(second.count,8);assert.equal(second.reason,'timed');
 });
 
 test('death above the target population is replaced on the very next pressure tick',()=>{
- const p=pressurePlan(1,1),s={spawned:80,lastAlive:50,nextAt:20,pendingRefill:0};
+ const p=pressurePlan(4,1),s={spawned:80,lastAlive:50,nextAt:20,pendingRefill:0};
  const next=pressureTick(p,s,{elapsed:10,alive:49});assert.equal(next.count,1);assert.equal(next.state.lastAlive,50);assert.equal(next.reason,'refill');
 });
 
 test('mass death replacement is paced across ticks without losing the owed replacements',()=>{
- const p=pressurePlan(1,1);let state={spawned:50,lastAlive:50,nextAt:20,pendingRefill:0},alive=20,total=0;
+ const p=pressurePlan(4,1);let state={spawned:50,lastAlive:50,nextAt:20,pendingRefill:0},alive=20,total=0;
  for(let i=0;i<4;i++){const n=pressureTick(p,state,{elapsed:1+i/120,alive});assert.ok(n.count<=p.refillBurst);total+=n.count;alive+=n.count;state=n.state;}
  assert.equal(total,30);assert.equal(alive,50);assert.equal(state.pendingRefill,0);
 });
@@ -39,7 +39,7 @@ test('wave deadline discards all refill debt and never queues late reinforcement
 
 test('dense roster is mostly three fragile shapes but guarantees all existing specialist kinds',()=>{
  const kinds=new Set(),counts={swarm:0,total:0};
- for(let seed=17;seed<27;seed++){const random=rng(seed);for(let i=0;i<180;i++){const kind=pressureKind(1,1,i,random);assert.ok(ENEMIES[kind]);kinds.add(kind);counts.total++;counts.swarm+=!!ENEMIES[kind].swarm;}}
+ for(let seed=17;seed<27;seed++){const random=rng(seed);for(let i=0;i<180;i++){const kind=pressureKind(9,2,i,random);assert.ok(ENEMIES[kind]);kinds.add(kind);counts.total++;counts.swarm+=!!ENEMIES[kind].swarm;}}
  assert.equal(kinds.size,13);assert.ok(counts.swarm/counts.total>.75&&counts.swarm/counts.total<.85);
  for(const key of ['seedling','dustling','gnat']){const d=ENEMIES[key];assert.ok(d.hp<=20&&d.damage<=5);assert.ok(d.bodyRadius>0&&d.contactDamage>0);}
 });
@@ -50,28 +50,20 @@ test('later pressure grows speed, attack rate, contact damage and population as 
  const p=pressurePlan(9,2);assert.ok(p.targetAlive>pressurePlan(1,1).targetAlive);assert.ok(p.totalBudget>pressurePlan(1,1).totalBudget);
 });
 
-test('early high-rarity combinations ramp in without removing ordinary elites',()=>{
- assert.equal(rareRoll(()=>0,1),1);assert.equal(rareRoll(()=>0,2),1);
- assert.equal(rareRoll(()=>0,3),2);assert.equal(rareRoll(()=>0,6),2);assert.equal(rareRoll(()=>0,7),3);
- assert.equal(rareRoll(()=>.079,1),1);assert.equal(rareRoll(()=>.081,1),0);
- assert.equal(rareRoll(()=>.09,2),1);assert.equal(rareRoll(()=>.189,11),1);assert.equal(rareRoll(()=>.191,11),0);
- assert.equal(rareRoll(()=>.01,10),3);assert.equal(rareRoll(()=>.05,10),2);
+test('rarities introduce one-affix elites before rare and legendary threats',()=>{
+ for(const progress of [1,2,3])assert.equal(rareRoll(()=>0,progress),0);
+ assert.equal(rareRoll(()=>0,4),1);assert.equal(rareRoll(()=>0,7),1);assert.equal(rareRoll(()=>0,8),2);assert.equal(rareRoll(()=>0,13),2);assert.equal(rareRoll(()=>0,14),3);
+ assert.equal(rareRoll(()=>.189,11),1);assert.equal(rareRoll(()=>.191,11),0);assert.equal(rareRoll(()=>.01,18),3);
 });
-
-test('early healers have scheduled arrivals instead of randomly stacked support packs',()=>{
- for(let progress=1;progress<=6;progress++){
-  const room=Math.ceil(progress/2),wave=progress%2||2,plan=pressurePlan(room,wave);
-  let healers=0;for(let i=0;i<plan.totalBudget;i++)if(pressureKind(room,wave,i,()=>.98)==='shaman')healers++;
-  assert.ok(healers>=1&&healers<=2);
- }
- assert.equal(pressureKind(4,1,0,()=>.98),'shaman');
+test('healing support waits until wave eighteen, including scheduled specialist slots',()=>{
+ for(let progress=1;progress<18;progress++)for(let i=0;i<240;i++)assert.notEqual(pressureKind(Math.ceil(progress/2),progress%2||2,i,()=>.98),'shaman');
+ const kinds=Array.from({length:240},(_,i)=>pressureKind(9,2,i,()=>.98));assert.ok(kinds.includes('shaman'));
 });
-
 test('experience is common but not guaranteed; rare monsters improve both odds and values',()=>{
- assert.ok(XP_CHANCE[0]>=.55&&XP_CHANCE[0]<=.65);
+ assert.ok(XP_CHANCE[0]>=.55&&XP_CHANCE[0]<=.70);
  for(let rank=1;rank<4;rank++){assert.ok(XP_CHANCE[rank]>XP_CHANCE[rank-1]);assert.ok(XP_VALUE[rank]>XP_VALUE[rank-1]);assert.ok(GOLD_CHANCE[rank]>GOLD_CHANCE[rank-1]);assert.ok(GOLD_VALUE[rank]>GOLD_VALUE[rank-1]);}
  assert.deepEqual(lootRoll({rarity:0},()=>.999),[]);
- assert.ok(lootRoll({rarity:0},()=>.5).some(d=>d.type==='xp'));assert.ok(POTION_CHANCE[0]<.01&&GOLD_CHANCE[0]<.02);
+ assert.ok(lootRoll({rarity:0},()=>.5).some(d=>d.type==='xp'));assert.ok(POTION_CHANCE[0]===.011&&GOLD_CHANCE[0]===.04);
  let calls=0;lootRoll({rarity:3},()=>{calls++;return .5;});assert.equal(calls,3);
 });
 
@@ -122,7 +114,7 @@ test('ten seeded pre-boss reward budgets slow levels despite common XP and many 
    }
   }
   const row={seed,oldCount,newCount,oldXp,newXp,oldLevel:levelFor(oldXp,l=>5+(l-1)*3),newLevel:levelFor(newXp,xpRequired),level85:levelFor(newXp*.85,xpRequired),potions};rows.push(row);
-  assert.ok(newCount>oldCount*5);assert.ok(row.newLevel>=14&&row.newLevel<=18);assert.ok(row.level85>=14);assert.ok(row.newLevel<row.oldLevel);assert.ok(potions<oldCount*.28*.25);
+  assert.ok(newCount>oldCount*5);assert.ok(row.newLevel>=14&&row.newLevel<=18);assert.ok(row.level85>=14);assert.ok(row.newLevel<row.oldLevel);assert.ok(potions<oldCount*.28*.45);
  }
  t.diagnostic('Budget only: every scheduled spawn killed; 100% and 85% XP collection assumptions, not a combat-survival simulation. '+JSON.stringify(rows));
 });

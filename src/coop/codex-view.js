@@ -2,7 +2,7 @@ import {CODEX_CATEGORIES,CODEX_ENTRIES,findCodexEntry,filterCodexEntries} from '
 import {createCodexImage} from './codex-image.js';
 
 const ROLES={all:'全部职业',warrior:'战士',mage:'法师',archer:'弓手',universal:'通用'};
-const KINDS={role:'职业',active:'主动技能',core:'职业核心',form:'技能形态',evolution:'职业进化',passive:'被动组件',awakening:'通用觉醒',attribute:'升级属性',weapon:'武器',armor:'防具',affix:'装备词条','equipment-rarity':'装备品质',enemy:'普通怪物',boss:'首领','enemy-rarity':'怪物稀有度',trait:'怪物词条'};
+const KINDS={advance:'配对进阶',mastery:'组合精通',role:'职业',active:'主动技能',core:'职业核心',form:'技能形态',evolution:'职业进化',passive:'被动组件',awakening:'通用觉醒',attribute:'升级属性',weapon:'武器',armor:'防具',affix:'装备词条','equipment-rarity':'装备品质',enemy:'普通怪物',boss:'首领','enemy-rarity':'怪物稀有度',trait:'怪物词条'};
 const scopeName=entry=>entry.category==='monsters'?'林间生态':entry.role==='all'?'通用':ROLES[entry.role];
 const el=(tag,className,text)=>{const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;};
 const button=(className,text,click)=>{const node=el('button',className,text);node.type='button';node.addEventListener('click',click);return node;};

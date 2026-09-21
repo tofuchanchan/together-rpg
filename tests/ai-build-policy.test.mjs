@@ -8,7 +8,7 @@ const rng=seed=>()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296)
 test('recruits spend their existing first two build points learning both base actives',()=>{
  for(let seed=1;seed<=100;seed++){
   const w={room:5,level:7,heroes:[createHero('mage',0,{level:7})]},r=rollRecruit(w,rng(seed),`foundation-${seed}`);
-  assert.ok(r.hero.skills.every(n=>n>=1),`seed ${seed} has no working pair of active skills`);
+  assert.ok(r.hero.loadout.every(slot=>r.hero.skills[slot]>=1),`seed ${seed} has no working pair of active skills`);
   assert.equal(r.buildPoints,3);assert.equal(r.buildPointsUsed,3);assert.equal(r.attributePointsUsed,6);
   const replay=createHero(r.role,0,{level:7,rarity:r.rarity});for(const key of r.attributeChoices)applyReward(replay,key);
   for(const card of r.buildChoices){assert.ok(card.offers.includes(card.key));assert.ok(skillPool(replay,{clears:card.clears}).some(o=>o.key===card.key));assert.equal(applyReward(replay,card.key,card.replaceKey?{replaceKey:card.replaceKey}:{}).ok,true);}

@@ -1,0 +1,41 @@
+{
+  "method": "built-in image_gen; original alpha preserved",
+  "records": [
+    {
+      "key": "warrior_armor_ram",
+      "path": "C:\\Users\\fuweicheng\\.codex\\generated_images\\01a0b3a8-9077-7682-b570-036268bf1253\\exec-1cdf8f15-f336-49f5-a1e1-22d36bf56361.png"
+    },
+    {
+      "key": "warrior_armor_sun",
+      "path": "C:\\Users\\fuweicheng\\.codex\\generated_images\\01a0b3a8-9077-7682-b570-036268bf1253\\exec-ed9a313d-7ac0-4efb-9a9c-2c5d7709a225.png"
+    },
+    {
+      "key": "warrior_armor_crescent",
+      "path": "C:\\Users\\fuweicheng\\.codex\\generated_images\\01a0b3a8-9077-7682-b570-036268bf1253\\exec-f2d0997b-4eee-4654-ab5d-6e0b2de43702.png"
+    },
+    {
+      "key": "mage_armor_constellation",
+      "path": "C:\\Users\\fuweicheng\\.codex\\generated_images\\01a0b3a8-9077-7682-b570-036268bf1253\\exec-e7b7fcaa-4c53-45d1-bc9e-3cc8b28d2ab8.png"
+    },
+    {
+      "key": "mage_armor_rune",
+      "path": "C:\\Users\\fuweicheng\\.codex\\generated_images\\01a0b3a8-9077-7682-b570-036268bf1253\\exec-5becc5ab-a67c-45e5-a0c2-24f066cfede2.png"
+    },
+    {
+      "key": "mage_armor_grove",
+      "path": "C:\\Users\\fuweicheng\\.codex\\generated_images\\01a0b3a8-9077-7682-b570-036268bf1253\\exec-893e4c4a-e4ba-4eb6-aefb-835b4d7b6c76.png"
+    },
+    {
+      "key": "archer_armor_fox",
+      "path": "C:\\Users\\fuweicheng\\.codex\\generated_images\\01a0b3a8-9077-7682-b570-036268bf1253\\exec-0c4a1d46-6666-44bc-ba2b-97030856b7b9.png"
+    },
+    {
+      "key": "archer_armor_hawk",
+      "path": "C:\\Users\\fuweicheng\\.codex\\generated_images\\01a0b3a8-9077-7682-b570-036268bf1253\\exec-5aabb2a5-4432-449a-b2c9-3e1551a698db.png"
+    },
+    {
+      "key": "archer_armor_ermine",
+      "path": "C:\\Users\\fuweicheng\\.codex\\generated_images\\01a0b3a8-9077-7682-b570-036268bf1253\\exec-b8bb7cde-87ec-41ad-92f5-7897543a9c5a.png"
+    }
+  ]
+}

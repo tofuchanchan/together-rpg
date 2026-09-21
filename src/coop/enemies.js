@@ -1,4 +1,7 @@
 import {BOSS_DEF} from './encounters.js';
+export const ENEMY_PROGRESS={
+ seedling:{wave:1,group:'基础群怪'},dustling:{wave:1,group:'基础群怪'},goblin:{wave:3,group:'近战'},gnat:{wave:4,group:'突进'},mushroom:{wave:5,group:'重击'},slime:{wave:6,group:'跳跃'},skeleton:{wave:7,group:'远程'},bat:{wave:8,group:'突进'},wolf:{wave:10,group:'追击'},spider:{wave:12,group:'区域控制'},beetle:{wave:14,group:'重甲'},wisp:{wave:16,group:'弹幕'},shaman:{wave:18,group:'支援'},
+};
 export const ENEMIES={
  seedling:{name:'豆芽小怪',hp:20,speed:132,range:66,radius:38,windup:.44,damage:5,cd:1.45,behavior:'melee',size:50,xp:1,flank:.2,lead:.25,bodyRadius:14,contactDamage:2,swarm:true},
  dustling:{name:'煤球小怪',hp:15,speed:185,range:60,radius:32,windup:.4,damage:4,cd:1.3,behavior:'melee',size:45,xp:1,flank:.48,lead:.35,bodyRadius:13,contactDamage:1.5,swarm:true},

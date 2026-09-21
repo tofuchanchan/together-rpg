@@ -1,8 +1,9 @@
+import {SKILL_PAIRS} from './skill-pairs.js';
 import {ACTIVE,ATTRIBUTES,CORES,FORMS,PASSIVES} from './builds.js';
 import {CLASS_COMPONENTS,ROUTES,BRANCHES} from './progression-data.js';
 import {UNIVERSAL_PASSIVES,AWAKENINGS} from './universal-data.js';
 import {EQUIPMENT_APPEARANCES,EQUIPMENT_AFFIXES,EQUIPMENT_RARITIES,equipmentPrice} from './equipment-data.js';
-import {ENEMIES} from './enemies.js';
+import {ENEMIES,ENEMY_PROGRESS} from './enemies.js';
 import {RARITIES,AFFIXES,BOSS_DEF} from './encounters.js';
 import {BOSS_SKILLS} from './boss.js';
 import {HERO_ROLES} from './recruitment.js';
@@ -19,6 +20,7 @@ export const CODEX_CATEGORIES=Object.freeze([
 const roleName=role=>HERO_ROLES[role]?.name||'全职业';
 const section=(title,...lines)=>({title,lines:lines.flat().filter(Boolean)});
 const icon=key=>({type:'icon',key});
+const skillIcon=key=>icon(key);
 const passiveId=key=>`passive:${key}`;
 const activeId=(role,slot)=>`active:${role}:${slot}`;
 const formId=key=>`form:${key}`;
@@ -31,22 +33,26 @@ const add=entry=>entries.push({role:'all',tags:[],sections:[],relatedIds:[],...e
 const passiveNames=keys=>keys.map(key=>PASSIVES[key].title).join(' + ');
 
 const roleNotes={
- warrior:['近战普攻自动挥斩；盾冲负责突入与脱困，旋风斩处理身边的敌群。','盾阵蓄能、流血轮斩、普攻刃舞可走不同路线。'],
- mage:['远程普攻自动发射法弹；火球集中爆发，冰霜环控制近身敌人。','燃烧兑现、寒意碎晶、主动交替各自需要对应组件。'],
- archer:['远程普攻自动射箭；贯穿箭处理直线目标，箭雨扇射覆盖扇形敌群。','猎印兑现、残影协射、暴击流血各有不同准备方式。'],
+ warrior:['近战自动挥斩；盾冲与踩踏组成控制路线，旋风斩与剑气斩组成范围攻击路线。','四个基础技能中装备两个；配对技能 II 解锁独立进阶候选，双进阶 III 与对应组件 II 才能竞争精通。'],
+ mage:['远程自动发射法弹；奥术弹幕与星轨法球构成追踪弹群，火球与冰霜环构成冰火场地配合。','四选二；奥术依赖星轨站位，冰火通过本人寒意与灼烧联动。进阶与精通仍需随机奖励。'],
+ archer:['远程自动射箭；贯穿箭与钉穿箭封锁直线，散射与箭雨覆盖敌群。','四选二；贯星路线依靠钉住目标后贯穿分裂，箭幕路线通过雨区内命中追加落箭。'],
 };
 for(const [role,definition] of Object.entries(HERO_ROLES)){
  add({id:`role:${role}`,category:'skills',kind:'role',role,name:definition.name,summary:roleNotes[role][0],tags:[definition.name,'自动普攻','闪避'],art:{type:'hero',role},
-  sections:[section('初始能力',`生命 ${definition.hp} · 基础普攻 ${definition.damage} · 普攻间隔 ${definition.interval} 秒`,`移动速度 ${definition.speed} · 普攻索敌范围 ${definition.range}（世界距离）`,role==='warrior'?'战士挥斩实际命中半径为 205，索敌范围与伤害判定范围不同。':null,'普通攻击自动进行；玩家控制移动、主动技能和闪避。','开局没有主动、核心、被动或装备；通过局内奖励逐步构筑。'),section('闪避与成长','闪避基础冷却 0.85 秒，起手提供 0.15 秒无敌；方向由移动输入决定。',roleNotes[role][1],'升级选择属性；清波奖励选择技能。技能与属性成长分开。')],
+  sections:[section('初始能力',`生命 ${definition.hp} · 基础普攻 ${definition.damage} · 普攻间隔 ${definition.interval} 秒`,`移动速度 ${definition.speed} · 普攻索敌范围 ${definition.range}（世界距离）`,role==='warrior'?'战士挥斩实际命中半径为 205，索敌范围与伤害判定范围不同。':null,'普通攻击自动进行；玩家控制移动、主动技能和闪避。','开局没有主动、核心、被动或装备；通过局内奖励逐步构筑。'),section('闪避与成长','闪避距离124，基础冷却0.85秒，起手0.15秒无敌；方向由移动输入决定，仍受墙体阻挡。',roleNotes[role][1],'升级选择属性；清波奖励选择技能。技能与属性成长分开。')],
   relatedIds:[...ACTIVE[role].map((_,slot)=>activeId(role,slot)),...Object.entries(CORES).filter(([,core])=>core.role===role).map(([key])=>`core:${key}`)]});
  for(const [slot,definition] of ACTIVE[role].entries()){
-  const routes=Object.values(ROUTES).filter(route=>route.role===role&&route.slot===slot&&!route.form);
-  add({id:activeId(role,slot),category:'skills',kind:'active',role,name:definition.title,summary:definition.detail.split('；')[0],tags:[definition.name||roleName(role),slot===0?'Q 技能':'E 技能','主动'],art:icon(definition.icon),
-   sections:[section('基础效果',definition.detail.split('；')[0],role==='mage'&&slot===0?'所列为直接命中目标的基础伤害；周围溅射为该次火球基础伤害的 65%，各目标另计算增伤与减伤。':null,`基础冷却 ${HERO_ROLES[role].cd[slot]} 秒；受冷却属性与部分核心影响。`),section('获得与强化','清波技能奖励中习得，最多强化至 III。','强化等级与改换形态分别选择；改换形态保留等级。',routes.length?'基础形态有独立进化路线；满足配方后仍需抽到进化奖励。':'此基础形态当前没有可抽取的进化分支；可先选择对应技能形态。')],
-   relatedIds:[...Object.entries(FORMS).filter(([,form])=>form.role===role&&form.slot===slot).map(([key])=>formId(key)),...routes.flatMap(route=>route.branches.map(branch=>`evolution:${branch}`))]});
+  const routes=Object.values(ROUTES).filter(route=>route.role===role&&route.slot===slot&&!route.form),pair=Object.values(SKILL_PAIRS).find(p=>p.role===role&&p.slots.includes(slot));
+  add({id:activeId(role,slot),category:'skills',kind:'active',role,name:definition.title,summary:definition.detail.split('；')[0],tags:[definition.name||roleName(role),'Q 技能','E 技能','主动'],art:skillIcon(definition.icon),
+   sections:[section('基础效果',definition.detail.split('；')[0],role==='mage'&&slot===0?'所列为直接命中目标的基础伤害；周围溅射为该次火球基础伤害的 65%，各目标另计算增伤与减伤。':null,`基础冷却 ${HERO_ROLES[role].cd[slot]} 秒；受冷却属性与部分核心影响。`),section('获得与强化','每职业四个基础技能，任意装备两个，按 Q/E 或 X/Y 使用；清波习得，最多强化至 III。','强化等级与改换形态分别选择；改换形态保留等级。',`配对进阶：${pair.slots.map(s=>ACTIVE[role][s].title+' II').join(' + ')}；第8次清波起随机出现，进阶与旧形态互斥。`,'商店技艺卷轴可补充技能等级、被动、进阶或精通；仍需满足对应条件。')],
+   relatedIds:[`advance:${role}:${slot}`,...Object.entries(FORMS).filter(([,form])=>form.role===role&&form.slot===slot).map(([key])=>formId(key)),...routes.flatMap(route=>route.branches.map(branch=>`evolution:${branch}`))]});
  }
 }
 
+for(const [key,pair] of Object.entries(SKILL_PAIRS)){
+ for(const [index,slot] of pair.slots.entries())add({id:'advance:'+pair.role+':'+slot,category:'skills',kind:'advance',role:pair.role,name:pair.advances[index],summary:pair.descs[index],tags:['配对进阶',pair.title],art:skillIcon(ACTIVE[pair.role][slot].icon),sections:[section('解锁条件',pair.slots.map(s=>ACTIVE[pair.role][s].title+' II').join(' + '),'两项均装备；对应技能不能已有旧形态或进化。第8次清波起进入随机候选，领取只进阶一项技能，不自动获得另一项。'),section('后续精通',pair.mastery)],relatedIds:[...pair.slots.map(s=>activeId(pair.role,s)),'mastery:'+key]});
+ add({id:'mastery:'+key,category:'skills',kind:'mastery',role:pair.role,name:pair.title,summary:pair.mastery,tags:['组合精通','后期构筑'],art:skillIcon(ACTIVE[pair.role][pair.slots[0]].icon),sections:[section('精通条件','两个技能均为进阶 III，'+PASSIVES[pair.component].title+' II；第16次清波起随机出现，仍需单独领取。','满足条件后也可从商店技艺卷轴购买；每次进店全队共限购一份。替换技能或丢失必要组件后精通暂停。'),section('战斗效果',pair.mastery)],relatedIds:[...pair.slots.map(s=>'advance:'+pair.role+':'+s),passiveId(pair.component)]});
+}
 const coreRequirements={bulwark:'需要已习得 Q 盾冲或其形态。',arcanist:'需要至少一个已习得的主动。',executioner:'需要暴击率大于 0，或持有疾风步。'};
 for(const [key,definition] of Object.entries(CORES))add({id:`core:${key}`,category:'skills',kind:'core',role:definition.role,name:definition.title,summary:definition.desc,tags:[roleName(definition.role),'职业核心'],art:icon(definition.icon),
  sections:[section('核心效果',definition.desc),section('获得条件','完成第 3 次清波奖励起进入候选池；每人只有一个核心槽。',coreRequirements[key]||'无额外技能来源要求。','核心只改变战斗规则，不附赠配方组件；有配套也不保证后续抽到组件。')],relatedIds:definition.tags.map(passiveId)});
@@ -161,14 +167,14 @@ const enemyNotes={
 for(const [key,definition] of Object.entries(ENEMIES)){
  const notes=enemyNotes[key];
  add({id:`enemy:${key}`,category:'monsters',kind:'enemy',name:definition.name,summary:notes.summary,tags:[definition.swarm?'基础小怪':'特殊怪',({melee:'近战',dash:'冲刺',leap:'跳跃',ranged:'远程',healer:'治疗',poison:'毒区',armored:'护甲',burst:'弹幕'})[definition.behavior]],art:{type:'enemy',kind:key,key},
-  sections:[section('攻击方式',notes.behavior),section('应对方式',notes.counter),section('基础数值',`生命 ${definition.hp} · 移动速度 ${definition.speed}${key==='shaman'?' · 主动为范围治疗':` · 主动攻击伤害 ${definition.damage}`}`,`碰撞伤害 ${definition.contactDamage} · 动作前摇 ${definition.windup} 秒 · 基础动作冷却 ${definition.cd} 秒`,'以上为第 1 波普通个体的基础值；后续波数、稀有度、词条和狂暴都会改变实战数值。',key==='shaman'?'治疗本身不会主动攻击玩家，但身体接触仍造成伤害。':'主攻击伤害是单次判定，范围、弹道、毒区和碰撞各有不同触发方式。'),section('掉落与成长','经验、金币、药瓶均掉在地上，需要拾取；怪物种类不决定固定经验值。','掉落数量与概率主要由稀有度决定；首领召唤物的经验概率降低，不掉金币与药瓶。')],relatedIds:RARITIES.map((_,rank)=>`enemy-rarity:${rank}`)});
+  sections:[section('出现进度',`${ENEMY_PROGRESS[key].group} · 第 ${ENEMY_PROGRESS[key].wave} 波起加入刷新池。`),section('攻击方式',notes.behavior),section('应对方式',notes.counter),section('基础数值',`生命 ${definition.hp} · 移动速度 ${definition.speed}${key==='shaman'?' · 主动为范围治疗':` · 主动攻击伤害 ${definition.damage}`}`,`碰撞伤害 ${definition.contactDamage} · 动作前摇 ${definition.windup} 秒 · 基础动作冷却 ${definition.cd} 秒`,'以上为物种原始基础值；前四波群怪有新手减压，实际数值另受波数、稀有度、词条和狂暴影响。',key==='shaman'?'治疗本身不会主动攻击玩家，但身体接触仍造成伤害。':'主攻击伤害是单次判定，范围、弹道、毒区和碰撞各有不同触发方式。'),section('掉落与成长','经验、金币、药瓶均掉在地上，需要拾取；怪物种类不决定固定经验值。','掉落数量与概率主要由稀有度决定；首领召唤物的经验概率降低，不掉金币与药瓶。')],relatedIds:RARITIES.map((_,rank)=>`enemy-rarity:${rank}`)});
 }
 const bossSkillNotes={slam:'锁定目标脚下的圆形重锤，较长预警后落下。',barrage:'朝锁定方向扇射荆种，阶段越高弹数越多、弹速越快。',roots:'在所有存活队员脚下布置根刺；第二阶段起再追加侧面的延迟根刺。',summon:'召集哥布林与史莱姆；召唤数量随阶段增加，最多保有 18 名该首领的召唤物。',ultimate:'从中心向外连续引爆三圈，预警保留两条逃生通道；第二阶段起使用，第三阶段间隔缩短。'};
 add({id:'boss:thornking',category:'monsters',kind:'boss',name:BOSS_DEF.name,summary:'每 10 关出现的三阶段首领，以重锤、弹幕、根刺、召集和荆冠天罚围猎小队。',tags:['首领','三阶段','大招'],art:{type:'enemy',kind:'thornking',key:'thornking'},
  sections:[section('出现与阶段','第 10、20 关出现；继续无尽后仍每 10 关出现。','生命降至 65% 进入第二阶段，降至 30% 进入第三阶段；后续阶段出招更紧凑。','首领生命按首领关卡单独设定，其他战斗数值仍随波数成长。'),section('五种技能',...Object.entries(BOSS_SKILLS).map(([key,name])=>`${name}：${bossSkillNotes[key]}`)),section('战术要点','技能开始蓄力后，预警位置不再跟随玩家；利用这段时间规划退路。','荆冠天罚从中心向外展开，及时选择留出的通道，避免站在相邻爆圈重叠处。','召唤物可能封路；在输出首领的同时清理撤退方向。'),section('首领掉落','击败首领必掉 24 经验、10 金币和一个基础回复 35 的药瓶；仍需实际拾取。')],relatedIds:['enemy:goblin','enemy:slime']});
 
 for(const [rank,definition] of RARITIES.entries())add({id:`enemy-rarity:${rank}`,category:'monsters',kind:'enemy-rarity',name:`${definition.name}怪物`,summary:rank?`${rank} 个不重复随机词条，以${rank===1?'蓝':rank===2?'紫':'金'}色描边辨认。`:'没有稀有描边，不附加随机怪物词条。',tags:['稀有度',definition.name],art:icon(rank?'focus':'skull'),
- sections:[section('稀有加成',`生命基础倍率 ×${definition.mult}；另叠加波数成长与词条效果。`,`随机词条数量 ${rank}。稀有度还提高伤害和词条强度。`),section('普通击杀掉落',`经验：${pct(XP_CHANCE[rank])} 概率，${XP_VALUE[rank]} 点。`,`金币：${pct(GOLD_CHANCE[rank])} 概率，${GOLD_VALUE[rank]} 金币。`,`药瓶：${pct(POTION_CHANCE[rank])} 概率，基础回复 35。`,'三类掉落独立判定；首领与其召唤物使用特殊规则。'),section('成长与狂暴','后期更容易遇到高稀有度、多词条组合。',`波次超时后，小怪狂暴：移速 ×${ENRAGE.speed}、伤害 ×${ENRAGE.damage}、攻击频率 ×${ENRAGE.attackRate}；首领本体不套用这些狂暴倍率。`)],relatedIds:Object.keys(AFFIXES).map(key=>`trait:${key}`)});
+ sections:[section('稀有加成',`生命基础倍率 ×${definition.mult}；另叠加波数成长与词条效果。`,`随机词条数量 ${rank}。稀有度还提高伤害和词条强度。`),section('普通击杀掉落',`经验：${pct(XP_CHANCE[rank])} 概率，${XP_VALUE[rank]} 点。`,`金币：${pct(GOLD_CHANCE[rank])} 概率，${GOLD_VALUE[rank]} 金币。`,`药瓶：${pct(POTION_CHANCE[rank])} 概率，基础回复 35。`,'三类掉落独立判定；前两波经验掉率至少85%，首领与其召唤物使用特殊规则。'),section('成长与狂暴','后期更容易遇到高稀有度、多词条组合。',`波次超时后，小怪狂暴：移速 ×${ENRAGE.speed}、伤害 ×${ENRAGE.damage}、攻击频率 ×${ENRAGE.attackRate}；首领本体不套用这些狂暴倍率。`)],relatedIds:Object.keys(AFFIXES).map(key=>`trait:${key}`)});
 const traitNotes={
  vitality:['额外增加生命上限，稀有度越高增幅越大。','优先判断是否值得集火，避免长时间追逐它而被小怪围住。'],
  fury:['提高主动攻击和碰撞伤害，稀有度越高增幅越大。','保持退路，别用生命交换它的一整套攻击。'],

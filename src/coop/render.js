@@ -2,6 +2,7 @@ import {drawEquipmentEffect,drawEquipmentObject} from './equipment-effects.js';
 import {createHero} from './recruitment.js';
 import {drawShop,handleShopInput} from './shop-view.js';
 import {ROLES,clamp,MAP,MAP_SCALE} from './model.js';
+import {equippedSkills,advanceInfo,pairFor,SKILL_PAIRS} from './skill-pairs.js';
 import {ACTIVE,PASSIVES,CORES,RUNES,skillName,formInfo,evolutionText,evolutionStatus} from './builds.js';
 import {drawBuildEffect,drawBuildProjectile,drawBuildIcon} from './build-art.js';
 import {drawPet,drawPickup,drawSwarm,drawUniversalIcon,drawUniversalObject,drawUniversalEffect} from './universal-art.js';
@@ -48,6 +49,7 @@ export class View{
   c.clearRect(0,0,W,H);c.fillStyle='#173f34';c.fillRect(0,0,W,H);
   c.save();let sx=0,sy=0;if(w.options.shake&&w.options.feedback&&w.shake>0){sx=Math.sin(w.time*93)*w.shake*17;sy=Math.cos(w.time*109)*w.shake*12;}
   c.translate(720+sx-w.camera.x*w.camera.zoom,369+sy-w.camera.y*.707*w.camera.zoom);c.scale(w.camera.zoom,w.camera.zoom);c.drawImage(this.ground,-800*MAP_SCALE,-550*MAP_SCALE,1600*MAP_SCALE,1100*MAP_SCALE);
+  for(const f of w.skillFields||[]){if(f.kind==='wave'&&f.age<f.next)continue;if(['wave','rain','orbit','ice','fire','scar'].includes(f.kind))drawBuildEffect(c,{type:'build',variant:'pair-'+f.kind,x:f.x,y:f.y,r:f.kind==='wave'?f.r*Math.min(1,(f.age-f.next)/Math.max(.08,Math.min(.4,f.life+f.age-f.next))):f.r,life:f.life,max:f.life+f.age,isField:true,untilPulse:f.next-f.age});}
   for(const f of w.hazards){if(f.type==='coldfield'){const owner=w.heroes[f.owner];if(f.life>0&&owner&&!owner.down)drawBuildEffect(c,{...f,type:'build',variant:'icefield',max:f.max||(owner.evolved[1]?5:3.6)});continue;}drawArt(c,f.type==='poison'?'frost-2':'blast-2',f.x,f.y*.707,f.r*2,f.r*1.414,{alpha:.55,filter:f.type==='poison'?'hue-rotate(230deg) saturate(1.5)':undefined});}
   // Persistent art reads combat state, never a second independent FX timer.
   for(const h of w.heroes)if(!h.down&&h.action?.form==='aegis'&&h.guardUntil>w.time)drawBuildEffect(c,{type:'build',variant:'aegis',x:h.x,y:h.y,r:105,dir:h.guardDir||h.action.dir,life:h.guardUntil-w.time,max:h.action.activeEnd-h.action.windup});
@@ -116,16 +118,16 @@ export class View{
   else text(c,this.fit(Object.entries(h.passives).map(([key,rank])=>`${PASSIVES[key].title}${rank}`).join(' · ')||'被动：0 / 4',177,12),x+101,759,12,'#d6dfc0');
   text(c,`${h.core?CORES[h.core].title:'未定流派'}${h.awakening?' · '+AWAKENINGS[h.awakening]?.title:''}`,x+21,652,14,'#ffe096');
   const keys=this.router.labels(i),icons=h.role==='warrior'?['shield','spin']:h.role==='mage'?['fire','frost']:['pierce','fan'];
-  for(let j=0;j<3;j++){const bx=x+310+j*88,locked=j<2&&!h.skills[j],form=j<2?formInfo(h,j):null;skin(c,'skill-slot',bx,674,70,77);if(locked)text(c,'待习得',bx+35,709,15,'#becfb5','center');else{if(!form||!drawBuildIcon(c,h.forms?.[j]||form.key,bx+35,707,51))icon(c,j===2?'dodge':icons[j],bx+35,707,23);if(j<2)text(c,h.evolved[j]?'进化':`Lv.${h.skills[j]}`,bx+35,680,12,'#ffe096','center');}
-   const cd=j===2?h.dodgeCd:h.cd[j];if(cd>0){c.save();c.fillStyle='#112b26b8';c.beginPath();c.roundRect(bx+7,685,56,53,7);c.fill();c.restore();text(c,cd.toFixed(1),bx+35,709,23,CREAM,'center');}
-   skin(c,'button-neutral',bx+2,732,66,22);text(c,keys[j],bx+35,743,13,CREAM,'center',700);text(c,this.fit(j===2?'闪避':locked?'清波习得':skillName(h,j),80,12),bx+35,763,12,form?'#ffe6a4':'#d6dfc0','center');
+  for(let j=0;j<3;j++){const slot=equippedSkills(h)[j],bx=x+310+j*88,locked=j<2&&!h.skills[slot],form=j<2?formInfo(h,slot):null;skin(c,'skill-slot',bx,674,70,77);if(locked)text(c,'待习得',bx+35,709,15,'#becfb5','center');else{if(!drawBuildIcon(c,form?.key||ACTIVE[h.role][slot]?.icon,bx+35,707,51))icon(c,j===2?'dodge':ACTIVE[h.role][slot].icon,bx+35,707,23);if(j<2)text(c,h.skillAdvances?.[slot]?'进阶':h.evolved[slot]?'进化':`Lv.${h.skills[slot]}`,bx+35,680,12,'#ffe096','center');}
+   const cd=j===2?h.dodgeCd:h.cd[slot];if(cd>0){c.save();c.fillStyle='#112b26b8';c.beginPath();c.roundRect(bx+7,685,56,53,7);c.fill();c.restore();text(c,cd.toFixed(1),bx+35,709,23,CREAM,'center');}
+   skin(c,'button-neutral',bx+2,732,66,22);text(c,keys[j],bx+35,743,13,CREAM,'center',700);text(c,this.fit(j===2?'闪避':locked?'清波习得':skillName(h,slot),80,12),bx+35,763,12,form?'#ffe6a4':'#d6dfc0','center');
   }
  }
  veil(alpha=.65){this.c.fillStyle=`rgba(9,27,22,${alpha})`;this.c.fillRect(0,0,W,H);}
  menu(){const c=this.c;this.veil(.45);skin(c,'panel-gold',466,35,508,146);text(c,'THREEFOLD ODYSSEY',720,67,14,'#d3dfbf','center',700);heading(c,'组建小队',720,121,43,CREAM,'center');
   this.button('单人冒险',478,196,228,43,()=>{this.humanCount=1;this.router.awaiting=null;},this.humanCount===1?CYAN:'#9ab38b',false,'setup-single');this.button('双人同行',734,196,228,43,()=>this.humanCount=2,this.humanCount===2?ORANGE:'#9ab38b',false,'setup-duo');
   for(let i=0;i<2;i++){const x=255+i*485,col=colors[i],h=createHero(this.roles[i],i),ai=i>=this.humanCount;skin(c,`card-${variant(col)}`,x,260,445,265);text(c,ai?'未启用 P2':`PLAYER ${i+1}`,x+28,291,15,col);
-   if(!drawHeroPortrait(c,this.roles[i],x+10,305,158,164,i===1)){c.save();c.translate(x+87,439);hero(c,{...h,role:this.roles[i],face:i?3:1,action:null,move:{x:0,y:0},gait:0,down:false,hitFlash:0,hitReaction:null,invuln:0},this.animTime,1.3);c.restore();}heading(c,ROLES[this.roles[i]].name,x+173,340,31);text(c,ROLES[this.roles[i]].skills.join('  /  '),x+173,382,16,'#dce3cb');
+   if(!drawHeroPortrait(c,this.roles[i],x+10,305,158,164,i===1)){c.save();c.translate(x+87,439);hero(c,{...h,role:this.roles[i],face:i?3:1,action:null,move:{x:0,y:0},gait:0,down:false,hitFlash:0,hitReaction:null,invuln:0},this.animTime,1.3);c.restore();}heading(c,ROLES[this.roles[i]].name,x+173,340,31);for(let row=0;row<2;row++)text(c,this.fit(ROLES[this.roles[i]].skills.slice(row*2,row*2+2).join(' / '),242,15),x+173,372+row*23,15,'#dce3cb');
    this.button('切换职业',x+174,412,135,38,()=>this.cycleRole(i),col,ai,`setup-role-${i}`);text(c,ai?'第二手柄按 A 加入':this.router.describe(i),x+27,485,14,'#bdcdb0');if(!ai){this.button('绑定手柄',x+219,466,102,37,()=>this.router.claim(i),col,false,`setup-bind-${i}`);this.button('键盘',x+332,466,80,37,()=>this.router.bind(i,{type:'keyboard',id:i}),col,false,`setup-keyboard-${i}`);}
   }
   text(c,'开局无 AI · 每五关商店招募 · 小队最多三人 · 职业可重复',720,554,16,'#e0e5c9','center');this.button('出发  →',554,589,332,64,()=>this.actions.start(this.roles),CYAN,false,'setup-start');
@@ -135,20 +137,22 @@ export class View{
  claimOverlay(){const c=this.c;this.regions=[];this.navRegions=[];skin(c,`panel-${variant(colors[this.router.awaiting])}`,408,566,624,109);icon(c,'gamepad',451,614,24);text(c,`P${this.router.awaiting+1}：新手柄按 A / Start 认领，B 取消`,740,601,19,CREAM,'center');this.button('取消 · B',662,629,116,31,()=>this.router.awaiting=null,'#9cb798',false,'binding-cancel');}
  upgrade(){const c=this.c,w=this.world,skills=w.rewardType==='skill';this.veil(.95);heading(c,skills?(w.highReward?'高阶奖励 · 选择方向':'清波 · 选择构筑'):'升级 · 强化属性',720,65,34,CREAM,'center');text(c,skills?'选完休整：存活队员回复 15% 生命 · 四被动槽 · 高阶构筑随机出现':`小队 Lv.${w.level} · 拾取经验升级，选完立即回到战斗`,720,107,16,'#d4dec6','center');
   for(let i=0;i<w.humanCount;i++){const x=w.humanCount===1?450:126+i*648,col=colors[i],h=w.heroes[i],menu=w.rewardMenus[i],choices=w.rewardChoices(i),count=choices.length,compact=count>3;
-   text(c,`P${i+1} · ${ROLES[h.role].name}${menu?.type==='replace'?' · 选择被替换项':menu?.type==='route'?' · 先选领取方式':menu?.type==='reshape'?' · 重塑二选一':''}`,x+270,151,20,col,'center');
+   text(c,`P${i+1} · ${ROLES[h.role].name}${['replace','skill-replace'].includes(menu?.type)?' · 选择被替换项':menu?.type==='route'?' · 先选领取方式':menu?.type==='reshape'?' · 重塑二选一':''}`,x+270,151,20,col,'center');
    for(let j=0;j<count;j++){const y=174+j*(compact?86:111),height=compact?79:102,selected=w.selection[i]===j,o=choices[j],form=o.form||(o.kind==='evolution'?h.forms?.[o.slot]:null);skin(c,selected?(w.ready[i]?'card-ready':`card-${variant(col)}`):'card-neutral',x,y,540,height);
-    if(!drawUniversalIcon(c,o.icon,x+43,y+height*.48,48)&&!drawBuildIcon(c,form,x+43,y+height*.48,50))icon(c,o.icon,x+43,y+height*.48,22);
+    if(!drawUniversalIcon(c,o.icon,x+43,y+height*.48,48)&&!drawBuildIcon(c,form||o.icon,x+43,y+height*.48,50))icon(c,o.icon,x+43,y+height*.48,22);
     const q={common:'普通',uncommon:'精良',rare:'稀有',legendary:'觉醒'}[o.quality];text(c,this.fit((o.disabled?'× ':'')+o.title,390,compact?18:20,700),x+80,y+22,compact?18:20,CREAM,'left',700);if(q)text(c,q,x+513,y+21,12,o.quality==='legendary'?'#ffd87b':'#b7e3d4','right');
     this.wrap(o.desc,x+80,y+(compact?43:48),435,14,2);if(o.detail&&!compact)text(c,this.fit(o.kind==='evolution'?'主动 III · 两件配方组件且至少一件 II · 同槽分支互斥':o.detail,435,12),x+80,y+89,12,'#f1d598');this.regions.push({x,y,w:540,h:height,action:()=>w.choose(i,j)});
    }
    this.button(w.ready[i]?'已就绪 ✓':this.router.slots[i].type==='gamepad'?'确认 · A':i===0?'确认 · E':'确认 · Enter',x+16,520,306,42,()=>this.actions.confirm(i),col,w.ready[i]);
-   if(menu?.type==='replace')this.button('取消 · B / R / Y',x+338,520,184,42,()=>{if(w.cancelReplacement(i))this.router.flush();},col,w.ready[i]);
+   if(['replace','skill-replace'].includes(menu?.type))this.button('取消 · B / R / Y',x+338,520,184,42,()=>{if(w.cancelReplacement(i))this.router.flush();},col,w.ready[i]);
    else{const device=this.router.slots[i],key=device.type==='gamepad'?'Y':device.id===1?'NUM3':'R';this.button(`重掷 ${key} · ${h.rerolls??0}`,x+338,520,184,42,()=>{if(w.reroll(i))this.router.flush();},col,w.ready[i]||!h.rerolls||!!menu);}
    if(w.rewardError?.slot===i)text(c,this.fit(w.rewardError.text,520,14),x+270,577,14,'#ffac8f','center');
    text(c,`暴击 ${Math.round(h.crit*100)}% · 闪避 ${Math.round(h.evasion*100)}% · 拾取 ${h.pickupRadius||75}`,x+270,597,14,'#d5dfc6','center');
    text(c,this.fit(`核心：${h.core?CORES[h.core].title:'尚未选择'}  ·  觉醒：${h.awakening?AWAKENINGS[h.awakening]?.title:'尚未获得'}`,520,14),x+10,617,14,'#ffe096');
-   ACTIVE[h.role].forEach((a,slot)=>{const status=evolutionStatus(h,slot),y=641+slot*50;text(c,this.fit(`${slot?'E':'Q'}  ${h.skills[slot]?skillName(h,slot)+' '+h.skills[slot]:'未习得 '+a.title}`,520,14),x+10,y,14,'#e7d9ad');
-    if(h.evolved[slot])this.wrap(evolutionText(h,slot),x+10,y+17,520,12,2);
+   equippedSkills(h).forEach((slot,button)=>{const a=ACTIVE[h.role][slot],status=evolutionStatus(h,slot),y=641+button*50;text(c,this.fit(`${button?'E':'Q'}  ${h.skills[slot]?skillName(h,slot)+' '+h.skills[slot]:'未习得 '+a.title}`,520,14),x+10,y,14,'#e7d9ad');
+    if(advanceInfo(h,slot))this.wrap(advanceInfo(h,slot).desc,x+10,y+17,520,12,2);
+    else if(pairFor(h,slot)&&!h.forms?.[slot]&&!h.evolved[slot]){const [key,pair]=pairFor(h,slot);text(c,this.fit('进阶需 '+pair.slots.map(s=>ACTIVE[h.role][s].title+' '+(h.skills[s]||0)+'/2').join(' + ')+' · 清波8起随机',520,12),x+10,y+17,12,'#c7d8c4');}
+    else if(h.evolved[slot])this.wrap(evolutionText(h,slot),x+10,y+17,520,12,2);
     else if(status.recipes?.length)status.recipes.forEach((r,index)=>text(c,this.fit(`${index?'或':'需主动III +'} ${r.parts.map(p=>p.title+(p.level?' '+p.level:' 缺')).join(' + ')}${index?'':'（一件II）'}`,520,12),x+10,y+17+index*16,12,r.ready?'#b3e9b7':'#c7d8c4'));
     else text(c,'取得形态后查看进化路线',x+10,y+17,12,'#c7d8c4');});
    text(c,this.fit('被动 '+(Object.entries(h.passives).map(([key,rank])=>(PASSIVES[key]?.title||key)+' '+rank).join(' / ')||'暂无'),520,14),x+10,744,14,'#d5dfc1');

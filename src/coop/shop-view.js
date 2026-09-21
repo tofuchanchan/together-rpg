@@ -2,6 +2,10 @@ import {ROLES} from './model.js';
 import {createHero} from './recruitment.js';
 import {CORES,PASSIVES,skillName} from './builds.js';
 import {shopRerollPrice} from './shop.js';
+import {lessonEligibility} from './shop-lessons.js';
+import {drawBuildIcon} from './build-art.js';
+import {drawUniversalIcon} from './universal-art.js';
+import {icon} from './world-art.js';
 import {EQUIPMENT_AFFIXES} from './equipment-data.js';
 import {hero} from './sprites.js';
 import {skin} from './world-assets.js';
@@ -25,19 +29,20 @@ export function handleShopInput(v,slot,input){
   if(input.down||input.right)r.selection=(r.selection+1)%r.choices.length;
   if(input.confirm){w.recruit(slot,r.uid,r.choices[r.selection]);v.router.flush();}return;
  }
- if(input.up)s.cursors[slot]=(s.cursors[slot]+5)%6;
- if(input.down)s.cursors[slot]=(s.cursors[slot]+1)%6;
+ const count=s.lesson?7:6;
+ if(input.up)s.cursors[slot]=(s.cursors[slot]+count-1)%count;
+ if(input.down)s.cursors[slot]=(s.cursors[slot]+1)%count;
  if(input.left||input.right)s.targets[slot]=(s.targets[slot]+(input.right?1:w.heroes.length-1))%w.heroes.length;
  if(input.cancel){s.cursors[slot]=5;return;}
- if(input.skill1&&s.cursors[slot]<=3){sharedOverlay(v,'inspect',s.cursors[slot]<3?{type:'item',index:s.cursors[slot]}:{type:'recruit'});return;}
+ if(input.skill1&&(s.cursors[slot]<=3||s.cursors[slot]===6)){sharedOverlay(v,'inspect',s.cursors[slot]===6?{type:'lesson'}:s.cursors[slot]<3?{type:'item',index:s.cursors[slot]}:{type:'recruit'});return;}
  if(input.reroll){w.rerollShop(slot);v.router.flush();return;}
- if(input.confirm){const at=s.cursors[slot];if(at<3){const item=s.offers[at];w.buyEquipment(slot,at,s.targets[slot],item?.uid);}else if(at===3)w.recruit(slot,s.recruit?.uid);else if(at===4)w.rerollShop(slot);else w.leaveShop(slot);v.router.flush();}
+ if(input.confirm){const at=s.cursors[slot];if(at<3){const item=s.offers[at];w.buyEquipment(slot,at,s.targets[slot],item?.uid);}else if(at===3)w.recruit(slot,s.recruit?.uid);else if(at===4)w.rerollShop(slot);else if(at===6)w.buyLesson(slot,s.targets[slot],s.lesson?.uid);else w.leaveShop(slot);v.router.flush();}
 }
 export function drawShop(v){
  const c=v.c,w=v.world,s=w.shop;v.veil(.95);heading(c,'林间商旅',82,43,34,CREAM);text(c,`第 ${w.room} 关补给 · 每五关停靠`,285,44,16,'#c7d8c0');text(c,`共用金币  ${w.gold}`,1355,43,25,'#f5d685','right',700);
  const humanColors=[CYAN,ORANGE];
  for(let slot=0;slot<w.humanCount;slot++){const x=82+slot*650,target=w.heroes[s.targets[slot]]||w.heroes[slot];
-  v.button(`P${slot+1} 穿戴者：${label(target)}  ↔`,x,65,550,37,()=>s.targets[slot]=(s.targets[slot]+1)%w.heroes.length,humanColors[slot]);
+  v.button(`P${slot+1} 接收者：${label(target)}  ↔`,x,65,550,37,()=>s.targets[slot]=(s.targets[slot]+1)%w.heroes.length,humanColors[slot]);
   text(c,`${v.router.slots[slot].type==='gamepad'?'上下选择 · 左右换人 · A 确认 · Y 刷新 · X 详情':slot===0?'W/S 选择 · A/D 换人 · E 确认 · R 刷新 · Q 详情':'↑/↓ 选择 · ←/→ 换人 · Enter 确认 · NUM3 刷新 · NUM1 详情'}`,x+4,119,14,'#c7d8c0');
  }
  s.offers.forEach((item,index)=>{
@@ -70,8 +75,10 @@ export function drawShop(v){
  w.heroes.forEach((p,i)=>text(c,v.fit(`${label(p)} · Lv.${p.level}`,379,14),954,518+i*24,14,p.ai?colors[p.rarity]:humanColors[p.id]));
  v.button(`${s.cursors.some(n=>n===4)?'▶ ':''}刷新全店 · ${shopRerollPrice(w)} 金`,952,594,383,37,()=>w.rerollShop(0),'#d3bc79',w.gold<shopRerollPrice(w));
  for(let slot=0;slot<w.humanCount;slot++)v.button(`P${slot+1} ${s.ready[slot]?'已就绪 ✓':'离店'}${s.cursors[slot]===5?' ◀':''}`,952+slot*196,648,w.humanCount===1?383:187,38,()=>w.leaveShop(slot),humanColors[slot]);
- text(c,v.fit(s.message,1260,14),720,734,14,'#edd49a','center');
- text(c,'购买立即换装，旧件消失、不退币。刷新同时更换装备与候选；普通装备价格低，稀有词条需取舍。',720,765,14,'#bbceb4','center');
+ text(c,v.fit(s.message,1260,12),720,712,12,'#edd49a','center');
+ if(s.lesson){const item=s.lesson;skin(c,'panel-gold',82,726,1275,74);if(!drawUniversalIcon(c,item.icon,118,762,42)&&!drawBuildIcon(c,item.icon,118,762,42))icon(c,item.icon,118,762,18);text(c,v.fit(`技艺卷轴 · ${ROLES[item.role].name} · ${item.title}`,735,18,700),150,748,18,CREAM);text(c,v.fit(`每次进店限购一份 · ${item.price} 金 · 点此看配方与效果`,735,13),150,779,13,'#d9cfac');v.regions.push({x:82,y:726,w:840,h:74,action:()=>sharedOverlay(v,'inspect',{type:'lesson'})});
+  for(let slot=0;slot<w.humanCount;slot++){const reason=lessonEligibility(w,item,w.heroes[s.targets[slot]]),selected=s.cursors[slot]===6;v.button(item.sold?'本次已购买':reason?`P${slot+1} 条件不足`:`${selected?'▶ ':''}P${slot+1} 学习 ${item.price} 金`,943+slot*201,746,w.humanCount===1?396:195,38,()=>{s.cursors[slot]=6;w.buyLesson(slot,s.targets[slot],item.uid);},selected?humanColors[slot]:'#d3bc79',!!reason||w.gold<item.price);}
+ }
  if(s.replacing){
   const r=s.replacing;v.veil(.8);v.regions=[];skin(c,'panel-gold',370,245,700,300);heading(c,'选择要离队的 AI',720,280,27,CREAM,'center');text(c,'原队员与携带装备一起离队；真人不可替换。',720,315,15,'#d6cfb2','center');
   r.choices.forEach((id,i)=>{const old=w.heroes[id];v.button(`${r.selection===i?'▶ ':''}${label(old)} · Lv.${old.level}`,404,343+i*55,632,44,()=>w.recruit(r.slot,r.uid,id),humanColors[r.slot]);});
@@ -85,6 +92,10 @@ export function drawShop(v){
    text(c,'换装损益（旧装备会消失）',310,432,19,'#eed5a3');
    w.heroes.filter(p=>p.role===item.role).forEach((p,i)=>{const old=p.equipment[item.slot];text(c,v.fit(`${label(p)}：移除 ${old?old.name+' / '+equipmentText(old):'无旧加成'} → 获得 ${equipmentText(item)}`,810,14),310,468+i*48,14,'#d1dec6');if(old?.affixes.length)text(c,'失去词条：'+old.affixes.map(a=>EQUIPMENT_AFFIXES[a.key]?.title).join('、'),310,490+i*48,12,'#e1ad99');});
    if(!w.heroes.some(p=>p.role===item.role))text(c,'队伍中没有该职业，当前无法购买。',310,473,15,'#e1ad99');
+  }else if(s.inspect.type==='lesson'){
+   const item=s.lesson;text(c,v.fit(`技艺卷轴 · ${item.title} · ${item.price} 金`,812,26),310,173,26,'#f3c66f');v.wrap(item.desc,310,222,812,18,4);v.wrap(item.detail,310,327,812,15,3);text(c,'只补一份构筑，不自动获得另一技能或整套配方。',310,403,16,'#d7c699');
+   w.heroes.forEach((h,i)=>text(c,v.fit(`${label(h)}：${lessonEligibility(w,item,h)||'符合条件，可立即学习'}`,812,16),310,452+i*37,16,lessonEligibility(w,item,h)?'#e1ad99':'#b3e9b7'));
+   text(c,'购买立即生效；每次进店全队共限购一份，刷新不会恢复名额。',310,591,14,'#c8d8c0');
   }else{
    text(c,`${offer.name} · ${GEAR_RARITIES[offer.rarity]} ${ROLES[offer.role].name} · Lv.${offer.level}`,310,173,26,colors[offer.rarity]);
    text(c,`生命 ${h.maxHp} · 普攻 ×${h.power.toFixed(2)} · 技能 ×${h.skillPower.toFixed(2)} · 暴击 ${Math.round(h.crit*100)}%`,310,210,16,CREAM);

@@ -1,5 +1,6 @@
 import {rollEquipment,applyEquipment,resetEquipment} from './equipment.js';
 import {rollRecruit} from './recruitment.js';
+import {rollLesson} from './shop-lessons.js';
 
 const allowed=(w,slot)=>w.mode==='shop'&&Number.isInteger(slot)&&slot>=0&&slot<w.humanCount;
 const fail=(w,reason)=>{if(w.shop)w.shop.message=reason;return {ok:false,reason};};
@@ -10,17 +11,18 @@ function fillStock(w){
  const roles=['warrior','mage','archer'];
  w.shop.offers=Array.from({length:3},()=>rollEquipment(roles[Math.floor(w.random()*3)],w.random()<.5?'weapon':'armor',w.room,()=>w.random(),`gear-${w.nextId++}`));
  w.shop.recruit=rollRecruit(w,()=>w.random(),`recruit-${w.nextId++}`);
+ if(!w.shop.lessonBought)w.shop.lesson=rollLesson(w);
  w.shop.replacing=null;w.shop.ready=w.heroes.filter(h=>!h.ai).map(()=>false);
 }
 export function enterShop(w,returnMode='complete'){
  if(!shopDue(w)||!['complete','victory'].includes(w.mode))return false;
- w.shopVisitedRoom=w.room;w.shop={room:w.room,returnMode,rerolls:0,offers:[],recruit:null,cursors:[0,0],targets:[0,1],ready:[],replacing:null,message:'全队共享金币与库存。选择穿戴者，职业相符才能购买。'};
+ w.shopVisitedRoom=w.room;w.shop={room:w.room,returnMode,rerolls:0,offers:[],recruit:null,cursors:[0,0],targets:[0,1],ready:[],replacing:null,message:'全队共享金币与库存。选择接收者，职业与构筑条件相符才能购买。'};
  fillStock(w);w.mode='shop';w.clearBuffers();w.accumulator=0;w.emit('shop');return true;
 }
 export function rerollShop(w,slot){
  if(!allowed(w,slot))return fail(w,'当前无法刷新');
  const price=shopRerollPrice(w);if(w.gold<price)return fail(w,`刷新需要 ${price} 金币`);
- w.gold-=price;w.shop.rerolls++;fillStock(w);w.shop.message='三件装备和一名候选已刷新；刷新费用逐次提高。';w.emit('shopReroll');return {ok:true,price};
+ w.gold-=price;w.shop.rerolls++;fillStock(w);w.shop.message='装备、候选和未售出的技艺已刷新；每次进店限购一份技艺。';w.emit('shopReroll');return {ok:true,price};
 }
 export function buyShopEquipment(w,slot,index,targetId,expectedUid){
  if(!allowed(w,slot))return fail(w,'当前无法购买');

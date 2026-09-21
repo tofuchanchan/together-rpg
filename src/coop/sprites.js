@@ -56,7 +56,7 @@ export function hero(c, h, time, scale = 1) {
   if(h.invuln>0&&!h.down&&h.action?.type!=='dodge'&&h.hitFlash<=0)c.globalAlpha*=.82+.18*Math.cos(time*38)**2;
   c.imageSmoothingEnabled = true;
   c.imageSmoothingQuality = 'high';
-  if(!pose.cloth&&!h.down&&!['dodge','bash','spin'].includes(h.action?.type)){
+  if(!pose.cloth&&!h.down&&(h.action?.pairSkill||!['dodge','bash','spin'].includes(h.action?.type))){
     const base=pose.row*4;
     drawCharacterRig(c,atlas.rigs.get(base),jointPose(h,time),atlas.manifest.anchor,h.hitReaction?.life>0,atlas.image);
   }else if(h.hitReaction?.life>0&&!h.down){

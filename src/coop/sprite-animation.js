@@ -1,4 +1,5 @@
 import {actionPhase,reactionPose} from './combat-motion.js';
+import {pairMotion} from './pair-motion.js';
 // Source rows are separately illustrated views, not mirrored fronts.
 export const DIRECTION_ROWS = [6, 7, 0, 1, 2, 3, 4, 5];
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
@@ -14,6 +15,7 @@ export function jointPose(h){
  const feet=[0,1].map(i=>{const swing=Math.sin(phase+i*Math.PI),lift=Math.max(0,swing);return{x:swing*5*dx/m*amount,y:(swing*3*dy/m-lift*4)*amount,rotation:swing*.13*amount};});
  const arm={x:0,y:Math.sin(phase)*.6*amount,rotation:Math.sin(phase)*.035*amount};
  const a=h.action,row=DIRECTION_ROWS[a?.facing??h.face??0];
+ const pair=pairMotion(h);if(pair){arm.x+=pair.armX;arm.y+=pair.armY;arm.rotation+=pair.arm;feet[0].y-=pair.footLift;return{feet,arm};}
  if(a){const start=a.windup??a.duration*.33,end=a.activeEnd??a.duration*.56;
   const pulse=curve(a.t,[[0,0],[start*.62,-.38],[start,1],[end,.8],[a.duration,0]]),angle=(a.facing??h.face??0)*Math.PI/4;
   const swing=h.role==='warrior'?[-1.5,-1.15,-.75,-.9,-.55,.7,1.2,.75][row]:h.role==='mage'?[-.45,-.35,-.3,-.25,.2,.3,.4,.45][row]:[.08,-.09,-.1,-.08,.08,.1,.1,.08][row];
@@ -34,7 +36,9 @@ export function spritePose(h, time = 0) {
     column = [1, 2, 3, 2][Math.floor(stride * 4)];
     y = -(1-Math.cos(stride*Math.PI*4))*.65*gait(h);
   }
-  if (action) {
+  const pair=pairMotion(h);
+  if(pair){column=0;sheet='move';x+=pair.x;y+=pair.y;rotation+=pair.rotation;}
+  else if (action) {
     sheet = 'combat';
     const phase=actionPhase(action),start=action.windup??action.duration*.33,end=action.activeEnd??action.duration*.56;
     column = phase==='windup'?0:phase==='active'?1:q<.9?2:0;

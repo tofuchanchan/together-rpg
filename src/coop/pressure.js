@@ -1,7 +1,9 @@
 // Finite wave pressure: one live cap and one lifetime budget, with no deferred backlog.
+import {ENEMY_PROGRESS} from './enemies.js';
 export function pressurePlan(room,wave){
  const progress=Math.max(1,(room-1)*2+wave),n=progress-1,targetAlive=32+Math.min(44,Math.floor(n*1.2));
- return {duration:58+(wave-1)*6+Math.min(30,Math.floor((room-1)/3)*2),initial:targetAlive,targetAlive,aliveCap:72+Math.min(56,Math.floor(n*1.5)),totalBudget:n===0?144:n===1?160:180+Math.min(420,n*8),interval:Math.max(3.2,5.2-n*.04),timedBatch:8+Math.min(6,Math.floor(n/8)),refillBurst:8,spawnRadius:[380,530]};
+ const intro=n<4;
+ return {duration:intro?[44,48,52,56][n]:58+(wave-1)*6+Math.min(30,Math.floor((room-1)/3)*2),initial:intro?[20,24,28,31][n]:targetAlive,targetAlive:intro?[20,24,28,31][n]:targetAlive,aliveCap:intro?[40,48,56,64][n]:72+Math.min(56,Math.floor(n*1.5)),totalBudget:n===0?144:n===1?160:180+Math.min(420,n*8),interval:intro?6.2-n*.3:Math.max(3.2,5.2-n*.04),timedBatch:8+Math.min(6,Math.floor(n/8)),refillBurst:8,spawnRadius:[380,530]};
 }
 // Party membership is sampled at wave start, including temporarily downed allies.
 // Monster stats, duration and drops stay unchanged; solo starts have no free AI.
@@ -29,10 +31,9 @@ export function pressureTick(plan,state,{elapsed,alive}){
 const SWARM=['seedling','dustling','gnat'];
 const SPECIAL=['goblin','mushroom','slime','bat','wolf','skeleton','spider','wisp','shaman','beetle'];
 export function pressureKind(room,wave,index,random){
- // A scheduled specialist every twelfth spawn keeps support and ranged foes present.
- if(index%12===11)return SPECIAL[(Math.floor(index/12)+(room-1)*2+wave-1)%SPECIAL.length];
- const pick=random();if(pick<.87){const weight=pick/.87;return SWARM[weight<.42?0:weight<.79?1:2];}
- const specialist=SPECIAL[Math.min(SPECIAL.length-1,Math.floor((pick-.87)/.13*SPECIAL.length))];
- // Scheduled shamans remain; early random support stacks must not out-heal base kits.
- return specialist==='shaman'&&(room-1)*2+wave<=6?'skeleton':specialist;
+ const progress=(room-1)*2+wave,special=SPECIAL.filter(k=>ENEMY_PROGRESS[k].wave<=progress),swarm=SWARM.filter(k=>ENEMY_PROGRESS[k].wave<=progress);
+ // Both scheduled and random spawns obey the same introduction gate.
+ if(index%12===11&&special.length)return special[(Math.floor(index/12)+progress-1)%special.length];
+ const pick=random();if(pick<.87||!special.length){const weight=pick/.87;return swarm[Math.min(swarm.length-1,weight<.42?0:weight<.79?1:2)];}
+ return special[Math.min(special.length-1,Math.floor((pick-.87)/.13*special.length))];
 }
