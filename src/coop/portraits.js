@@ -1,4 +1,5 @@
 // Selection artwork is independent from the small, animated combat atlases.
+import {runtimeArtUrl} from './runtime-art.js';
 const ROLES=['warrior','mage','archer'];
 const entries=new Map();
 let pending;
@@ -8,7 +9,7 @@ export function loadHeroPortraits(){
  return Promise.allSettled(ROLES.map(async role=>{
   const entry={role,status:'loading',image:new Image()};entries.set(role,entry);
   entry.bbox=manifest?.[role]?.bbox;
-  entry.image.src=new URL(`../../${manifest?.[role]?.src||`assets/portraits/${role}-hd.png`}`,import.meta.url).href;
+  entry.image.src=runtimeArtUrl(`../../${manifest?.[role]?.src||`assets/portraits/${role}-hd.png`}`,import.meta.url);
   try{await entry.image.decode();entry.status='ready';}catch(error){entry.status='failed';entry.error=error.message;throw error;}
  }));
  })();

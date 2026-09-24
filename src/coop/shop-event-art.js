@@ -1,11 +1,17 @@
 import {EQUIPMENT_APPEARANCES} from './equipment-data.js';
+import {loadRuntimeImage} from './runtime-art.js';
 const sheets={},map={},root=new URL('../../assets/shop/',import.meta.url);
 for(const slots of Object.values(EQUIPMENT_APPEARANCES))for(const item of [...slots.weapon,...slots.armor])map[item.key]=true;
-let manifest;
-export async function loadShopEventArt(){
- const response=await fetch(new URL('manifest.json',root));if(!response.ok)throw Error('Shop art manifest');manifest=await response.json();
+let manifest,pending;const loading=new Map();
+export async function loadShopEventArt(group='all'){
+ if(!manifest)await(pending??=(async()=>{const response=await fetch(new URL('../runtime/shop-manifest.json',root),{signal:AbortSignal.timeout(45000)});if(!response.ok)throw Error('Shop art manifest');manifest=await response.json();})().catch(e=>{pending=null;throw e;}));
  for(const key of Object.keys(map))if(!manifest.icons?.[key])throw Error(`Missing equipment icon: ${key}`);
- await Promise.all(Object.entries({...manifest.icons,bonus:manifest.bonus}).map(([key,data])=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>{sheets[key]=img;resolve();};img.onerror=()=>reject(Error(`Shop art: ${key}`));img.src=new URL(data.file,root).href;})));
+ const entries=Object.entries(group==='bonus'?{bonus:manifest.bonus}:group==='icons'?manifest.icons:{...manifest.icons,bonus:manifest.bonus});
+ await Promise.all(entries.map(([key,data])=>{
+  if(sheets[key])return;
+  if(!loading.has(key))loading.set(key,loadRuntimeImage(data.file,root).then(img=>{sheets[key]=img;}).finally(()=>loading.delete(key)));
+  return loading.get(key);
+ }));
 }
 export const shopEventArtState=()=>({ready:!!sheets.bonus&&Object.keys(map).every(key=>!!sheets[key]),equipmentIcons:Object.keys(map).length,bonusFrames:manifest?.bonus.frames.length||0});
 export function drawEquipmentIcon(c,item,x,y,size){

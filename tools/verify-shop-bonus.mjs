@@ -10,7 +10,7 @@ const shot=async name=>{await page.evaluate(()=>coopTest.render());await page.lo
 const mark=t=>{checks.push(t);console.log('PASS',t);};
 const store=async(role='warrior',humans=2)=>page.evaluate(({role,humans})=>{coopTest.start([role,'mage'],humans);const w=coopTest.world;w.mode='complete';w.room=5;w.wave=2;w.clears=10;w.heroes.forEach(h=>h.gold=2000);w.enterShop();coopTest.render();},{role,humans});
 try{
- await page.goto('http://127.0.0.1:4173/');await page.waitForFunction(()=>window.assetsReady===true);await page.locator('#title-start').click();await store();
+ await page.goto('http://127.0.0.1:4173/');await page.waitForFunction(()=>window.assetsReady===true);await page.evaluate(()=>coopTest.sceneLoading.assets.wait(['shop','equipment','bonus']));await page.locator('#title-start').click();await store();
  let s=await state();assert.deepEqual(s.shopEventArt,{ready:true,equipmentIcons:21,bonusFrames:8});assert.ok(s.shop.stalls.every(v=>v.offers.length===5&&v.recruits.length===5&&v.lessons.filter(Boolean).length===5));await shot('shop-equipment-duo');
  for(let i=0;i<4;i++)await tap('s');await tap('e');s=await state();assert.ok(s.shop.stalls[0].offers[4].sold);assert.equal(s.heroes[1].gold,2000);mark('Five equipment, skills and recruits per owner; fifth equipment buys from only P1 wallet');
  await tap('d');assert.equal((await state()).shop.stalls[0].category,'skills');await shot('shop-skills-duo');await tap('e');s=await state();assert.ok(s.shop.stalls[0].lessons[4].sold);assert.equal(s.shop.stalls[0].lessonPurchases,1);assert.equal(s.shop.stalls[1].lessonPurchases,0);mark('Fifth skill is selectable and buying updates only personal prices');

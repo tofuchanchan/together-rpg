@@ -1,0 +1,288 @@
+{
+  "icons": {
+    "warrior_weapon_iron": {
+      "file": "../runtime/shop-items-warrior_weapon_iron-ac4e56c99baa.webp",
+      "frame": [
+        0,
+        0,
+        176,
+        384
+      ],
+      "source": "assets/equipment/warrior_weapon_iron.png",
+      "sourceSha256": "6eaa5f1a97bcf87122bcc6bdbab8788551003c18564f7d1d903e0163f3619776"
+    },
+    "warrior_weapon_cleaver": {
+      "file": "../runtime/shop-items-warrior_weapon_cleaver-11e3e59912bd.webp",
+      "frame": [
+        0,
+        0,
+        165,
+        384
+      ],
+      "source": "assets/equipment/warrior_weapon_cleaver.png",
+      "sourceSha256": "90b23917abd4b821387120d1525f2c3fbc35c7795d3d9bfd7ca01836079b90df"
+    },
+    "warrior_armor_plate": {
+      "file": "../runtime/shop-items-warrior_armor_plate-0538d19e12e4.webp",
+      "frame": [
+        0,
+        0,
+        328,
+        384
+      ],
+      "source": "assets/equipment/warrior_armor_plate.png",
+      "sourceSha256": "86168a5cf9e9e1c5355c87fde1f7559667717e78624495c68990a92fcd5f9e12"
+    },
+    "warrior_armor_raider": {
+      "file": "../runtime/shop-items-warrior_armor_raider-7ff692653fae.webp",
+      "frame": [
+        0,
+        0,
+        384,
+        367
+      ],
+      "source": "assets/equipment/warrior_armor_raider.png",
+      "sourceSha256": "3c5f51f6a8a82d1ef4d3abab14df71b203edd2d4d9450f2376ff0ddc09296b7d"
+    },
+    "warrior_armor_ram": {
+      "file": "../runtime/shop-items-warrior_armor_ram-16a54a38e93e.webp",
+      "frame": [
+        0,
+        0,
+        384,
+        366
+      ],
+      "source": "assets/equipment/warrior_armor_ram.png",
+      "sourceSha256": "6036a98df2567ebc78e04efbc3fe9f0123db8cee0ee4730679189453c35bd071"
+    },
+    "warrior_armor_sun": {
+      "file": "../runtime/shop-items-warrior_armor_sun-a02e0bfec0e5.webp",
+      "frame": [
+        0,
+        0,
+        372,
+        384
+      ],
+      "source": "assets/equipment/warrior_armor_sun.png",
+      "sourceSha256": "19c81b449d3bff652865ce85c0a55aa6d602438168c69ea42d7cd79ac881a03b"
+    },
+    "warrior_armor_crescent": {
+      "file": "../runtime/shop-items-warrior_armor_crescent-ec623b8c2ec3.webp",
+      "frame": [
+        0,
+        0,
+        356,
+        384
+      ],
+      "source": "assets/equipment/warrior_armor_crescent.png",
+      "sourceSha256": "55945159eb072a1606cb57001ceceb97936d87775b71755766fcbb1b1f464b4e"
+    },
+    "mage_weapon_crystal": {
+      "file": "../runtime/shop-items-mage_weapon_crystal-1741095b3505.webp",
+      "frame": [
+        0,
+        0,
+        135,
+        384
+      ],
+      "source": "assets/equipment/mage_weapon_crystal.png",
+      "sourceSha256": "ca2b0eba564ab864cf82976a455910994aa9101f924e4acec8ebd3fd44f971e7"
+    },
+    "mage_weapon_ember": {
+      "file": "../runtime/shop-items-mage_weapon_ember-50853cec0345.webp",
+      "frame": [
+        0,
+        0,
+        181,
+        384
+      ],
+      "source": "assets/equipment/mage_weapon_ember.png",
+      "sourceSha256": "1688a30b62de9810509ec19fbb26d8fafc8b9ff39d4b4c218f5081b65b15d48b"
+    },
+    "mage_armor_star": {
+      "file": "../runtime/shop-items-mage_armor_star-0a5867ce706e.webp",
+      "frame": [
+        0,
+        0,
+        294,
+        384
+      ],
+      "source": "assets/equipment/mage_armor_star.png",
+      "sourceSha256": "0ac9eada3c6635624519e5797e42d1cc93c24d35a55b58643fee36a9c9d7b13c"
+    },
+    "mage_armor_leaf": {
+      "file": "../runtime/shop-items-mage_armor_leaf-b83bd6a93591.webp",
+      "frame": [
+        0,
+        0,
+        318,
+        384
+      ],
+      "source": "assets/equipment/mage_armor_leaf.png",
+      "sourceSha256": "7dfa44810b9ec7632a89a82714682f0d2508a46ab3a3171de41198edf33515be"
+    },
+    "mage_armor_constellation": {
+      "file": "../runtime/shop-items-mage_armor_constellation-cc562cf6e413.webp",
+      "frame": [
+        0,
+        0,
+        311,
+        384
+      ],
+      "source": "assets/equipment/mage_armor_constellation.png",
+      "sourceSha256": "ff20c784e7d04a295ac188f767a43fce127ff3cc5c7b3be3c4c17f29b9c02bbc"
+    },
+    "mage_armor_rune": {
+      "file": "../runtime/shop-items-mage_armor_rune-f6442ab4441d.webp",
+      "frame": [
+        0,
+        0,
+        292,
+        384
+      ],
+      "source": "assets/equipment/mage_armor_rune.png",
+      "sourceSha256": "a53087745a7c35b4734d3a753a4468362a1ab9db1e2f70974576ba4a7d6d66fa"
+    },
+    "mage_armor_grove": {
+      "file": "../runtime/shop-items-mage_armor_grove-8a6c6f6c41a6.webp",
+      "frame": [
+        0,
+        0,
+        304,
+        384
+      ],
+      "source": "assets/equipment/mage_armor_grove.png",
+      "sourceSha256": "ee86b49ff6b8ae16222b1a70dc3ffc098b58f23723d53bd132a84d5f47dd186a"
+    },
+    "archer_weapon_longbow": {
+      "file": "../runtime/shop-items-archer_weapon_longbow-bfa9903117cd.webp",
+      "frame": [
+        0,
+        0,
+        93,
+        384
+      ],
+      "source": "assets/equipment/archer_weapon_longbow.png",
+      "sourceSha256": "319fffba6cabad5c4702fa9c0446be81b2cac267e8720a915676e82ae579feca"
+    },
+    "archer_weapon_crossbow": {
+      "file": "../runtime/shop-items-archer_weapon_crossbow-381bd51941cb.webp",
+      "frame": [
+        0,
+        0,
+        384,
+        366
+      ],
+      "source": "assets/equipment/archer_weapon_crossbow.png",
+      "sourceSha256": "1ed4873dba13823ae7a99045ceb388a243b15dfab9d3f70c5e44bb99be39890c"
+    },
+    "archer_armor_scout": {
+      "file": "../runtime/shop-items-archer_armor_scout-0605ffee70c4.webp",
+      "frame": [
+        0,
+        0,
+        345,
+        384
+      ],
+      "source": "assets/equipment/archer_armor_scout.png",
+      "sourceSha256": "871bda6edf57e112668c7755801f97bb3a4bc589a275fa6404ba16e419222ac4"
+    },
+    "archer_armor_ranger": {
+      "file": "../runtime/shop-items-archer_armor_ranger-a610ff2581c1.webp",
+      "frame": [
+        0,
+        0,
+        347,
+        384
+      ],
+      "source": "assets/equipment/archer_armor_ranger.png",
+      "sourceSha256": "9613e4322dcd13af83098f9cdffdeaebeeeaa69cd3894d927509560cfa3d2408"
+    },
+    "archer_armor_fox": {
+      "file": "../runtime/shop-items-archer_armor_fox-aa143c5f444c.webp",
+      "frame": [
+        0,
+        0,
+        320,
+        384
+      ],
+      "source": "assets/equipment/archer_armor_fox.png",
+      "sourceSha256": "f8e20725996ba1dc310d7ddedd53376e81d6c6d7096c19aa3fb8464356b4aeed"
+    },
+    "archer_armor_hawk": {
+      "file": "../runtime/shop-items-archer_armor_hawk-ddaa245e68b3.webp",
+      "frame": [
+        0,
+        0,
+        317,
+        384
+      ],
+      "source": "assets/equipment/archer_armor_hawk.png",
+      "sourceSha256": "4dce3e3bc93fbd9ca44039c714f657f58bfd9f7faf0025d2056046fc066f08fe"
+    },
+    "archer_armor_ermine": {
+      "file": "../runtime/shop-items-archer_armor_ermine-701444419f02.webp",
+      "frame": [
+        0,
+        0,
+        343,
+        384
+      ],
+      "source": "assets/equipment/archer_armor_ermine.png",
+      "sourceSha256": "42fa0ed1a5bd94a895d3a35abc3ab1bfacaf97253170ce3823fab0981aa320e1"
+    }
+  },
+  "bonus": {
+    "file": "bonus.png",
+    "frames": [
+      [
+        74,
+        112,
+        268,
+        339
+      ],
+      [
+        461,
+        112,
+        264,
+        333
+      ],
+      [
+        838,
+        112,
+        266,
+        330
+      ],
+      [
+        1225,
+        112,
+        262,
+        343
+      ],
+      [
+        46,
+        568,
+        312,
+        340
+      ],
+      [
+        454,
+        566,
+        266,
+        336
+      ],
+      [
+        818,
+        570,
+        295,
+        350
+      ],
+      [
+        1211,
+        570,
+        289,
+        338
+      ]
+    ]
+  }
+}

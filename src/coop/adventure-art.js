@@ -1,7 +1,16 @@
-import {decodeArt} from './decode-art.js';
+import {loadRuntimeImage} from './runtime-art.js';
 import {MOSSBELL_SIZE} from './mossbell.js';
-let pending,manifest;const images=new Map();
-export function loadAdventureArt(){return pending??=(async()=>{const base=new URL('../../assets/adventure/',import.meta.url),r=await fetch(new URL('manifest.json',base));if(!r.ok)throw Error('冒险素材清单加载失败');manifest=await r.json();await Promise.all(Object.entries(manifest.assets).map(async([key,a])=>{const image=new Image();image.src=new URL(a.file,base).href;await decodeArt(image);if(image.width!==a.width||image.height!==a.height)throw Error(`冒险素材尺寸不符：${key}`);images.set(key,image);}));})();}
+let pending,manifest;const images=new Map(),loading=new Map();
+export async function loadAdventureArt(group='all'){
+ const base=new URL('../../assets/adventure/',import.meta.url);
+ if(!manifest)await(pending??=(async()=>{const r=await fetch(new URL('manifest.json',base),{signal:AbortSignal.timeout(45000)});if(!r.ok)throw Error('冒险素材清单加载失败');manifest=await r.json();})().catch(e=>{pending=null;throw e;}));
+ const entries=Object.entries(manifest.assets).filter(([key])=>group==='all'||(group==='boss'?key.startsWith('mossbell'):!key.startsWith('mossbell')));
+ await Promise.all(entries.map(([key,a])=>{
+  if(images.has(key))return;
+  if(!loading.has(key))loading.set(key,(async()=>{const image=await loadRuntimeImage(a.file,base);if(image.width!==a.width||image.height!==a.height)throw Error(`冒险素材尺寸不符：${key}`);images.set(key,image);})().finally(()=>loading.delete(key)));
+  return loading.get(key);
+ }));
+}
 export function adventureArtState(){return{ready:!!manifest&&images.size===Object.keys(manifest.assets).length,assets:[...images.keys()],frames:manifest?Object.values(manifest.assets).reduce((n,a)=>n+a.frames.length,0):0};}
 export function drawAdventureSprite(c,key,frame,x,y,height,alpha=1){
  const a=manifest?.assets[key],image=images.get(key);if(!a||!image)return false;

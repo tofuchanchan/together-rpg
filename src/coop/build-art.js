@@ -1,12 +1,13 @@
 // Dedicated painted sprites for build identities. All combat visuals are PNG art.
 import {drawArt,worldArtState} from './world-assets.js';
+import {runtimeArtUrl} from './runtime-art.js';
 const images=new Map(),failed=[];
 let pending;
 const names=['aegis','bloodspin','inferno','icelance','markedshot','shadow','coldfield'];
 const pairArt={stomp:'aegis',blade:'bloodspin',pin:'markedshot',rain:'shadow',barrage:'inferno',orbit:'coldfield','pair-wall':'aegis','pair-wave':'aegis','pair-tornado':'bloodspin','pair-blade':'bloodspin','pair-ichi':'icelance','pair-rail':'markedshot','pair-pin':'markedshot','pair-fan':'shadow','pair-rain':'shadow','pair-arcane':'inferno','pair-orbit':'coldfield','pair-ice':'coldfield','pair-fire':'inferno','pair-steam':'icelance','pair-scar':'bloodspin'};
 const aliases={...pairArt,guardburst:'aegis',icefield:'coldfield',shatter:'icelance',markburst:'markedshot',shadowvolley:'shadow',huntmark:'markedshot',brittle:'icelance'};
 export function loadBuildArt(){return pending??=Promise.all(names.map(async key=>{
- try{const image=new Image();image.src=new URL(`../../assets/builds/${key}.png`,import.meta.url).href;await image.decode();images.set(key,image);}
+ try{const image=new Image();image.src=runtimeArtUrl(`../../assets/builds/${key}.png`,import.meta.url);await image.decode();images.set(key,image);}
  catch(error){failed.push(key);throw error;}
 }));}
 export function buildArtState(){return{ready:images.size===names.length,loaded:images.size,total:names.length,failed:[...failed]};}

@@ -1,9 +1,10 @@
 import {drawArt} from './world-assets.js';
+import {runtimeArtUrl} from './runtime-art.js';
 import {drawBuildIcon} from './build-art.js';
 import {RARITIES} from './encounters.js';
 const names=['seedling','dustling','gnat','spiritdog','paperbird','thornpet'],images=new Map(),outlines=new Map();
 const ownerColors=['#6beddd','#ffb96a','#d5dda1'];
-export async function loadUniversalArt(){await Promise.all(names.map(async key=>{const img=new Image();img.src=new URL(`../../assets/universal/${key}.png`,import.meta.url).href;await img.decode();images.set(key,img);if(names.indexOf(key)<3)for(let rank=1;rank<=3;rank++){const mask=document.createElement('canvas');mask.width=img.width;mask.height=img.height;const mc=mask.getContext('2d');mc.drawImage(img,0,0);mc.globalCompositeOperation='source-in';mc.fillStyle=RARITIES[rank].color;mc.fillRect(0,0,mask.width,mask.height);outlines.set(`${key}:${rank}`,mask);}}));}
+export async function loadUniversalArt(){await Promise.all(names.map(async key=>{const img=new Image();img.src=runtimeArtUrl(`../../assets/universal/${key}.png`,import.meta.url);await img.decode();images.set(key,img);if(names.indexOf(key)<3)for(let rank=1;rank<=3;rank++){const mask=document.createElement('canvas');mask.width=img.width;mask.height=img.height;const mc=mask.getContext('2d');mc.drawImage(img,0,0);mc.globalCompositeOperation='source-in';mc.fillStyle=RARITIES[rank].color;mc.fillRect(0,0,mask.width,mask.height);outlines.set(`${key}:${rank}`,mask);}}));}
 export const universalArtState=()=>({ready:images.size===names.length,loaded:images.size,total:names.length});
 export function drawUnit(c,key,x,y,size,frame=0,flip=false,filter=null){
  const img=images.get(key);if(!img)return false;const f=Math.max(0,Math.min(3,frame|0));
