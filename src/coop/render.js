@@ -45,6 +45,7 @@ export class View{
  click(x,y){const b=[...this.regions].reverse().find(r=>x>=r.x&&y>=r.y&&x<=r.x+r.w&&y<=r.y+r.h);if(b)b.action();}
  cycleRole(slot){const keys=Object.keys(ROLES);let i=keys.indexOf(this.roles[slot]);i=(i+1)%3;this.roles[slot]=keys[i];}
  draw(dt=0){
+  if(this.beforeDraw&&!this.beforeDraw())return;
   this.animTime+=dt;const output=this.c,w=this.world;let c=output;output.setTransform(this.renderScaleX||1,0,0,this.renderScaleY||1,0,0);this.regions=[];this.navRegions=[];
   // Combat atlases contain no extra high-DPI detail. Render that layer at the
   // original budget; portraits, nameplates, bars and menus still paint at full DPR.

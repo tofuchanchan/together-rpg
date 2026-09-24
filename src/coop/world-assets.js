@@ -1,4 +1,5 @@
 import {decodeArt} from './decode-art.js';
+import {runtimeArtUrl} from './runtime-art.js';
 let pending,manifest,background;
 const images=new Map();
 const outlines=new Map();
@@ -6,7 +7,7 @@ export function loadWorldArt(){return pending??= (async()=>{
  const base=new URL('../../assets/world/',import.meta.url),response=await fetch(new URL('manifest.json',base));
  if(!response.ok)throw new Error(`美术清单加载失败 (${response.status})`);manifest=await response.json();
  await Promise.all([...Object.entries(manifest.pages),['background',{file:manifest.background}]].map(async([name,page])=>{
-  const image=new Image();image.src=new URL(page.file,base).href;await decodeArt(image);
+  const image=new Image();image.src=runtimeArtUrl(page.file,base);await decodeArt(image);
   if(page.width&&(page.width!==image.width||page.height!==image.height))throw new Error(`图集尺寸不符：${name}`);
   if(name==='background')background=image;else images.set(name,image);
  }));

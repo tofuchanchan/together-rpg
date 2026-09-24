@@ -1,3 +1,4 @@
+import {runtimeArtUrl} from './runtime-art.js';
 import {drawEquippedHero} from './equipment-art.js';
 import {loadLayeredWarrior,drawLayeredWarrior,layeredAssetState} from './layered-warrior.js';
 import {equipment} from './layered-pose.js';
@@ -17,7 +18,7 @@ export function loadCharacterSprites() {
     if (!response.ok) throw new Error(`角色图集加载失败：${role} (${response.status})`);
     const manifest = await response.json();
     const image = new Image();
-    image.src = new URL(manifest.image, url).href;
+    image.src = runtimeArtUrl(manifest.image, url);
     await image.decode();
     if (image.width !== manifest.width || image.height !== manifest.height) throw new Error(`角色图集尺寸不符：${role}`);
     const atlas={image, manifest, parts:new Map(), faces:new Map(), rigs:new Map()};

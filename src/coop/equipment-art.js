@@ -1,4 +1,5 @@
 import {DIRECTION_ROWS} from './sprite-animation.js';
+import {loadRuntimeImage} from './runtime-art.js';
 import {reactionPose} from './combat-motion.js';
 import {pairMotion} from './pair-motion.js';
 import {hurtFace} from './character-parts.js';
@@ -65,14 +66,23 @@ export function equipmentVisual(h){
  return{body:armorValid?armor:role+'_body_default',weapon:weaponValid?weapon:DEFAULT_WEAPON[role]};
 }
 export function loadEquipmentArt(){return pending??=(async()=>{
- const base=new URL('../../assets/equipment/',import.meta.url),response=await fetch(new URL('manifest.json',base));if(!response.ok)throw Error('换装图集清单加载失败');
+ const base=new URL('../../assets/equipment/',import.meta.url),response=await fetch(new URL('manifest.json',base),{signal:AbortSignal.timeout(45000)});if(!response.ok)throw Error('换装图集清单加载失败');
  const manifest=await response.json(),images={};
  if(BODY_KEYS.some(k=>!manifest.bodies[k])||WEAPON_KEYS.some(k=>!manifest.weapons[k]))throw Error('换装图集缺少外观');
  await Promise.all([...Object.values(manifest.bodies),...Object.values(manifest.weapons)].map(async entry=>{
- const im=new Image();im.src=new URL(entry.image,base).href;await im.decode();
+ const im=await loadRuntimeImage(entry.image,base);
  if(im.width!==1024||im.height!==(entry.frames.length===32?2048:512))throw Error('换装图集尺寸错误: '+entry.image);images[entry.image]=im;
  }));
- const parts={};for(const [key,entry]of Object.entries(manifest.bodies))parts[key]=Array.from({length:8},(_,row)=>localParts(images[entry.image],bodyFrame(entry,row),key,row));
+ // This work now also runs during combat prefetch. Yield between directions
+ // instead of segmenting every outfit in one long main-thread task.
+ const parts={};let sliceStart=performance.now();
+ for(const [key,entry]of Object.entries(manifest.bodies)){
+  parts[key]=[];
+  for(let row=0;row<8;row++){
+   parts[key].push(localParts(images[entry.image],bodyFrame(entry,row),key,row));
+   if(performance.now()-sliceStart>=6){await new Promise(resolve=>setTimeout(resolve,0));sliceStart=performance.now();}
+  }
+ }
  assets={manifest,images,parts};return equipmentAssetState();
  })().catch(error=>{pending=undefined;throw error;});}
 export function equipmentAssetState(){return{ready:!!assets,renderer:'full-body-cels-and-independent-weapon',animation:'rigid-torso-local-feet-accessories',bodyWarp:false,bodies:assets?Object.keys(assets.manifest.bodies):[],weapons:assets?Object.keys(assets.manifest.weapons):[],bodyFrames:assets?Object.values(assets.manifest.bodies).reduce((n,b)=>n+b.frames.length,0):0,weaponViews:assets?48:0,localParts:assets?Object.fromEntries(Object.entries(assets.parts).map(([key,rows])=>[key,rows.map(p=>({feet:p.feetCount,eyes:p.eyes.length,accessoryPixels:p.accessoryPixels}))])):{}};}
